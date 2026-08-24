@@ -1,0 +1,8 @@
+source_dataset,source_record_key,source_port_name,candidate_canonical_port_name,source_identifier,mapping_status,reason
+india_world_port_index.csv,wpi_row_0002,Machilipatnam,Machilipatnam,49460.0,MANUAL_REVIEW,Duplicate World Port Index identifier with conflicting source attributes; do not merge automatically.
+india_world_port_index.csv,wpi_row_0018,Krishnapatnam,Krishnapatnam,INKRI,MANUAL_REVIEW,UN/LOCODE is shared by multiple distinct source ports in this extract; preserve source identity.
+india_world_port_index.csv,wpi_row_0048,Kattupalli Port,Kattupalli Port,INKRI,MANUAL_REVIEW,UN/LOCODE is shared by multiple distinct source ports in this extract; preserve source identity.
+india_world_port_index.csv,wpi_row_0051,Machilipatnam,Machilipatnam,49460.0,MANUAL_REVIEW,Duplicate World Port Index identifier with conflicting source attributes; do not merge automatically.
+india_daily_port_activity_2019_2024.csv,port2150,Vizhinjam,,port2150,MANUAL_REVIEW,Activity name does not have a safe unique World Port Index mapping. Candidate observed in source: none.
+india_daily_port_activity_2019_2024.csv,port511,Jaigad Port,Jaigarh Bay,port511,MANUAL_REVIEW,Activity name does not have a safe unique World Port Index mapping. Candidate observed in source: Jaigarh Bay.
+india_daily_port_activity_2019_2024.csv,port529,Kakinada,Kakinada Bay,port529,MANUAL_REVIEW,Activity name does not have a safe unique World Port Index mapping. Candidate observed in source: Kakinada Bay.

@@ -1,0 +1,4 @@
+financial_year,financial_year_start,quantity_thousand_metric_tonnes,quantity_unit,source_financial_year,source_dataset,source_row_number,validation_status,time_series_scope
+2023-24,2023,234261.5795730779,thousand_metric_tonnes,2023-24,india_crude_import_totals_2023_2026.csv,2,VALID,RECENT_NATIONAL_TOTALS_2023_2026
+2024-25,2024,243224.97136204902,thousand_metric_tonnes,2024-25,india_crude_import_totals_2023_2026.csv,3,VALID,RECENT_NATIONAL_TOTALS_2023_2026
+2025-26,2025,245768.67364293197,thousand_metric_tonnes,2025-26,india_crude_import_totals_2023_2026.csv,4,VALID,RECENT_NATIONAL_TOTALS_2023_2026

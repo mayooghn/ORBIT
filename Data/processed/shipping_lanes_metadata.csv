@@ -1,0 +1,4 @@
+shipping_lane_id,source_feature_id,source_object_id,feature_name,lane_category,geometry_type,line_part_count,coordinate_point_count,geometry_valid,geometry_bounds_lon_lat,source_geometry_crs_status,source_dataset,source_feature_number,validation_status
+shipping-lane-b3f78c886f6e22a23bbf,0,1,,Major,MultiLineString,52,5678,TRUE,"[-179.99998854099996, -35.21346907699996, 179.9999885410001, 60.00246340400008]",UNDECLARED,shipping_lanes_v1.geojson,1,VALID
+shipping-lane-bf97dc6bc5f0a186d467,1,2,,Middle,MultiLineString,123,6862,TRUE,"[-179.99998853999998, -56.869410700999936, 179.9999885410001, 71.68715967600008]",UNDECLARED,shipping_lanes_v1.geojson,2,VALID
+shipping-lane-c9acd1887ad9ecdc98b5,2,3,,Minor,MultiLineString,64,16226,TRUE,"[-179.99999999999997, -55.997957705999966, 180.0000000000001, 54.55657751400008]",UNDECLARED,shipping_lanes_v1.geojson,3,VALID

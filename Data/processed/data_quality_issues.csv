@@ -1,0 +1,36 @@
+source_dataset,source_row_number,source_record_key,issue_type,field_name,severity,issue_status,description
+india_world_port_index.csv,2,wpi_row_0002,duplicate_source_identifier,world_port_index_number,REVIEW,OPEN,World Port Index number occurs on multiple source rows; source identities were not merged.
+india_world_port_index.csv,2,wpi_row_0002,missing_identifier,un_locode,REVIEW,OPEN,UN/LOCODE is blank or whitespace-only in the source.
+india_world_port_index.csv,17,wpi_row_0017,missing_identifier,un_locode,REVIEW,OPEN,UN/LOCODE is blank or whitespace-only in the source.
+india_world_port_index.csv,18,wpi_row_0018,duplicate_source_identifier,un_locode,REVIEW,OPEN,UN/LOCODE occurs on multiple distinct source ports in this extract.
+india_world_port_index.csv,48,wpi_row_0048,duplicate_source_identifier,un_locode,REVIEW,OPEN,UN/LOCODE occurs on multiple distinct source ports in this extract.
+india_world_port_index.csv,49,wpi_row_0049,missing_identifier,un_locode,REVIEW,OPEN,UN/LOCODE is blank or whitespace-only in the source.
+india_world_port_index.csv,50,wpi_row_0050,missing_identifier,un_locode,REVIEW,OPEN,UN/LOCODE is blank or whitespace-only in the source.
+india_world_port_index.csv,51,wpi_row_0051,duplicate_source_identifier,world_port_index_number,REVIEW,OPEN,World Port Index number occurs on multiple source rows; source identities were not merged.
+india_world_port_index.csv,51,wpi_row_0051,missing_identifier,un_locode,REVIEW,OPEN,UN/LOCODE is blank or whitespace-only in the source.
+india_world_port_index.csv,55,wpi_row_0055,missing_identifier,un_locode,REVIEW,OPEN,UN/LOCODE is blank or whitespace-only in the source.
+india_daily_port_activity_2019_2024.csv,,port2150,unresolved_port_mapping,portname,REVIEW,OPEN,Activity name does not have a safe unique World Port Index mapping. Candidate observed in source: none.
+india_daily_port_activity_2019_2024.csv,,port511,unresolved_port_mapping,portname,REVIEW,OPEN,Activity name does not have a safe unique World Port Index mapping. Candidate observed in source: Jaigarh Bay.
+india_daily_port_activity_2019_2024.csv,,port529,unresolved_port_mapping,portname,REVIEW,OPEN,Activity name does not have a safe unique World Port Index mapping. Candidate observed in source: Kakinada Bay.
+india_refinery_capacity_april_2026.csv,16,"CPCL,Manali",unresolved_region_mapping,state,REVIEW,OPEN,CHENNAI is retained as a normalized source location label; no state mapping was invented.
+india_refinery_capacity_april_2026.csv,17,"CPCL, Cauvery Basin*",unresolved_region_mapping,state,REVIEW,OPEN,CHENNAI is retained as a normalized source location label; no state mapping was invented.
+india_refinery_capacity_april_2026.csv,17,"CPCL, Cauvery Basin*",zero_reported_value,capacity_thousand_metric_tonnes_per_year,REVIEW,OPEN,Zero capacity is preserved as an explicit source value.
+global_oil_country.csv,29,South Sudan,missing_metric,consumption_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,114,Curaçao,missing_metric,production_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,114,Curaçao,missing_metric,exports_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,114,Curaçao,missing_metric,imports_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,142,Gaza Strip,invalid_rank,Rank,REVIEW,OPEN,Rank is an em dash or non-numeric; normalized rank is NULL and source text is preserved.
+global_oil_country.csv,142,Gaza Strip,missing_metric,production_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,142,Gaza Strip,missing_metric,consumption_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,142,Gaza Strip,missing_metric,exports_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,142,Gaza Strip,missing_metric,imports_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,159,Macau,invalid_rank,Rank,REVIEW,OPEN,Rank is an em dash or non-numeric; normalized rank is NULL and source text is preserved.
+global_oil_country.csv,160,Montserrat,invalid_rank,Rank,REVIEW,OPEN,Rank is an em dash or non-numeric; normalized rank is NULL and source text is preserved.
+global_oil_country.csv,194,Tokelau,invalid_rank,Rank,REVIEW,OPEN,Rank is an em dash or non-numeric; normalized rank is NULL and source text is preserved.
+global_oil_country.csv,194,Tokelau,missing_metric,production_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,194,Tokelau,missing_metric,consumption_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,194,Tokelau,missing_metric,exports_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+global_oil_country.csv,194,Tokelau,missing_metric,imports_barrels_per_day,REVIEW,OPEN,Source metric is missing; normalized field remains NULL.
+shipping_lanes_v1.geojson,1,0,missing_metadata,feature_name,REVIEW,OPEN,GeoJSON feature has no feature name; lane category is preserved from Type.
+shipping_lanes_v1.geojson,2,1,missing_metadata,feature_name,REVIEW,OPEN,GeoJSON feature has no feature name; lane category is preserved from Type.
+shipping_lanes_v1.geojson,3,2,missing_metadata,feature_name,REVIEW,OPEN,GeoJSON feature has no feature name; lane category is preserved from Type.

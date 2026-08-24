@@ -1,0 +1,5 @@
+source_dataset,source_name,source_normalized_name,country_code,mapping_status,mapping_method,occurrence_count,review_reason
+supplier_crude_imports_2014_2017.csv,Netherlandantil,Netherlandantil,9277,MANUAL_REVIEW,ambiguous_source_name,2,"No safe canonical country match; do not guess whether this represents a current country, historical territory, or source typo."
+supplier_crude_imports_2014_2017.csv,Pakistan Ir,Pakistan Ir,10309,MANUAL_REVIEW,ambiguous_source_name,1,"No safe canonical country match; do not guess whether this represents a current country, historical territory, or source typo."
+supplier_crude_imports_2014_2017.csv,Panama C Z,Panama C Z,9313,MANUAL_REVIEW,ambiguous_source_name,1,"No safe canonical country match; do not guess whether this represents a current country, historical territory, or source typo."
+supplier_crude_imports_2014_2017.csv,Unspecified,Unspecified,599,MANUAL_REVIEW,ambiguous_source_name,2,"No safe canonical country match; do not guess whether this represents a current country, historical territory, or source typo."

@@ -1,0 +1,129 @@
+financial_year,pc_code,pc_description,country_code,country_source_name,country_normalized,quantity_tonnes,quantity_unit,trade_value_source_units
+2014-2015,S5,Petroleum: Crude,11351,Saudi Arab,Saudi Arabia,34492347.0,Ton,21803.39542
+2014-2015,S5,Petroleum: Crude,11191,Iraq,Iraq,24017371.0,Ton,14174.33334
+2014-2015,S5,Petroleum: Crude,6433,Venezuela,Venezuela,22751603.0,Ton,11597.91458
+2014-2015,S5,Petroleum: Crude,11219,Kuwait,Kuwait,18816740.0,Ton,11478.89721
+2014-2015,S5,Petroleum: Crude,3291,Nigeria,Nigeria,17928554.0,Ton,12935.05145
+2014-2015,S5,Petroleum: Crude,11419,U Arab Emts,United Arab Emirates,16262447.0,Ton,11057.33382
+2014-2015,S5,Petroleum: Crude,10189,Iran,Iran,11200311.0,Ton,7039.691692
+2014-2015,S5,Petroleum: Crude,3011,Angola,Angola,6795945.0,Ton,4418.293989
+2014-2015,S5,Petroleum: Crude,9259,Mexico,Mexico,5126218.0,Ton,2684.266906
+2014-2015,S5,Petroleum: Crude,6043,Brazil,Brazil,4597955.0,Ton,2510.807806
+2014-2015,S5,Petroleum: Crude,10245,Malaysia,Malaysia,3468799.0,Ton,2464.816778
+2014-2015,S5,Petroleum: Crude,11335,Qatar,Qatar,3439602.0,Ton,2301.395707
+2014-2015,S5,Petroleum: Crude,6083,Colombia,Colombia,3106836.0,Ton,1744.829063
+2014-2015,S5,Petroleum: Crude,4111,Egypt A Rp,Egypt,2521118.0,Ton,1322.996536
+2014-2015,S5,Petroleum: Crude,6109,Ecuador,Ecuador,1463779.0,Ton,962.330486
+2014-2015,S5,Petroleum: Crude,13275,Netherland,Netherlands,1273908.0,Ton,746.684325
+2014-2015,S5,Petroleum: Crude,2057,Cameroon,Cameroon,1199720.0,Ton,705.085414
+2014-2015,S5,Petroleum: Crude,10047,Brunei,Brunei,1178929.0,Ton,835.03574
+2014-2015,S5,Petroleum: Crude,3117,Equtl Guinea,Equatorial Guinea,1124772.0,Ton,745.558775
+2014-2015,S5,Petroleum: Crude,2141,Gabon,Gabon,1053133.0,Ton,726.141309
+2014-2015,S5,Petroleum: Crude,16409,Turkey,Turkey,872418.0,Ton,586.727304
+2014-2015,S5,Petroleum: Crude,11301,Oman,Oman,797995.0,Ton,561.984013
+2014-2015,S5,Petroleum: Crude,4381,Sudan,Sudan,759164.0,Ton,482.584662
+2014-2015,S5,Petroleum: Crude,15212,Kazakhstan,Kazakhstan,672090.0,Ton,554.872708
+2014-2015,S5,Petroleum: Crude,4005,Algeria,Algeria,520800.0,Ton,347.153441
+2014-2015,S5,Petroleum: Crude,2087,Congo P Rep,Republic of the Congo,383021.0,Ton,238.163419
+2014-2015,S5,Petroleum: Crude,3167,Guinea,Guinea,308906.0,Ton,246.021071
+2014-2015,S5,Petroleum: Crude,6015,Argentina,Argentina,299819.0,Ton,215.81084
+2014-2015,S5,Petroleum: Crude,15021,Azerbaijan,Azerbaijan,222308.0,Ton,186.603381
+2014-2015,S5,Petroleum: Crude,11453,Yemen Republc,Yemen,213391.0,Ton,90.565309
+2014-2015,S5,Petroleum: Crude,15344,Russia,Russia,201837.0,Ton,170.834691
+2014-2015,S5,Petroleum: Crude,10187,Indonesia,Indonesia,142310.0,Ton,75.831996
+2014-2015,S5,Petroleum: Crude,2069,Chad,Chad,136288.0,Ton,46.925479
+2014-2015,S5,Petroleum: Crude,10017,Australia,Australia,94695.0,Ton,52.366458
+2014-2015,S5,Petroleum: Crude,4382,South Sudan,South Sudan,91371.0,Ton,66.243641
+2014-2015,S5,Petroleum: Crude,2459,Congo D. Rep.,Democratic Republic of the Congo,86689.0,Ton,65.278491
+2014-2015,S5,Petroleum: Crude,15003,Albania,Albania,82959.0,Ton,49.172285
+2014-2015,S5,Petroleum: Crude,5059,Canada,Canada,82335.0,Ton,52.759147
+2014-2015,S5,Petroleum: Crude,4231,Libya,Libya,66046.0,Ton,57.581254
+2014-2015,S5,Petroleum: Crude,9313,Panama C Z,Panama C Z,59036.0,Ton,40.516732
+2015-2016,S5,Petroleum: Crude,11351,Saudi Arab,Saudi Arabia,39592334.0,Ton,13489.47025
+2015-2016,S5,Petroleum: Crude,11191,Iraq,Iraq,35694711.0,Ton,10758.45377
+2015-2016,S5,Petroleum: Crude,3291,Nigeria,Nigeria,22970985.0,Ton,9017.850242
+2015-2016,S5,Petroleum: Crude,6433,Venezuela,Venezuela,22721003.0,Ton,5678.629456
+2015-2016,S5,Petroleum: Crude,11419,U Arab Emts,United Arab Emirates,14805596.0,Ton,5461.48961
+2015-2016,S5,Petroleum: Crude,10189,Iran,Iran,13615704.0,Ton,4283.772631
+2015-2016,S5,Petroleum: Crude,11219,Kuwait,Kuwait,11173150.0,Ton,3588.906982
+2015-2016,S5,Petroleum: Crude,3011,Angola,Angola,7221689.0,Ton,2659.173691
+2015-2016,S5,Petroleum: Crude,9259,Mexico,Mexico,5757201.0,Ton,1378.882695
+2015-2016,S5,Petroleum: Crude,11335,Qatar,Qatar,4434809.0,Ton,1480.27944
+2015-2016,S5,Petroleum: Crude,6043,Brazil,Brazil,4031337.0,Ton,1240.344037
+2015-2016,S5,Petroleum: Crude,10245,Malaysia,Malaysia,3284160.0,Ton,1286.490392
+2015-2016,S5,Petroleum: Crude,4111,Egypt A Rp,Egypt,2655798.0,Ton,772.028455
+2015-2016,S5,Petroleum: Crude,599,Unspecified,Unspecified,1427461.0,Ton,376.039002
+2015-2016,S5,Petroleum: Crude,2057,Cameroon,Cameroon,1414632.0,Ton,487.324853
+2015-2016,S5,Petroleum: Crude,10047,Brunei,Brunei,1331018.0,Ton,550.559382
+2015-2016,S5,Petroleum: Crude,6109,Ecuador,Ecuador,1326490.0,Ton,437.563601
+2015-2016,S5,Petroleum: Crude,6083,Colombia,Colombia,984627.0,Ton,291.907272
+2015-2016,S5,Petroleum: Crude,2069,Chad,Chad,948469.0,Ton,310.304489
+2015-2016,S5,Petroleum: Crude,3117,Equtl Guinea,Equatorial Guinea,933551.0,Ton,316.793489
+2015-2016,S5,Petroleum: Crude,10017,Australia,Australia,678421.0,Ton,217.56969
+2015-2016,S5,Petroleum: Crude,15212,Kazakhstan,Kazakhstan,634936.0,Ton,261.033447
+2015-2016,S5,Petroleum: Crude,4005,Algeria,Algeria,526373.0,Ton,204.086701
+2015-2016,S5,Petroleum: Crude,11301,Oman,Oman,436850.0,Ton,133.778012
+2015-2016,S5,Petroleum: Crude,16409,Turkey,Turkey,406783.0,Ton,147.186721
+2015-2016,S5,Petroleum: Crude,9277,Netherlandantil,Netherlandantil,321296.0,Ton,44.909452
+2015-2016,S5,Petroleum: Crude,10205,Japan,Japan,315204.0,Ton,102.520904
+2015-2016,S5,Petroleum: Crude,10217,Korea Rp,South Korea,271987.0,Ton,109.375237
+2015-2016,S5,Petroleum: Crude,13275,Netherland,Netherlands,257336.0,Ton,32.715526
+2015-2016,S5,Petroleum: Crude,2087,Congo P Rep,Republic of the Congo,254191.0,Ton,92.229625
+2015-2016,S5,Petroleum: Crude,6015,Argentina,Argentina,228000.0,Ton,78.425348
+2015-2016,S5,Petroleum: Crude,3167,Guinea,Guinea,178117.0,Ton,76.783776
+2015-2016,S5,Petroleum: Crude,2399,Togo,Togo,145711.0,Ton,65.839223
+2015-2016,S5,Petroleum: Crude,10077,China P Rp,China,145508.0,Ton,63.25927
+2015-2016,S5,Petroleum: Crude,2199,Cote D' Ivoire,Cote D' Ivoire,144678.0,Ton,57.682579
+2015-2016,S5,Petroleum: Crude,15344,Russia,Russia,144642.0,Ton,71.537862
+2015-2016,S5,Petroleum: Crude,15021,Azerbaijan,Azerbaijan,138997.0,Ton,63.318822
+2015-2016,S5,Petroleum: Crude,15410,Turkmenistan,Turkmenistan,135870.0,Ton,38.268877
+2015-2016,S5,Petroleum: Crude,2459,Congo D. Rep.,Democratic Republic of the Congo,124306.0,Ton,47.739816
+2015-2016,S5,Petroleum: Crude,10369,Sri Lanka Dsr,Sri Lanka,118184.0,Ton,22.687778
+2015-2016,S5,Petroleum: Crude,4381,Sudan,Sudan,115826.0,Ton,35.913453
+2015-2016,S5,Petroleum: Crude,10187,Indonesia,Indonesia,93241.0,Ton,23.859248
+2015-2016,S5,Petroleum: Crude,2141,Gabon,Gabon,83097.0,Ton,29.485284
+2015-2016,S5,Petroleum: Crude,10309,Pakistan Ir,Pakistan Ir,45705.0,Ton,20.724935
+2015-2016,S5,Petroleum: Crude,5423,U S A,United States,44321.0,Ton,15.73527
+2015-2016,S5,Petroleum: Crude,12195,Israel,Israel,8.0,Ton,0.051568
+2015-2016,S5,Petroleum: Crude,5059,Canada,Canada,0.0,Ton,0.001535
+2016-2017,S5,Petroleum: Crude,11351,Saudi Arab,Saudi Arabia,39334413.0,Ton,13674.08552
+2016-2017,S5,Petroleum: Crude,11191,Iraq,Iraq,37758995.0,Ton,11616.72177
+2016-2017,S5,Petroleum: Crude,10189,Iran,Iran,27140499.0,Ton,8908.606657
+2016-2017,S5,Petroleum: Crude,6433,Venezuela,Venezuela,21439155.0,Ton,5505.878814
+2016-2017,S5,Petroleum: Crude,11419,U Arab Emts,United Arab Emirates,19340961.0,Ton,6795.565372
+2016-2017,S5,Petroleum: Crude,3291,Nigeria,Nigeria,17709359.0,Ton,6748.950404
+2016-2017,S5,Petroleum: Crude,11219,Kuwait,Kuwait,9153864.0,Ton,2946.389913
+2016-2017,S5,Petroleum: Crude,9259,Mexico,Mexico,7002708.0,Ton,1842.301821
+2016-2017,S5,Petroleum: Crude,3011,Angola,Angola,5934975.0,Ton,2146.338653
+2016-2017,S5,Petroleum: Crude,10245,Malaysia,Malaysia,5106524.0,Ton,1979.26078
+2016-2017,S5,Petroleum: Crude,11335,Qatar,Qatar,4666484.0,Ton,1654.044521
+2016-2017,S5,Petroleum: Crude,6043,Brazil,Brazil,4255680.0,Ton,1334.643863
+2016-2017,S5,Petroleum: Crude,4111,Egypt A Rp,Egypt,2879583.0,Ton,739.5187
+2016-2017,S5,Petroleum: Crude,10047,Brunei,Brunei,1606185.0,Ton,627.598782
+2016-2017,S5,Petroleum: Crude,3117,Equtl Guinea,Equatorial Guinea,1339952.0,Ton,452.058373
+2016-2017,S5,Petroleum: Crude,4005,Algeria,Algeria,1252960.0,Ton,494.410201
+2016-2017,S5,Petroleum: Crude,15021,Azerbaijan,Azerbaijan,1050086.0,Ton,455.820841
+2016-2017,S5,Petroleum: Crude,16409,Turkey,Turkey,984466.0,Ton,377.993728
+2016-2017,S5,Petroleum: Crude,2057,Cameroon,Cameroon,982901.0,Ton,313.931383
+2016-2017,S5,Petroleum: Crude,6109,Ecuador,Ecuador,704439.0,Ton,219.160816
+2016-2017,S5,Petroleum: Crude,599,Unspecified,Unspecified,693322.0,Ton,217.904221
+2016-2017,S5,Petroleum: Crude,15212,Kazakhstan,Kazakhstan,623678.0,Ton,255.253854
+2016-2017,S5,Petroleum: Crude,10187,Indonesia,Indonesia,544764.0,Ton,180.826532
+2016-2017,S5,Petroleum: Crude,15344,Russia,Russia,512778.0,Ton,300.800179
+2016-2017,S5,Petroleum: Crude,11301,Oman,Oman,485314.0,Ton,155.328922
+2016-2017,S5,Petroleum: Crude,2069,Chad,Chad,428499.0,Ton,136.794786
+2016-2017,S5,Petroleum: Crude,9277,Netherlandantil,Netherlandantil,286347.0,Ton,56.358095
+2016-2017,S5,Petroleum: Crude,13275,Netherland,Netherlands,286253.0,Ton,61.972626
+2016-2017,S5,Petroleum: Crude,10217,Korea Rp,South Korea,268670.0,Ton,100.694869
+2016-2017,S5,Petroleum: Crude,6083,Colombia,Colombia,264028.0,Ton,110.61793
+2016-2017,S5,Petroleum: Crude,15216,Kyrghyzstan,Kyrghyzstan,194889.0,Ton,82.018022
+2016-2017,S5,Petroleum: Crude,4381,Sudan,Sudan,178146.0,Ton,67.42002
+2016-2017,S5,Petroleum: Crude,3167,Guinea,Guinea,144413.0,Ton,47.488409
+2016-2017,S5,Petroleum: Crude,2141,Gabon,Gabon,92980.0,Ton,30.065687
+2016-2017,S5,Petroleum: Crude,10017,Australia,Australia,81935.0,Ton,23.625478
+2016-2017,S5,Petroleum: Crude,2199,Cote D' Ivoire,Cote D' Ivoire,80788.0,Ton,25.424082
+2016-2017,S5,Petroleum: Crude,2087,Congo P Rep,Republic of the Congo,75704.0,Ton,21.840901
+2016-2017,S5,Petroleum: Crude,13155,Greece,Greece,28938.0,Ton,9.151248
+2016-2017,S5,Petroleum: Crude,13147,Germany,Germany,9.0,Ton,0.047896
+2016-2017,S5,Petroleum: Crude,10359,Singapore,Singapore,3.0,Ton,0.002429
+2016-2017,S5,Petroleum: Crude,12195,Israel,Israel,1.0,Ton,0.00488

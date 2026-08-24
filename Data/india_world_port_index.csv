@@ -1,0 +1,57 @@
+world_port_index_number,port_name,alternate_port_name,un_locode,country,water_body,latitude,longitude,harbor_size,harbor_type,harbor_use,max_vessel_length_m,max_vessel_beam_m,max_vessel_draft_m,liquid_bulk_facility,oil_terminal_facility,wharf_facility,anchorage_facility
+49460.0,Machilipatnam, , ,India,Bay of Bengal; Indian Ocean,16.15,81.166667,Very Small,Open Roadstead,Unknown,0.0,0.0,0.0,Unknown,Unknown,Unknown,Yes
+48620.0,Mandvi, ,IN MDV,India,Arabian Sea; Indian Ocean,22.833333,69.35,Very Small,Open Roadstead,Unknown,0.0,0.0,0.0,Unknown,Unknown,Yes,Yes
+48790.0,Hazira, ,IN HZA,India,Arabian Sea; Indian Ocean,21.083333,72.633333,Small,Coastal (Breakwater),Unknown,0.0,0.0,0.0,Unknown,Unknown,Unknown,Yes
+48650.0,Bedi,Bed,IN BED,India,Arabian Sea; Indian Ocean,22.57305556,70.04555556,Very Small,River (Natural),Cargo,0.0,0.0,0.0,Unknown,Unknown,Unknown,Yes
+48617.0,Mundra, ,IN MUN,India,Arabian Sea; Indian Ocean,22.72833333,69.70666667,Small,Open Roadstead,Cargo,397.0,51.2,17.3,Yes,Yes,Yes,Unknown
+48670.0,Okha, ,IN OKH,India,Arabian Sea; Indian Ocean,22.46805556,69.07972222,Very Small,Coastal (Natural),Cargo,181.0,35.0,8.0,Unknown,Unknown,Yes,Yes
+48690.0,Veraval, ,IN VVA,India,Arabian Sea; Indian Ocean,20.9,70.366667,Very Small,Open Roadstead,Unknown,0.0,0.0,0.0,Unknown,Unknown,Unknown,Yes
+48615.0,Vadinar Terminal, ,IN VAD,India,Arabian Sea; Indian Ocean,22.46666667,69.66666667,Very Small,Open Roadstead,Cargo,362.5,60.0,23.0,Yes,Yes,Unknown,Yes
+48613.0,Sikka, ,IN SKK,India,Arabian Sea; Indian Ocean,22.433333,69.833333,Very Small,Open Roadstead,Cargo,250.0,45.0,14.5,Unknown,Unknown,Yes,Yes
+48630.0,Kandla,Kundla,IN IXY,India,Arabian Sea; Indian Ocean,23.033333,70.216667,Small,River (Natural),Cargo,275.0,43.0,12.5,Unknown,Unknown,Yes,Unknown
+48680.0,Porbandar, ,IN PBD,India,Arabian Sea; Indian Ocean,21.633333,69.6,Very Small,Coastal (Breakwater),Unknown,225.0,0.0,9.8,Unknown,Unknown,Yes,Unknown
+48635.0,Navlakhi, ,IN NAV,India,Arabian Sea; Indian Ocean,22.95638889,70.44758333,Very Small,Open Roadstead,Unknown,93.0,18.0,3.4,Unknown,Unknown,No,Yes
+49030.0,New Mangalore, ,IN NML,India,Laccadive Sea; Indian Ocean,12.916667,74.816667,Medium,Coastal (Breakwater),Cargo,292.0,47.0,14.0,Unknown,Unknown,Yes,Unknown
+49130.0,Kochi (Cochin), ,IN KOC,India,Laccadive Sea; Indian Ocean,9.966667,76.233333,Medium,Coastal (Natural),Cargo,366.5,52.0,14.5,Unknown,Unknown,Yes,Yes
+49320.0,Tuticorin, ,IN TUT,India,Palk Strait; Indian Ocean,8.8,78.166667,Small,Coastal (Breakwater),Cargo,310.0,43.0,14.2,Unknown,Unknown,Yes,Yes
+49010.0,Honavar, , ,India,Arabian Sea; Indian Ocean,14.28333333,74.45,Very Small, ,Cargo,0.0,0.0,3.0,Unknown,Unknown,Unknown,Unknown
+49455.0,Krishnapatnam, ,INKRI,India,Bay of Bengal; Indian Ocean,14.25,80.13333333, , ,Cargo,318.4,50.0,19.5,Unknown,Unknown,Unknown,Unknown
+48890.0,Port Dabhol, ,INDHP,India,Arabian Sea; Indian Ocean,17.58333333,73.16666667,Very Small,River (Basins),Cargo,300.0,67.0,11.0,Unknown,Unknown,Unknown,Unknown
+48895.0,Jaigarh Bay, ,INJGD,India,Arabian Sea; Indian Ocean,17.3,73.21666667, , ,Cargo,295.0,42.0,18.5,Unknown,Unknown,Unknown,Unknown
+48720.0,Jafarabad, ,INJBD,India,Arabian Sea; Indian Ocean,20.86666667,71.38333333, ,Open Roadstead,Cargo,82.0,16.0,12.5,Unknown,Unknown,Unknown,Unknown
+49540.0,Dhamra, ,INDMQ,India,Bay of Bengal; Indian Ocean,20.81666667,86.96666667, , ,Cargo,350.0,50.0,19.0,Unknown,Unknown,Unknown,Unknown
+49479.0,Gangavaram, ,INGGV,India,Bay of Bengal; Indian Ocean,17.63333333,83.25, , ,Cargo,292.0,48.0,17.7,Unknown,Unknown,Unknown,Unknown
+49470.0,Kakinada Bay,Kakinada; Kakinada Bay,IN KAK,India,Bay of Bengal; Indian Ocean,17.0,82.316667,Very Small,Coastal (Breakwater),Cargo,230.0,32.4,13.0,Unknown,Unknown,Unknown,Yes
+49370.0,Karaikal Port, ,IN KRK,India,Bay of Bengal; Indian Ocean,10.833333,79.866667,Small,Coastal (Breakwater),Cargo,238.1,38.0,14.0,Unknown,Unknown,Yes,Unknown
+49410.0,Cuddalore, ,IN CDL,India,Bay of Bengal; Indian Ocean,11.716667,79.766667,Very Small,Open Roadstead,Cargo,164.0,25.6,9.0,Unknown,Unknown,Unknown,Yes
+48770.0,Magdalla,Hazira,IN MDA,India,Arabian Sea; Indian Ocean,21.15,72.75,Very Small,River (Natural),Cargo,131.0,17.2,14.0,Unknown,Unknown,Yes,Yes
+49560.0,Calcutta, ,IN CCU,India,Bay of Bengal; Indian Ocean,22.55,88.333333,Large,River (Natural),Cargo,171.9,25.0,6.8,Unknown,Unknown,Yes,Yes
+48845.0,Jawaharlal Nehru Port (Nhava Shiva), ,IN NSA,India,Arabian Sea; Indian Ocean,18.95,72.95,Medium,Open Roadstead,Cargo,370.0,51.2,16.5,Unknown,Unknown,Yes,No
+48990.0,Karwar, ,IN KRW,India,Arabian Sea; Indian Ocean,14.816667,74.116667,Very Small,Coastal (Breakwater),Cargo,229.0,32.3,8.2,Unknown,Unknown,Yes,Yes
+49555.0,Haldia Port, ,IN HAL,India,Bay of Bengal; Indian Ocean,22.016667,88.083333,Very Small,River (Natural),Cargo,177.0,44.0,8.5,Unknown,Unknown,Yes,Yes
+49450.0,Chennai (Madras), ,IN MAA,India,Bay of Bengal; Indian Ocean,13.1,80.3,Large,Coastal (Breakwater),Cargo,336.7,60.0,16.5,Unknown,Unknown,Yes,Yes
+48730.0,Pipavav Bandar, ,IN PAV,India,Arabian Sea; Indian Ocean,20.916667,71.516667,Small,Coastal (Natural),Cargo,367.0,50.0,14.5,Unknown,Unknown,Yes,Unknown
+49430.0,Pondicherry,New Pondicherry; Pondicherri,IN PNY,India,Bay of Bengal; Indian Ocean,11.933333,79.833333,Very Small,Open Roadstead,Cargo,0.0,0.0,3.0,Unknown,Unknown,Unknown,Yes
+48760.0,Bhavnagar, ,IN BHU,India,Arabian Sea; Indian Ocean,21.766667,72.233333,Small,River (Tide Gates),Cargo,78.9,14.8,4.0,Unknown,Unknown,Yes,Yes
+49480.0,Vishakhapatnam,Vizagapatam,IN NRP,India,Bay of Bengal; Indian Ocean,17.683333,83.3,Medium,Coastal (Breakwater),Cargo,320.0,50.0,18.1,Unknown,Unknown,Yes,Yes
+49535.0,Paradip, ,IN PPT,India,Bay of Bengal; Indian Ocean,20.266667,86.683333,Small,Coastal (Breakwater),Cargo,295.0,46.0,14.5,Unknown,Unknown,Yes,Unknown
+49454.0,Kamarajar Port,Ennur,INENR,India,Bay of Bengal; Indian Ocean,13.26138889,80.3425,Small,Coastal (Breakwater),Cargo,365.9,48.2,15.0,Unknown,Unknown,Unknown,Unknown
+49500.0,Gopalpur, ,IN GPR,India,Bay of Bengal; Indian Ocean,19.30194444,84.96666667,Small,Coastal (Breakwater),Cargo,240.0,36.0,13.5,Unknown,Unknown,Yes,Yes
+48970.0,Marmagao, ,IN MRM,India,Arabian Sea; Indian Ocean,15.4175,73.795,Small,River (Natural),Cargo,335.0,50.0,14.1,Unknown,Unknown,Yes,Unknown
+48840.0,Mumbai (Bombay), ,IN BOM,India,Arabian Sea; Indian Ocean,18.966667,72.866667,Large,Coastal (Tide Gates),Cargo,294.0,40.0,9.8,Unknown,Unknown,Yes,No
+49110.0,Beypore,Beipur,IN BEY,India,Laccadive Sea; Indian Ocean,11.166667,75.8,Very Small,Open Roadstead,Cargo,72.1,12.8,0.0,Unknown,Unknown,Yes,Yes
+48900.0,Ratnagiri, ,IN RTC,India,Arabian Sea; Indian Ocean,16.983333,73.283333,Very Small,Coastal (Natural),Fishing,177.0,0.0,9.5,Unknown,Unknown,No,Yes
+49000.0,Belekeri, ,IN BLK,India,Arabian Sea; Indian Ocean,14.7,74.266667,Very Small,Open Roadstead,Cargo,0.0,0.0,0.0,Unknown,Unknown,Unknown,Yes
+49350.0,Nagappattinam, ,IN NPT,India,Bay of Bengal; Indian Ocean,10.766667,79.85,Small,Open Roadstead,Cargo,0.0,0.0,0.0,Unknown,Unknown,No,Yes
+48674.0,Dahej, ,IN DAH,India,Arabian Sea; Indian Ocean,21.7,72.533333,Very Small,Open Roadstead,Cargo,300.0,0.0,14.5,Unknown,Unknown,Yes,Yes
+48960.0,Panaji, ,IN PAN,India,Arabian Sea; Indian Ocean,15.5,73.816667,Very Small,Coastal (Natural),Cargo,280.0,46.0,17.0,Unknown,Unknown,Unknown,Yes
+49454.5,Kattupalli Port, ,INKRI,India,Bay of Bengal; Indian Ocean,13.30694444,80.35222222,Large, ,Cargo,0.0,0.0,0.0,Unknown,Unknown,Unknown,Unknown
+49330.0,Pamban, , ,India,Palk Strait; Indian Ocean,9.283333333,79.21666667,Very Small,Open Roadstead,Cargo,0.0,0.0,0.0,Unknown,Unknown,Unknown,Unknown
+49550.0,Baleshwar, , ,India,Bay of Bengal; Indian Ocean,21.48333333,86.95,Very Small,River (Natural),Cargo,0.0,0.0,0.0,Unknown,Unknown,Unknown,Unknown
+49460.0,Machilipatnam,Masulipatam, ,India,Bay of Bengal; Indian Ocean,16.15,81.15,Very Small,Open Roadstead,Cargo,0.0,0.0,0.0,Unknown,Unknown,Unknown,Unknown
+49160.0,Quilon (Kollam), ,IN QUI,India,Laccadive Sea; Indian Ocean,8.871944444,76.58388889,Very Small,Coastal (Breakwater),Unknown,116.0,0.0,7.0,Unknown,Unknown,Yes,No
+49040.0,Azhikal (Azhikkal),Beliapatam; Valarpattam,IN AZK,India,Laccadive Sea; Indian Ocean,11.94555556,75.30944444,Very Small,River (Natural),Cargo,30.0,10.0,3.0,Unknown,Unknown,Yes,No
+49170.0,Trivandrum, ,IN TRV,India,Laccadive Sea; Indian Ocean,8.483333,76.95,Very Small,Open Roadstead,Unknown,0.0,0.0,0.0,Unknown,Unknown,Yes,Yes
+49180.0,Kolachel, , ,India,Laccadive Sea; Indian Ocean,8.166667,77.25,Very Small,Open Roadstead,Cargo,0.0,0.0,0.0,Unknown,Unknown,No,Yes
+49100.0,Calicut (Kozhikode), ,IN CCJ,India,Laccadive Sea; Indian Ocean,11.25,75.766667,Very Small,Open Roadstead,Cargo,0.0,0.0,0.0,Unknown,Unknown,Yes,Yes
+49720.0,Port Blair, ,IN IXZ,India,Andaman Sea; Indian Ocean,11.67777778,92.73333333,Small,Coastal (Natural),Cargo,183.4,32.2,9.0,Unknown,Unknown,Yes,Yes

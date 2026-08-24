@@ -1,0 +1,129 @@
+financial_year,financial_year_start,country_id,quantity_tonnes,quantity_unit,source_country_name,source_country_normalized_name,country_code,source_product_code,source_product_description,product_id,source_quantity_unit,source_trade_value_source_units,source_dataset,source_row_number,country_mapping_status,validation_status
+2014-15,2014,country-6c1925d6560c7c47d21c,34492347.0,tonnes,Saudi Arab,Saudi Arabia,11351,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,21803.39542,supplier_crude_imports_2014_2017.csv,2,MAPPED,VALID
+2014-15,2014,country-818d76d6586437a090e7,24017371.0,tonnes,Iraq,Iraq,11191,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,14174.33334,supplier_crude_imports_2014_2017.csv,3,MAPPED,VALID
+2014-15,2014,country-7942e84ee77ffefd180f,22751603.0,tonnes,Venezuela,Venezuela,6433,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,11597.91458,supplier_crude_imports_2014_2017.csv,4,MAPPED,VALID
+2014-15,2014,country-9ac506560edb9211e1b5,18816740.0,tonnes,Kuwait,Kuwait,11219,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,11478.89721,supplier_crude_imports_2014_2017.csv,5,MAPPED,VALID
+2014-15,2014,country-3383e4237141bb9feeb2,17928554.0,tonnes,Nigeria,Nigeria,3291,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,12935.05145,supplier_crude_imports_2014_2017.csv,6,MAPPED,VALID
+2014-15,2014,country-ccce216a59d326e4558d,16262447.0,tonnes,U Arab Emts,United Arab Emirates,11419,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,11057.33382,supplier_crude_imports_2014_2017.csv,7,MAPPED,VALID
+2014-15,2014,country-d4328f17fc46dfde5a0a,11200311.0,tonnes,Iran,Iran,10189,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,7039.691692,supplier_crude_imports_2014_2017.csv,8,MAPPED,VALID
+2014-15,2014,country-5feeb60f78d8d2224674,6795945.0,tonnes,Angola,Angola,3011,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,4418.293989,supplier_crude_imports_2014_2017.csv,9,MAPPED,VALID
+2014-15,2014,country-8be2978e343799a3747a,5126218.0,tonnes,Mexico,Mexico,9259,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,2684.266906,supplier_crude_imports_2014_2017.csv,10,MAPPED,VALID
+2014-15,2014,country-5c8f52ca28966103ff0a,4597955.0,tonnes,Brazil,Brazil,6043,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,2510.807806,supplier_crude_imports_2014_2017.csv,11,MAPPED,VALID
+2014-15,2014,country-6a9a10210588981dd8fa,3468799.0,tonnes,Malaysia,Malaysia,10245,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,2464.816778,supplier_crude_imports_2014_2017.csv,12,MAPPED,VALID
+2014-15,2014,country-3fc81a2348ee6614856d,3439602.0,tonnes,Qatar,Qatar,11335,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,2301.395707,supplier_crude_imports_2014_2017.csv,13,MAPPED,VALID
+2014-15,2014,country-c91bd9c288c0a7c5ca1b,3106836.0,tonnes,Colombia,Colombia,6083,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1744.829063,supplier_crude_imports_2014_2017.csv,14,MAPPED,VALID
+2014-15,2014,country-b116c99a2c11258bdc6b,2521118.0,tonnes,Egypt A Rp,Egypt,4111,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1322.996536,supplier_crude_imports_2014_2017.csv,15,MAPPED,VALID
+2014-15,2014,country-f4cb75e90ad07f8c1d38,1463779.0,tonnes,Ecuador,Ecuador,6109,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,962.330486,supplier_crude_imports_2014_2017.csv,16,MAPPED,VALID
+2014-15,2014,country-63c8807c2fd92b19aaf7,1273908.0,tonnes,Netherland,Netherlands,13275,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,746.684325,supplier_crude_imports_2014_2017.csv,17,MAPPED,VALID
+2014-15,2014,country-1366ad3415239832b32d,1199720.0,tonnes,Cameroon,Cameroon,2057,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,705.085414,supplier_crude_imports_2014_2017.csv,18,MAPPED,VALID
+2014-15,2014,country-0cd165045b47476a308e,1178929.0,tonnes,Brunei,Brunei,10047,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,835.03574,supplier_crude_imports_2014_2017.csv,19,MAPPED,VALID
+2014-15,2014,country-8e5afa94476a1439c6f7,1124772.0,tonnes,Equtl Guinea,Equatorial Guinea,3117,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,745.558775,supplier_crude_imports_2014_2017.csv,20,MAPPED,VALID
+2014-15,2014,country-67e218f2bddbbf8b1da1,1053133.0,tonnes,Gabon,Gabon,2141,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,726.141309,supplier_crude_imports_2014_2017.csv,21,MAPPED,VALID
+2014-15,2014,country-8d7d5397f8842b4181d3,872418.0,tonnes,Turkey,Turkey,16409,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,586.727304,supplier_crude_imports_2014_2017.csv,22,MAPPED,VALID
+2014-15,2014,country-e883a76a30b245c29f32,797995.0,tonnes,Oman,Oman,11301,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,561.984013,supplier_crude_imports_2014_2017.csv,23,MAPPED,VALID
+2014-15,2014,country-eb2230485d2da72ff135,759164.0,tonnes,Sudan,Sudan,4381,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,482.584662,supplier_crude_imports_2014_2017.csv,24,MAPPED,VALID
+2014-15,2014,country-4451df5780fe1b2c96c5,672090.0,tonnes,Kazakhstan,Kazakhstan,15212,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,554.872708,supplier_crude_imports_2014_2017.csv,25,MAPPED,VALID
+2014-15,2014,country-d854169a7fa8233ea9a1,520800.0,tonnes,Algeria,Algeria,4005,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,347.153441,supplier_crude_imports_2014_2017.csv,26,MAPPED,VALID
+2014-15,2014,country-7f48a600768b114b5c99,383021.0,tonnes,Congo P Rep,Republic of the Congo,2087,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,238.163419,supplier_crude_imports_2014_2017.csv,27,MAPPED,VALID
+2014-15,2014,country-3f7351456856a4eecf6c,308906.0,tonnes,Guinea,Guinea,3167,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,246.021071,supplier_crude_imports_2014_2017.csv,28,MAPPED,VALID
+2014-15,2014,country-3a73954246460ddeee5c,299819.0,tonnes,Argentina,Argentina,6015,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,215.81084,supplier_crude_imports_2014_2017.csv,29,MAPPED,VALID
+2014-15,2014,country-0c341736c12dd6a90849,222308.0,tonnes,Azerbaijan,Azerbaijan,15021,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,186.603381,supplier_crude_imports_2014_2017.csv,30,MAPPED,VALID
+2014-15,2014,country-cc3d6b2176eba4a5795a,213391.0,tonnes,Yemen Republc,Yemen,11453,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,90.565309,supplier_crude_imports_2014_2017.csv,31,MAPPED,VALID
+2014-15,2014,country-90a6d53df47e4097ad65,201837.0,tonnes,Russia,Russia,15344,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,170.834691,supplier_crude_imports_2014_2017.csv,32,MAPPED,VALID
+2014-15,2014,country-341cf9022a3e6469098e,142310.0,tonnes,Indonesia,Indonesia,10187,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,75.831996,supplier_crude_imports_2014_2017.csv,33,MAPPED,VALID
+2014-15,2014,country-2dec26043f679fdd6bb0,136288.0,tonnes,Chad,Chad,2069,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,46.925479,supplier_crude_imports_2014_2017.csv,34,MAPPED,VALID
+2014-15,2014,country-c585f1decb986f7ff19b,94695.0,tonnes,Australia,Australia,10017,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,52.366458,supplier_crude_imports_2014_2017.csv,35,MAPPED,VALID
+2014-15,2014,country-ddea6abd2ee5d012fb6a,91371.0,tonnes,South Sudan,South Sudan,4382,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,66.243641,supplier_crude_imports_2014_2017.csv,36,MAPPED,VALID
+2014-15,2014,country-f69cfb3ddf10c1170014,86689.0,tonnes,Congo D. Rep.,Democratic Republic of the Congo,2459,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,65.278491,supplier_crude_imports_2014_2017.csv,37,MAPPED,VALID
+2014-15,2014,country-e83f024f9a1156e097a7,82959.0,tonnes,Albania,Albania,15003,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,49.172285,supplier_crude_imports_2014_2017.csv,38,MAPPED,VALID
+2014-15,2014,country-408c7c5887a0f3905767,82335.0,tonnes,Canada,Canada,5059,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,52.759147,supplier_crude_imports_2014_2017.csv,39,MAPPED,VALID
+2014-15,2014,country-f6b323fdd9f99c634640,66046.0,tonnes,Libya,Libya,4231,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,57.581254,supplier_crude_imports_2014_2017.csv,40,MAPPED,VALID
+2014-15,2014,,59036.0,tonnes,Panama C Z,Panama C Z,9313,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,40.516732,supplier_crude_imports_2014_2017.csv,41,MANUAL_REVIEW,REVIEW
+2015-16,2015,country-6c1925d6560c7c47d21c,39592334.0,tonnes,Saudi Arab,Saudi Arabia,11351,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,13489.47025,supplier_crude_imports_2014_2017.csv,42,MAPPED,VALID
+2015-16,2015,country-818d76d6586437a090e7,35694711.0,tonnes,Iraq,Iraq,11191,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,10758.45377,supplier_crude_imports_2014_2017.csv,43,MAPPED,VALID
+2015-16,2015,country-3383e4237141bb9feeb2,22970985.0,tonnes,Nigeria,Nigeria,3291,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,9017.850242,supplier_crude_imports_2014_2017.csv,44,MAPPED,VALID
+2015-16,2015,country-7942e84ee77ffefd180f,22721003.0,tonnes,Venezuela,Venezuela,6433,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,5678.629456,supplier_crude_imports_2014_2017.csv,45,MAPPED,VALID
+2015-16,2015,country-ccce216a59d326e4558d,14805596.0,tonnes,U Arab Emts,United Arab Emirates,11419,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,5461.48961,supplier_crude_imports_2014_2017.csv,46,MAPPED,VALID
+2015-16,2015,country-d4328f17fc46dfde5a0a,13615704.0,tonnes,Iran,Iran,10189,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,4283.772631,supplier_crude_imports_2014_2017.csv,47,MAPPED,VALID
+2015-16,2015,country-9ac506560edb9211e1b5,11173150.0,tonnes,Kuwait,Kuwait,11219,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,3588.906982,supplier_crude_imports_2014_2017.csv,48,MAPPED,VALID
+2015-16,2015,country-5feeb60f78d8d2224674,7221689.0,tonnes,Angola,Angola,3011,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,2659.173691,supplier_crude_imports_2014_2017.csv,49,MAPPED,VALID
+2015-16,2015,country-8be2978e343799a3747a,5757201.0,tonnes,Mexico,Mexico,9259,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1378.882695,supplier_crude_imports_2014_2017.csv,50,MAPPED,VALID
+2015-16,2015,country-3fc81a2348ee6614856d,4434809.0,tonnes,Qatar,Qatar,11335,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1480.27944,supplier_crude_imports_2014_2017.csv,51,MAPPED,VALID
+2015-16,2015,country-5c8f52ca28966103ff0a,4031337.0,tonnes,Brazil,Brazil,6043,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1240.344037,supplier_crude_imports_2014_2017.csv,52,MAPPED,VALID
+2015-16,2015,country-6a9a10210588981dd8fa,3284160.0,tonnes,Malaysia,Malaysia,10245,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1286.490392,supplier_crude_imports_2014_2017.csv,53,MAPPED,VALID
+2015-16,2015,country-b116c99a2c11258bdc6b,2655798.0,tonnes,Egypt A Rp,Egypt,4111,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,772.028455,supplier_crude_imports_2014_2017.csv,54,MAPPED,VALID
+2015-16,2015,,1427461.0,tonnes,Unspecified,Unspecified,599,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,376.039002,supplier_crude_imports_2014_2017.csv,55,MANUAL_REVIEW,REVIEW
+2015-16,2015,country-1366ad3415239832b32d,1414632.0,tonnes,Cameroon,Cameroon,2057,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,487.324853,supplier_crude_imports_2014_2017.csv,56,MAPPED,VALID
+2015-16,2015,country-0cd165045b47476a308e,1331018.0,tonnes,Brunei,Brunei,10047,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,550.559382,supplier_crude_imports_2014_2017.csv,57,MAPPED,VALID
+2015-16,2015,country-f4cb75e90ad07f8c1d38,1326490.0,tonnes,Ecuador,Ecuador,6109,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,437.563601,supplier_crude_imports_2014_2017.csv,58,MAPPED,VALID
+2015-16,2015,country-c91bd9c288c0a7c5ca1b,984627.0,tonnes,Colombia,Colombia,6083,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,291.907272,supplier_crude_imports_2014_2017.csv,59,MAPPED,VALID
+2015-16,2015,country-2dec26043f679fdd6bb0,948469.0,tonnes,Chad,Chad,2069,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,310.304489,supplier_crude_imports_2014_2017.csv,60,MAPPED,VALID
+2015-16,2015,country-8e5afa94476a1439c6f7,933551.0,tonnes,Equtl Guinea,Equatorial Guinea,3117,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,316.793489,supplier_crude_imports_2014_2017.csv,61,MAPPED,VALID
+2015-16,2015,country-c585f1decb986f7ff19b,678421.0,tonnes,Australia,Australia,10017,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,217.56969,supplier_crude_imports_2014_2017.csv,62,MAPPED,VALID
+2015-16,2015,country-4451df5780fe1b2c96c5,634936.0,tonnes,Kazakhstan,Kazakhstan,15212,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,261.033447,supplier_crude_imports_2014_2017.csv,63,MAPPED,VALID
+2015-16,2015,country-d854169a7fa8233ea9a1,526373.0,tonnes,Algeria,Algeria,4005,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,204.086701,supplier_crude_imports_2014_2017.csv,64,MAPPED,VALID
+2015-16,2015,country-e883a76a30b245c29f32,436850.0,tonnes,Oman,Oman,11301,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,133.778012,supplier_crude_imports_2014_2017.csv,65,MAPPED,VALID
+2015-16,2015,country-8d7d5397f8842b4181d3,406783.0,tonnes,Turkey,Turkey,16409,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,147.186721,supplier_crude_imports_2014_2017.csv,66,MAPPED,VALID
+2015-16,2015,,321296.0,tonnes,Netherlandantil,Netherlandantil,9277,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,44.909452,supplier_crude_imports_2014_2017.csv,67,MANUAL_REVIEW,REVIEW
+2015-16,2015,country-59ae856cd788d0f57e39,315204.0,tonnes,Japan,Japan,10205,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,102.520904,supplier_crude_imports_2014_2017.csv,68,MAPPED,VALID
+2015-16,2015,country-d83d0388b282d66a754e,271987.0,tonnes,Korea Rp,South Korea,10217,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,109.375237,supplier_crude_imports_2014_2017.csv,69,MAPPED,VALID
+2015-16,2015,country-63c8807c2fd92b19aaf7,257336.0,tonnes,Netherland,Netherlands,13275,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,32.715526,supplier_crude_imports_2014_2017.csv,70,MAPPED,VALID
+2015-16,2015,country-7f48a600768b114b5c99,254191.0,tonnes,Congo P Rep,Republic of the Congo,2087,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,92.229625,supplier_crude_imports_2014_2017.csv,71,MAPPED,VALID
+2015-16,2015,country-3a73954246460ddeee5c,228000.0,tonnes,Argentina,Argentina,6015,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,78.425348,supplier_crude_imports_2014_2017.csv,72,MAPPED,VALID
+2015-16,2015,country-3f7351456856a4eecf6c,178117.0,tonnes,Guinea,Guinea,3167,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,76.783776,supplier_crude_imports_2014_2017.csv,73,MAPPED,VALID
+2015-16,2015,country-7d6b68079d4614fd7e3e,145711.0,tonnes,Togo,Togo,2399,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,65.839223,supplier_crude_imports_2014_2017.csv,74,MAPPED,VALID
+2015-16,2015,country-50c0152c2952082aeaf4,145508.0,tonnes,China P Rp,China,10077,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,63.25927,supplier_crude_imports_2014_2017.csv,75,MAPPED,VALID
+2015-16,2015,country-a9e09665ee384ef81af3,144678.0,tonnes,Cote D' Ivoire,Cote D' Ivoire,2199,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,57.682579,supplier_crude_imports_2014_2017.csv,76,MAPPED,VALID
+2015-16,2015,country-90a6d53df47e4097ad65,144642.0,tonnes,Russia,Russia,15344,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,71.537862,supplier_crude_imports_2014_2017.csv,77,MAPPED,VALID
+2015-16,2015,country-0c341736c12dd6a90849,138997.0,tonnes,Azerbaijan,Azerbaijan,15021,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,63.318822,supplier_crude_imports_2014_2017.csv,78,MAPPED,VALID
+2015-16,2015,country-700530bf6ed31b40c7bd,135870.0,tonnes,Turkmenistan,Turkmenistan,15410,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,38.268877,supplier_crude_imports_2014_2017.csv,79,MAPPED,VALID
+2015-16,2015,country-f69cfb3ddf10c1170014,124306.0,tonnes,Congo D. Rep.,Democratic Republic of the Congo,2459,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,47.739816,supplier_crude_imports_2014_2017.csv,80,MAPPED,VALID
+2015-16,2015,country-95cdad8bfb9652ac584a,118184.0,tonnes,Sri Lanka Dsr,Sri Lanka,10369,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,22.687778,supplier_crude_imports_2014_2017.csv,81,MAPPED,VALID
+2015-16,2015,country-eb2230485d2da72ff135,115826.0,tonnes,Sudan,Sudan,4381,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,35.913453,supplier_crude_imports_2014_2017.csv,82,MAPPED,VALID
+2015-16,2015,country-341cf9022a3e6469098e,93241.0,tonnes,Indonesia,Indonesia,10187,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,23.859248,supplier_crude_imports_2014_2017.csv,83,MAPPED,VALID
+2015-16,2015,country-67e218f2bddbbf8b1da1,83097.0,tonnes,Gabon,Gabon,2141,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,29.485284,supplier_crude_imports_2014_2017.csv,84,MAPPED,VALID
+2015-16,2015,,45705.0,tonnes,Pakistan Ir,Pakistan Ir,10309,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,20.724935,supplier_crude_imports_2014_2017.csv,85,MANUAL_REVIEW,REVIEW
+2015-16,2015,country-981e5b396726008318fc,44321.0,tonnes,U S A,United States,5423,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,15.73527,supplier_crude_imports_2014_2017.csv,86,MAPPED,VALID
+2015-16,2015,country-77173ace11f118f4cfaa,8.0,tonnes,Israel,Israel,12195,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,0.051568,supplier_crude_imports_2014_2017.csv,87,MAPPED,VALID
+2015-16,2015,country-408c7c5887a0f3905767,0,tonnes,Canada,Canada,5059,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,0.001535,supplier_crude_imports_2014_2017.csv,88,MAPPED,VALID
+2016-17,2016,country-6c1925d6560c7c47d21c,39334413.0,tonnes,Saudi Arab,Saudi Arabia,11351,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,13674.08552,supplier_crude_imports_2014_2017.csv,89,MAPPED,VALID
+2016-17,2016,country-818d76d6586437a090e7,37758995.0,tonnes,Iraq,Iraq,11191,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,11616.72177,supplier_crude_imports_2014_2017.csv,90,MAPPED,VALID
+2016-17,2016,country-d4328f17fc46dfde5a0a,27140499.0,tonnes,Iran,Iran,10189,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,8908.606657,supplier_crude_imports_2014_2017.csv,91,MAPPED,VALID
+2016-17,2016,country-7942e84ee77ffefd180f,21439155.0,tonnes,Venezuela,Venezuela,6433,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,5505.878814,supplier_crude_imports_2014_2017.csv,92,MAPPED,VALID
+2016-17,2016,country-ccce216a59d326e4558d,19340961.0,tonnes,U Arab Emts,United Arab Emirates,11419,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,6795.565372,supplier_crude_imports_2014_2017.csv,93,MAPPED,VALID
+2016-17,2016,country-3383e4237141bb9feeb2,17709359.0,tonnes,Nigeria,Nigeria,3291,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,6748.950404,supplier_crude_imports_2014_2017.csv,94,MAPPED,VALID
+2016-17,2016,country-9ac506560edb9211e1b5,9153864.0,tonnes,Kuwait,Kuwait,11219,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,2946.389913,supplier_crude_imports_2014_2017.csv,95,MAPPED,VALID
+2016-17,2016,country-8be2978e343799a3747a,7002708.0,tonnes,Mexico,Mexico,9259,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1842.301821,supplier_crude_imports_2014_2017.csv,96,MAPPED,VALID
+2016-17,2016,country-5feeb60f78d8d2224674,5934975.0,tonnes,Angola,Angola,3011,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,2146.338653,supplier_crude_imports_2014_2017.csv,97,MAPPED,VALID
+2016-17,2016,country-6a9a10210588981dd8fa,5106524.0,tonnes,Malaysia,Malaysia,10245,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1979.26078,supplier_crude_imports_2014_2017.csv,98,MAPPED,VALID
+2016-17,2016,country-3fc81a2348ee6614856d,4666484.0,tonnes,Qatar,Qatar,11335,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1654.044521,supplier_crude_imports_2014_2017.csv,99,MAPPED,VALID
+2016-17,2016,country-5c8f52ca28966103ff0a,4255680.0,tonnes,Brazil,Brazil,6043,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,1334.643863,supplier_crude_imports_2014_2017.csv,100,MAPPED,VALID
+2016-17,2016,country-b116c99a2c11258bdc6b,2879583.0,tonnes,Egypt A Rp,Egypt,4111,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,739.5187,supplier_crude_imports_2014_2017.csv,101,MAPPED,VALID
+2016-17,2016,country-0cd165045b47476a308e,1606185.0,tonnes,Brunei,Brunei,10047,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,627.598782,supplier_crude_imports_2014_2017.csv,102,MAPPED,VALID
+2016-17,2016,country-8e5afa94476a1439c6f7,1339952.0,tonnes,Equtl Guinea,Equatorial Guinea,3117,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,452.058373,supplier_crude_imports_2014_2017.csv,103,MAPPED,VALID
+2016-17,2016,country-d854169a7fa8233ea9a1,1252960.0,tonnes,Algeria,Algeria,4005,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,494.410201,supplier_crude_imports_2014_2017.csv,104,MAPPED,VALID
+2016-17,2016,country-0c341736c12dd6a90849,1050086.0,tonnes,Azerbaijan,Azerbaijan,15021,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,455.820841,supplier_crude_imports_2014_2017.csv,105,MAPPED,VALID
+2016-17,2016,country-8d7d5397f8842b4181d3,984466.0,tonnes,Turkey,Turkey,16409,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,377.993728,supplier_crude_imports_2014_2017.csv,106,MAPPED,VALID
+2016-17,2016,country-1366ad3415239832b32d,982901.0,tonnes,Cameroon,Cameroon,2057,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,313.931383,supplier_crude_imports_2014_2017.csv,107,MAPPED,VALID
+2016-17,2016,country-f4cb75e90ad07f8c1d38,704439.0,tonnes,Ecuador,Ecuador,6109,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,219.160816,supplier_crude_imports_2014_2017.csv,108,MAPPED,VALID
+2016-17,2016,,693322.0,tonnes,Unspecified,Unspecified,599,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,217.904221,supplier_crude_imports_2014_2017.csv,109,MANUAL_REVIEW,REVIEW
+2016-17,2016,country-4451df5780fe1b2c96c5,623678.0,tonnes,Kazakhstan,Kazakhstan,15212,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,255.253854,supplier_crude_imports_2014_2017.csv,110,MAPPED,VALID
+2016-17,2016,country-341cf9022a3e6469098e,544764.0,tonnes,Indonesia,Indonesia,10187,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,180.826532,supplier_crude_imports_2014_2017.csv,111,MAPPED,VALID
+2016-17,2016,country-90a6d53df47e4097ad65,512778.0,tonnes,Russia,Russia,15344,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,300.800179,supplier_crude_imports_2014_2017.csv,112,MAPPED,VALID
+2016-17,2016,country-e883a76a30b245c29f32,485314.0,tonnes,Oman,Oman,11301,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,155.328922,supplier_crude_imports_2014_2017.csv,113,MAPPED,VALID
+2016-17,2016,country-2dec26043f679fdd6bb0,428499.0,tonnes,Chad,Chad,2069,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,136.794786,supplier_crude_imports_2014_2017.csv,114,MAPPED,VALID
+2016-17,2016,,286347.0,tonnes,Netherlandantil,Netherlandantil,9277,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,56.358095,supplier_crude_imports_2014_2017.csv,115,MANUAL_REVIEW,REVIEW
+2016-17,2016,country-63c8807c2fd92b19aaf7,286253.0,tonnes,Netherland,Netherlands,13275,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,61.972626,supplier_crude_imports_2014_2017.csv,116,MAPPED,VALID
+2016-17,2016,country-d83d0388b282d66a754e,268670.0,tonnes,Korea Rp,South Korea,10217,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,100.694869,supplier_crude_imports_2014_2017.csv,117,MAPPED,VALID
+2016-17,2016,country-c91bd9c288c0a7c5ca1b,264028.0,tonnes,Colombia,Colombia,6083,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,110.61793,supplier_crude_imports_2014_2017.csv,118,MAPPED,VALID
+2016-17,2016,country-92150179d1b63ac8803c,194889.0,tonnes,Kyrghyzstan,Kyrghyzstan,15216,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,82.018022,supplier_crude_imports_2014_2017.csv,119,MAPPED,VALID
+2016-17,2016,country-eb2230485d2da72ff135,178146.0,tonnes,Sudan,Sudan,4381,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,67.42002,supplier_crude_imports_2014_2017.csv,120,MAPPED,VALID
+2016-17,2016,country-3f7351456856a4eecf6c,144413.0,tonnes,Guinea,Guinea,3167,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,47.488409,supplier_crude_imports_2014_2017.csv,121,MAPPED,VALID
+2016-17,2016,country-67e218f2bddbbf8b1da1,92980.0,tonnes,Gabon,Gabon,2141,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,30.065687,supplier_crude_imports_2014_2017.csv,122,MAPPED,VALID
+2016-17,2016,country-c585f1decb986f7ff19b,81935.0,tonnes,Australia,Australia,10017,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,23.625478,supplier_crude_imports_2014_2017.csv,123,MAPPED,VALID
+2016-17,2016,country-a9e09665ee384ef81af3,80788.0,tonnes,Cote D' Ivoire,Cote D' Ivoire,2199,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,25.424082,supplier_crude_imports_2014_2017.csv,124,MAPPED,VALID
+2016-17,2016,country-7f48a600768b114b5c99,75704.0,tonnes,Congo P Rep,Republic of the Congo,2087,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,21.840901,supplier_crude_imports_2014_2017.csv,125,MAPPED,VALID
+2016-17,2016,country-4839625482ad85764b6c,28938.0,tonnes,Greece,Greece,13155,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,9.151248,supplier_crude_imports_2014_2017.csv,126,MAPPED,VALID
+2016-17,2016,country-b2c01c8a8a0d9a99f145,9.0,tonnes,Germany,Germany,13147,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,0.047896,supplier_crude_imports_2014_2017.csv,127,MAPPED,VALID
+2016-17,2016,country-51e2a46721d104d9148d,3.0,tonnes,Singapore,Singapore,10359,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,0.002429,supplier_crude_imports_2014_2017.csv,128,MAPPED,VALID
+2016-17,2016,country-77173ace11f118f4cfaa,1.0,tonnes,Israel,Israel,12195,S5,Petroleum: Crude,product-fe52ad63a114c5ebc1b8,Ton,0.00488,supplier_crude_imports_2014_2017.csv,129,MAPPED,VALID

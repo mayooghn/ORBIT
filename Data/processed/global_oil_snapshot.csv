@@ -1,0 +1,211 @@
+global_oil_snapshot_id,country_id,canonical_country_name,source_country_name,source_rank,rank,source_proven_reserves_barrels,proven_reserves_barrels,source_production_barrels_per_day,production_barrels_per_day,source_consumption_barrels_per_day,consumption_barrels_per_day,source_exports_barrels_per_day,exports_barrels_per_day,source_imports_barrels_per_day,imports_barrels_per_day,as_of_date,source_dataset,source_row_number,missing_metric_count,validation_status
+global-oil-e5afe90d2437e3fa7223,country-7942e84ee77ffefd180f,Venezuela,Venezuela,1,1,298350000000,298350000000,3023000.0,3023000.0,571000.0,571000.0,2452000.0,2452000.0,0.0,0,,global_oil_country.csv,2,0,VALID
+global-oil-0e1df26b5425bf45b560,country-6c1925d6560c7c47d21c,Saudi Arabia,Saudi Arabia,2,2,267900000000,267900000000,9684700.0,9684700.0,2817000.0,2817000.0,6880000.0,6880000.0,0.0,0,,global_oil_country.csv,3,0,VALID
+global-oil-829c688ff439ed29e939,country-408c7c5887a0f3905767,Canada,Canada,3,3,173100000000,173100000000,3324300.0,3324300.0,2259000.0,2259000.0,1576000.0,1576000.0,770300.0,770300.0,,global_oil_country.csv,4,0,VALID
+global-oil-bbaa2d33a655305d81e2,country-d4328f17fc46dfde5a0a,Iran,Iran,4,4,154600000000,154600000000,3113300.0,3113300.0,1709000.0,1709000.0,2445000.0,2445000.0,15600.0,15600.0,,global_oil_country.csv,5,0,VALID
+global-oil-57728c8ee4482011a17c,country-818d76d6586437a090e7,Iraq,Iraq,5,5,141400000000,141400000000,3054400.0,3054400.0,818000.0,818000.0,2390000.0,2390000.0,0.0,0,,global_oil_country.csv,6,0,VALID
+global-oil-ef63c530958dca705d83,country-9ac506560edb9211e1b5,Kuwait,Kuwait,6,6,104000000000,104000000000,2650000.0,2650000.0,339000.0,339000.0,1395000.0,1395000.0,0.0,0,,global_oil_country.csv,7,0,VALID
+global-oil-2967b32356e6148cebdd,country-ccce216a59d326e4558d,United Arab Emirates,United Arab Emirates,7,7,97800000000,97800000000,2820000.0,2820000.0,572100.0,572100.0,2142000.0,2142000.0,0.0,0,,global_oil_country.csv,8,0,VALID
+global-oil-891580bedc4eac3a7afe,country-90a6d53df47e4097ad65,Russia,Russia,8,8,80000000000,80000000000,10053800.0,10053800.0,3196000.0,3196000.0,4720000.0,4720000.0,16380.0,16380.0,,global_oil_country.csv,9,0,VALID
+global-oil-f43b7c15cf97e81ffc6b,country-f6b323fdd9f99c634640,Libya,Libya,9,9,48010000000,48010000000,918300.0,918300.0,314000.0,314000.0,1378000.0,1378000.0,0.0,0,,global_oil_country.csv,10,0,VALID
+global-oil-c6c2cd4e3367f376b7b0,country-3383e4237141bb9feeb2,Nigeria,Nigeria,10,10,37200000000,37200000000,2367400.0,2367400.0,271600.0,271600.0,2341000.0,2341000.0,0.0,0,,global_oil_country.csv,11,0,VALID
+global-oil-3dccd31274fbdfe2cb9c,country-4451df5780fe1b2c96c5,Kazakhstan,Kazakhstan,11,11,30000000000,30000000000,1572900.0,1572900.0,244200.0,244200.0,1406000.0,1406000.0,119600.0,119600.0,,global_oil_country.csv,12,0,VALID
+global-oil-139fe44fb6a5ec0491fd,country-3fc81a2348ee6614856d,Qatar,Qatar,12,12,25380000000,25380000000,1553000.0,1553000.0,189700.0,189700.0,1389000.0,1389000.0,0.0,0,,global_oil_country.csv,13,0,VALID
+global-oil-6af74f45373446408c11,country-981e5b396726008318fc,United States,United States,13,13,20680000000,20680000000,7443400.0,7443400.0,18840000.0,18840000.0,41640.0,41640.0,9213000.0,9213000.0,,global_oil_country.csv,14,0,VALID
+global-oil-98fd4686e533fa95c9cd,country-50c0152c2952082aeaf4,China,China,14,14,17300000000,17300000000,4164100.0,4164100.0,9790000.0,9790000.0,33000.0,33000.0,5664000.0,5664000.0,,global_oil_country.csv,15,0,VALID
+global-oil-f72e3905c33991ccd191,country-5c8f52ca28966103ff0a,Brazil,Brazil,15,15,13150000000,13150000000,2023900.0,2023900.0,2594000.0,2594000.0,619100.0,619100.0,343600.0,343600.0,,global_oil_country.csv,16,0,VALID
+global-oil-c47ba6450fa2c18a84a4,country-d854169a7fa8233ea9a1,Algeria,Algeria,16,16,12200000000,12200000000,1461800.0,1461800.0,316400.0,316400.0,1097000.0,1097000.0,6400.0,6400.0,,global_oil_country.csv,17,0,VALID
+global-oil-bc01b7c35e54af890a0e,country-5feeb60f78d8d2224674,Angola,Angola,17,17,10470000000,10470000000,1830700.0,1830700.0,79430.0,79430.0,1928000.0,1928000.0,0.0,0,,global_oil_country.csv,18,0,VALID
+global-oil-199a955c6715455aeb69,country-8be2978e343799a3747a,Mexico,Mexico,18,18,10260000000,10260000000,2561900.0,2561900.0,2133000.0,2133000.0,1460000.0,1460000.0,0.0,0,,global_oil_country.csv,19,0,VALID
+global-oil-672ec75ef69fde8aa44e,country-f4cb75e90ad07f8c1d38,Ecuador,Ecuador,19,19,8240000000,8240000000,526100.0,526100.0,280000.0,280000.0,413000.0,413000.0,154000.0,154000.0,,global_oil_country.csv,20,0,VALID
+global-oil-89e2ed09d1f81c93e110,country-0c341736c12dd6a90849,Azerbaijan,Azerbaijan,20,20,7000000000,7000000000,870600.0,870600.0,168000.0,168000.0,821000.0,821000.0,0.0,0,,global_oil_country.csv,21,0,VALID
+global-oil-10e468c6185be02ebf26,country-e883a76a30b245c29f32,Oman,Oman,21,21,5500000000,5500000000,939900.0,939900.0,98000.0,98000.0,705100.0,705100.0,0.0,0,,global_oil_country.csv,22,0,VALID
+global-oil-1d3529e8a015312b4b29,country-fb54e9062429a9378555,India,India,22,22,5476000000,5476000000,772100.0,772100.0,3292000.0,3292000.0,0.0,0,3272000.0,3272000.0,,global_oil_country.csv,23,0,VALID
+global-oil-6bdb566048e1d9024259,country-1d43cfed6bbe6dd99196,Norway,Norway,23,23,5366000000,5366000000,1529900.0,1529900.0,255200.0,255200.0,1602000.0,1602000.0,11320.0,11320.0,,global_oil_country.csv,24,0,VALID
+global-oil-478c114f9f23290021e5,country-b116c99a2c11258bdc6b,Egypt,Egypt,24,24,4400000000,4400000000,514400.0,514400.0,816300.0,816300.0,85000.0,85000.0,48740.0,48740.0,,global_oil_country.csv,25,0,VALID
+global-oil-7b487b7785ddc662fc90,country-4558505e43ad952755f6,Vietnam,Vietnam,25,25,4400000000,4400000000,335500.0,335500.0,259900.0,259900.0,188000.0,188000.0,0.0,0,,global_oil_country.csv,26,0,VALID
+global-oil-eca10e37bc003fe1a7a4,country-341cf9022a3e6469098e,Indonesia,Indonesia,26,26,4030000000,4030000000,825200.0,825200.0,1322000.0,1322000.0,338100.0,338100.0,388400.0,388400.0,,global_oil_country.csv,27,0,VALID
+global-oil-79061c42ed3535b58fc9,country-6a9a10210588981dd8fa,Malaysia,Malaysia,27,27,4000000000,4000000000,515700.0,515700.0,542900.0,542900.0,269000.0,269000.0,160500.0,160500.0,,global_oil_country.csv,28,0,VALID
+global-oil-aeb4100686df40b25c43,country-ddea6abd2ee5d012fb6a,South Sudan,South Sudan,28,28,3750000000,3750000000,220000.0,220000.0,,,291800.0,291800.0,0.0,0,,global_oil_country.csv,29,1,REVIEW
+global-oil-bb5132a976b5faa82b43,country-0e98cc0b1589b955ff17,United Kingdom,United Kingdom,29,29,3122000000,3122000000,801300.0,801300.0,1217000.0,1217000.0,637800.0,637800.0,1053000.0,1053000.0,,global_oil_country.csv,30,0,VALID
+global-oil-4f2c099bc7fbb324605b,country-cc3d6b2176eba4a5795a,Yemen,Yemen,30,30,3000000000,3000000000,129200.0,129200.0,177000.0,177000.0,175200.0,175200.0,0.0,0,,global_oil_country.csv,31,0,VALID
+global-oil-20a7df91ca9e0878cbbe,country-3a73954246460ddeee5c,Argentina,Argentina,31,31,2805000000,2805000000,539800.0,539800.0,678100.0,678100.0,90920.0,90920.0,0.0,0,,global_oil_country.csv,32,0,VALID
+global-oil-8ef3e0237f0e394cff68,country-38e64378dcc97326eee8,Syria,Syria,32,32,2500000000,2500000000,58000.0,58000.0,258800.0,258800.0,152400.0,152400.0,0.0,0,,global_oil_country.csv,33,0,VALID
+global-oil-b8230492dfc2c643edac,country-431debec82077bf2d678,Uganda,Uganda,33,33,2500000000,2500000000,0.0,0,16930.0,16930.0,0.0,0,0.0,0,,global_oil_country.csv,34,0,VALID
+global-oil-18d437d99bb52434af22,country-c91bd9c288c0a7c5ca1b,Colombia,Colombia,34,34,2200000000,2200000000,1003200.0,1003200.0,287000.0,287000.0,777900.0,777900.0,10.0,10.0,,global_oil_country.csv,35,0,VALID
+global-oil-639bdc7037b7af3d22bc,country-67e218f2bddbbf8b1da1,Gabon,Gabon,35,35,2000000000,2000000000,243200.0,243200.0,15800.0,15800.0,225300.0,225300.0,0.0,0,,global_oil_country.csv,36,0,VALID
+global-oil-cff53c6cdcb242ebfe8d,country-7f48a600768b114b5c99,Republic of the Congo,Republic of the Congo,36,36,1600000000,1600000000,265500.0,265500.0,10710.0,10710.0,290000.0,290000.0,0.0,0,,global_oil_country.csv,37,0,VALID
+global-oil-d7f548d11a55293c77e7,country-2dec26043f679fdd6bb0,Chad,Chad,37,37,1500000000,1500000000,97900.0,97900.0,1817.0,1817.0,125700.0,125700.0,0.0,0,,global_oil_country.csv,38,0,VALID
+global-oil-efb85f57cd899e0697a8,country-c585f1decb986f7ff19b,Australia,Australia,38,38,1433000000,1433000000,332400.0,332400.0,1023000.0,1023000.0,314100.0,314100.0,475900.0,475900.0,,global_oil_country.csv,39,0,VALID
+global-oil-c24f963a06833d64e67b,country-eb2230485d2da72ff135,Sudan,Sudan,39,39,1250000000,1250000000,28830.0,28830.0,95450.0,95450.0,97270.0,97270.0,0.0,0,,global_oil_country.csv,40,0,VALID
+global-oil-b9a334c38e72d8e301a9,country-0cd165045b47476a308e,Brunei,Brunei,40,40,1100000000,1100000000,122000.0,122000.0,14640.0,14640.0,147900.0,147900.0,0.0,0,,global_oil_country.csv,41,0,VALID
+global-oil-1853244cc5004ba7e142,country-8e5afa94476a1439c6f7,Equatorial Guinea,Equatorial Guinea,41,41,1100000000,1100000000,269800.0,269800.0,1588.0,1588.0,319100.0,319100.0,0.0,0,,global_oil_country.csv,42,0,VALID
+global-oil-5b923ff896a708687be5,country-5f0bf3ff6b72ac09f881,Denmark,Denmark,42,42,805000000,805000000,175400.0,175400.0,160200.0,160200.0,155200.0,155200.0,55010.0,55010.0,,global_oil_country.csv,43,0,VALID
+global-oil-eb43f3490dc3c7d23347,country-1607b15340c3a58e5a71,Trinidad and Tobago,Trinidad and Tobago,43,43,728300000,728300000,81300.0,81300.0,41000.0,41000.0,75340.0,75340.0,70260.0,70260.0,,global_oil_country.csv,44,0,VALID
+global-oil-929d4de625587eb3bcd0,country-fc4f9c94394e55c0c42b,Ghana,Ghana,44,44,660000000,660000000,97900.0,97900.0,61590.0,61590.0,0.0,0,32060.0,32060.0,,global_oil_country.csv,45,0,VALID
+global-oil-42bc793140cef95ab251,country-700530bf6ed31b40c7bd,Turkmenistan,Turkmenistan,45,45,600000000,600000000,228500.0,228500.0,145000.0,145000.0,67000.0,67000.0,0.0,0,,global_oil_country.csv,46,0,VALID
+global-oil-07cdeee4c58d6449a552,country-856f08f94e3316872671,Romania,Romania,46,46,600000000,600000000,85100.0,85100.0,218200.0,218200.0,1604.0,1604.0,122000.0,122000.0,,global_oil_country.csv,47,0,VALID
+global-oil-e3400391d88cfa5bc5ae,country-1c438aa8cb197cc6b8a3,Uzbekistan,Uzbekistan,47,47,594000000,594000000,70000.0,70000.0,137100.0,137100.0,0.0,0,0.0,0,,global_oil_country.csv,48,0,VALID
+global-oil-72c90e903e268e33515e,country-fdc224c5d68863446711,Peru,Peru,48,48,579200000,579200000,62900.0,62900.0,206900.0,206900.0,15610.0,15610.0,99590.0,99590.0,,global_oil_country.csv,49,0,VALID
+global-oil-07c267a550eb043e2b8f,country-93ff074ca77b5f7e61e6,Italy,Italy,49,49,521300000,521300000,101800.0,101800.0,1454000.0,1454000.0,6300.0,6300.0,1591000.0,1591000.0,,global_oil_country.csv,50,0,VALID
+global-oil-ceccc636a3748679e2ff,country-d299927fdea2d5a7e994,Thailand,Thailand,50,50,453300000,453300000,240600.0,240600.0,721100.0,721100.0,32200.0,32200.0,793900.0,793900.0,,global_oil_country.csv,51,0,VALID
+global-oil-68f44dde1923eef46ccd,country-8e9f3fe372b3e2360007,Tunisia,Tunisia,51,51,425000000,425000000,62200.0,62200.0,88380.0,88380.0,77980.0,77980.0,3680.0,3680.0,,global_oil_country.csv,52,0,VALID
+global-oil-8ec698e6786eccd0ae69,country-5c86f5a8ea4a73682e57,Ukraine,Ukraine,52,52,395000000,395000000,43200.0,43200.0,320600.0,320600.0,0.0,0,155300.0,155300.0,,global_oil_country.csv,53,0,VALID
+global-oil-0871f6e1a4e2e9ee54f0,country-63c8807c2fd92b19aaf7,Netherlands,Netherlands,53,53,352000000,352000000,22900.0,22900.0,1010000.0,1010000.0,35500.0,35500.0,1202000.0,1202000.0,,global_oil_country.csv,54,0,VALID
+global-oil-820f00221bef5ddb1591,country-8d7d5397f8842b4181d3,Turkey,Turkey,54,54,270400000,270400000,46200.0,46200.0,706100.0,706100.0,0.0,0,338900.0,338900.0,,global_oil_country.csv,55,0,VALID
+global-oil-5cefd1341773ee06c78a,country-b2c01c8a8a0d9a99f145,Germany,Germany,55,55,254200000,254200000,55900.0,55900.0,2400000.0,2400000.0,14260.0,14260.0,1876000.0,1876000.0,,global_oil_country.csv,56,0,VALID
+global-oil-83e7bddb3f5dc53e97d3,country-ad1d0a33d1475e29c577,Pakistan,Pakistan,56,56,247500000,247500000,59900.0,59900.0,426700.0,426700.0,0.0,0,151200.0,151200.0,,global_oil_country.csv,57,0,VALID
+global-oil-8177c3e8b57a832e29ca,country-d27c899eb5eb67ca26e2,Bolivia,Bolivia,57,57,209800000,209800000,47000.0,47000.0,55560.0,55560.0,61.0,61.0,0.0,0,,global_oil_country.csv,58,0,VALID
+global-oil-e8951518a748b0cfe073,country-1366ad3415239832b32d,Cameroon,Cameroon,58,58,200000000,200000000,62800.0,62800.0,29410.0,29410.0,55680.0,55680.0,34220.0,34220.0,,global_oil_country.csv,59,0,VALID
+global-oil-00ca16fbdd0409fe8cd3,country-0b778819fc2789a0fe60,Belarus,Belarus,59,59,198000000,198000000,30000.0,30000.0,188800.0,188800.0,0.0,0,294800.0,294800.0,,global_oil_country.csv,60,0,VALID
+global-oil-fbb5f5722fa94c6c8234,country-f69cfb3ddf10c1170014,Democratic Republic of the Congo,Democratic Republic of the Congo,60,60,180000000,180000000,20000.0,20000.0,10240.0,10240.0,22240.0,22240.0,0.0,0,,global_oil_country.csv,61,0,VALID
+global-oil-ec04bac2c11372eb2470,country-e83f024f9a1156e097a7,Albania,Albania,61,61,172400000,172400000,17000.0,17000.0,38390.0,38390.0,23320.0,23320.0,0.0,0,,global_oil_country.csv,62,0,VALID
+global-oil-48891ed166e00ff2df94,country-9cbbdd6cbd5335f528ec,Poland,Poland,62,62,156500000,156500000,19200.0,19200.0,576600.0,576600.0,3615.0,3615.0,547900.0,547900.0,,global_oil_country.csv,63,0,VALID
+global-oil-07ed7113f8024c2724cd,country-55a119a7ff113034af2d,Papua New Guinea,Papua New Guinea,63,63,154300000,154300000,28100.0,28100.0,36320.0,36320.0,28400.0,28400.0,14880.0,14880.0,,global_oil_country.csv,64,0,VALID
+global-oil-2c39c2a3ff44d8bc538f,country-4c799454ccf37279d378,Spain,Spain,64,64,150000000,150000000,8000.0,8000.0,1384000.0,1384000.0,0.0,0,1061000.0,1061000.0,,global_oil_country.csv,65,0,VALID
+global-oil-423751a50ae2bde222f6,country-c42f580108029f094432,Chile,Chile,65,65,150000000,150000000,6700.0,6700.0,321700.0,321700.0,0.0,0,169700.0,169700.0,,global_oil_country.csv,66,0,VALID
+global-oil-98605f4c2a6230a14a16,country-0f9a79acd620eca49149,Philippines,Philippines,66,66,138500000,138500000,21000.0,21000.0,315600.0,315600.0,20090.0,20090.0,182000.0,182000.0,,global_oil_country.csv,67,0,VALID
+global-oil-aa1c95b7a20fce5c2724,country-a23061616678f32f71b5,Bahrain,Bahrain,67,67,124600000,124600000,48000.0,48000.0,51450.0,51450.0,152600.0,152600.0,256000.0,256000.0,,global_oil_country.csv,68,0,VALID
+global-oil-8749acc0eb118fe30c0b,country-950662956e7592a1d712,Cuba,Cuba,68,68,124000000,124000000,50000.0,50000.0,150200.0,150200.0,83000.0,83000.0,165000.0,165000.0,,global_oil_country.csv,69,0,VALID
+global-oil-8142b1639fd3b1ec58ab,country-a9e09665ee384ef81af3,Côte d'Ivoire,Côte d'Ivoire,69,69,100000000,100000000,37000.0,37000.0,24630.0,24630.0,32190.0,32190.0,49780.0,49780.0,,global_oil_country.csv,70,0,VALID
+global-oil-91b5218111043214c483,country-2c598436e5575a5769b6,France,France,70,70,85180000,85180000,16000.0,16000.0,1792000.0,1792000.0,0.0,0,1298000.0,1298000.0,,global_oil_country.csv,71,0,VALID
+global-oil-e72498561d791935952b,country-7112733729f24775a6e8,Austria,Austria,71,71,85000000,85000000,16200.0,16200.0,210700.0,210700.0,0.0,0,139000.0,139000.0,,global_oil_country.csv,72,0,VALID
+global-oil-f6702b7697b0d4e2b541,country-5f211d4244df430c87a0,Guatemala,Guatemala,72,72,83070000,83070000,10000.0,10000.0,80810.0,80810.0,10960.0,10960.0,0.0,0,,global_oil_country.csv,73,0,VALID
+global-oil-b0641d7b2ce9a2caff04,country-22c264294a1d038fb023,New Zealand,New Zealand,73,73,81400000,81400000,35300.0,35300.0,148900.0,148900.0,47290.0,47290.0,99810.0,99810.0,,global_oil_country.csv,74,0,VALID
+global-oil-28d8875bb04a9367a635,country-467dda4df29b3ad6df89,Serbia,Serbia,74,74,77500000,77500000,16500.0,16500.0,72770.0,72770.0,0.0,0,33330.0,33330.0,,global_oil_country.csv,75,0,VALID
+global-oil-af2ec6220d5dc0b793a7,country-0f0857451904a83978a9,Suriname,Suriname,75,75,76800000,76800000,15000.0,15000.0,14100.0,14100.0,7621.0,7621.0,1.0,1.0,,global_oil_country.csv,76,0,VALID
+global-oil-bde3b08423b78bae0c9d,country-f17f6b658c4b6feb5425,Croatia,Croatia,76,76,71000000,71000000,12000.0,12000.0,74410.0,74410.0,0.0,0,51470.0,51470.0,,global_oil_country.csv,77,0,VALID
+global-oil-5e00a86dd27d95eb9a50,country-9e9f4c6d624a3c810435,Burma,Burma,77,77,50000000,50000000,20000.0,20000.0,40620.0,40620.0,0.0,0,0.0,0,,global_oil_country.csv,78,0,VALID
+global-oil-8b3db52aedb486bb0487,country-59ae856cd788d0f57e39,Japan,Japan,78,78,44120000,44120000,4700.0,4700.0,4464000.0,4464000.0,0.0,0,3472000.0,3472000.0,,global_oil_country.csv,79,0,VALID
+global-oil-5d7b6476ccb071502736,country-92150179d1b63ac8803c,Kyrgyzstan,Kyrgyzstan,79,79,40000000,40000000,1000.0,1000.0,16640.0,16640.0,0.0,0,0.0,0,,global_oil_country.csv,80,0,VALID
+global-oil-2186077c74f7de2e914b,country-1c18bc2214f67ae19bba,Georgia,Georgia,80,80,35000000,35000000,1000.0,1000.0,17280.0,17280.0,531.0,531.0,0.0,0,,global_oil_country.csv,81,0,VALID
+global-oil-95b5b03cd0b4b0488803,country-8e07df26128d8a78474d,Bangladesh,Bangladesh,81,81,28000000,28000000,4000.0,4000.0,108900.0,108900.0,0.0,0,23620.0,23620.0,,global_oil_country.csv,82,0,VALID
+global-oil-84f7bfd0aa4935877420,country-aa0db396b7d5266b3919,Hungary,Hungary,82,82,27320000,27320000,12000.0,12000.0,141100.0,141100.0,0.0,0,114800.0,114800.0,,global_oil_country.csv,83,0,VALID
+global-oil-1905df74a91931ea770f,country-5f54f2d82d16e5bcef3d,Mauritania,Mauritania,83,83,20000000,20000000,6800.0,6800.0,18120.0,18120.0,7337.0,7337.0,0.0,0,,global_oil_country.csv,84,0,VALID
+global-oil-eb3f5e3bf9377a6502fb,country-9e44a91f69c553dd6929,Bulgaria,Bulgaria,84,84,15000000,15000000,1000.0,1000.0,112700.0,112700.0,0.0,0,124700.0,124700.0,,global_oil_country.csv,85,0,VALID
+global-oil-9fd5d214709c82639883,country-7a80542464c08d209975,South Africa,South Africa,85,85,15000000,15000000,3600.0,3600.0,590900.0,590900.0,0.0,0,385100.0,385100.0,,global_oil_country.csv,86,0,VALID
+global-oil-2b3a6ee4f42b24e29a2c,country-141a3d757ed4518bf869,Czech Republic,Czech Republic,86,86,15000000,15000000,3000.0,3000.0,199000.0,199000.0,404.0,404.0,154000.0,154000.0,,global_oil_country.csv,87,0,VALID
+global-oil-f24cf056af9c80b41526,country-3c9e5562b466ad00681f,Tajikistan,Tajikistan,87,87,12000000,12000000,553.0,553.0,20090.0,20090.0,0.0,0,0.0,0,,global_oil_country.csv,88,0,VALID
+global-oil-6659ebf9c5a8bc823dc6,country-2a200e0c356ae8b4a137,Lithuania,Lithuania,88,88,12000000,12000000,9111.0,9111.0,70390.0,70390.0,2181.0,2181.0,190100.0,190100.0,,global_oil_country.csv,89,0,VALID
+global-oil-aebebdbf8d975186a0df,country-77173ace11f118f4cfaa,Israel,Israel,89,89,11500000,11500000,5839.0,5839.0,238400.0,238400.0,0.0,0,260600.0,260600.0,,global_oil_country.csv,90,0,VALID
+global-oil-98ca745ce4d43173b61f,country-4839625482ad85764b6c,Greece,Greece,90,90,10000000,10000000,7497.0,7497.0,343400.0,343400.0,17020.0,17020.0,405500.0,405500.0,,global_oil_country.csv,91,0,VALID
+global-oil-3d2fb102f2b830cf2670,country-85e8b4499e5677a1b69f,Slovakia,Slovakia,91,91,9000000,9000000,9277.0,9277.0,83910.0,83910.0,263.0,263.0,108400.0,108400.0,,global_oil_country.csv,92,0,VALID
+global-oil-e8c95dceaff12d6587fb,country-c94b56e02b7e9b04e57f,Benin,Benin,92,92,8000000,8000000,0.0,0,29170.0,29170.0,0.0,0,0.0,0,,global_oil_country.csv,93,0,VALID
+global-oil-cbec734844054bfba2fa,country-01aa028bb4212190c27b,Belize,Belize,93,93,6700000,6700000,3239.0,3239.0,7044.0,7044.0,4345.0,4345.0,0.0,0,,global_oil_country.csv,94,0,VALID
+global-oil-a8376db5d116e692c52e,country-fd8711d30c801fa6969f,Taiwan,Taiwan,94,94,2380000,2380000,21680.0,21680.0,786100.0,786100.0,0.0,0,885900.0,885900.0,,global_oil_country.csv,95,0,VALID
+global-oil-7460931996017882b0b2,country-f5885b5927323e158a49,Barbados,Barbados,95,95,2260000,2260000,1001.0,1001.0,8339.0,8339.0,765.0,765.0,0.0,0,,global_oil_country.csv,96,0,VALID
+global-oil-694a289a81ec0e62e12e,country-136c67657614311f3223,Jordan,Jordan,96,96,1000000,1000000,165.0,165.0,107000.0,107000.0,0.0,0,68320.0,68320.0,,global_oil_country.csv,97,0,VALID
+global-oil-1b273482eacc642dde8c,country-52118e19d4efe87556e2,Morocco,Morocco,97,97,680000,680000,5057.0,5057.0,203600.0,203600.0,0.0,0,122900.0,122900.0,,global_oil_country.csv,98,0,VALID
+global-oil-690cb957b0ed9bfd9f73,country-4ac53897ac29ce8b0c27,Ethiopia,Ethiopia,98,98,430000,430000,100.0,100.0,49080.0,49080.0,0.0,0,0.0,0,,global_oil_country.csv,99,0,VALID
+global-oil-611e527a38623b181c0d,country-562017f663ea6e762a60,Moldova,Moldova,99,99,7330,7330,221.0,221.0,15320.0,15320.0,0.0,0,0.0,0,,global_oil_country.csv,100,0,VALID
+global-oil-e2dd607e7dbb9f7aaa26,country-2fcc9256ec1186625790,Aruba,Aruba,100,100,0,0,2811.0,2811.0,5661.0,5661.0,0.0,0,228800.0,228800.0,,global_oil_country.csv,101,0,VALID
+global-oil-c17854035562bdc19a31,country-cf0acc38c3ef258d5b9c,Antigua and Barbuda,Antigua and Barbuda,101,101,0,0,0.0,0,5000.0,5000.0,0.0,0,0.0,0,,global_oil_country.csv,102,0,VALID
+global-oil-d5ba66c1aec260cc7022,country-1d5a04fbeace6278ac78,Armenia,Armenia,102,102,0,0,0.0,0,45300.0,45300.0,0.0,0,0.0,0,,global_oil_country.csv,103,0,VALID
+global-oil-123ae5df5dbb818238a5,country-e0c67046a3c83fbdf1a3,American Samoa,American Samoa,103,103,0,0,0.0,0,5115.0,5115.0,0.0,0,0.0,0,,global_oil_country.csv,104,0,VALID
+global-oil-74cdab128fb58b63f85d,country-4cdb4fcebbed72a3f473,Botswana,Botswana,104,104,0,0,0.0,0,15420.0,15420.0,0.0,0,0.0,0,,global_oil_country.csv,105,0,VALID
+global-oil-ef7f440f68fafd213d00,country-2fb2f533e014433cb7a2,Bermuda,Bermuda,105,105,0,0,0.0,0,2747.0,2747.0,0.0,0,0.0,0,,global_oil_country.csv,106,0,VALID
+global-oil-6d128a98af0ffe4f4b29,country-90d693d30a3fa06791eb,Belgium,Belgium,106,106,0,0,10530.0,10530.0,644400.0,644400.0,0.0,0,667700.0,667700.0,,global_oil_country.csv,107,0,VALID
+global-oil-ec5109f6a61a022f4270,country-f1ebd231a348712a3576,Bahamas,Bahamas,107,107,0,0,0.0,0,36300.0,36300.0,0.0,0,0.0,0,,global_oil_country.csv,108,0,VALID
+global-oil-9ba16253322230f35a27,country-3af1b873990dc3a90811,Bosnia and Herzegovina,Bosnia and Herzegovina,108,108,0,0,0.0,0,27540.0,27540.0,0.0,0,22140.0,22140.0,,global_oil_country.csv,109,0,VALID
+global-oil-84c921f1a95615b97379,country-322ae5a4a57d42d27c5c,Solomon Islands,Solomon Islands,109,109,0,0,0.0,0,1728.0,1728.0,0.0,0,0.0,0,,global_oil_country.csv,110,0,VALID
+global-oil-f356365224961c01ff56,country-65a4745d1eaaa35c0ad9,Bhutan,Bhutan,110,110,0,0,0.0,0,1719.0,1719.0,0.0,0,0.0,0,,global_oil_country.csv,111,0,VALID
+global-oil-86cd68d1f9aaee6688a6,country-ed13ad9a5761b2341649,Burundi,Burundi,111,111,0,0,0.0,0,2290.0,2290.0,0.0,0,0.0,0,,global_oil_country.csv,112,0,VALID
+global-oil-8fc09b78507632b1f48c,country-eae33aebc5874253ff0b,Cambodia,Cambodia,112,112,0,0,1.0,1.0,39350.0,39350.0,0.0,0,0.0,0,,global_oil_country.csv,113,0,VALID
+global-oil-4e9c19a2ab4b88c3bf81,country-3210180db79b0e85cbf7,Curaçao,Curaçao,113,113,0,0,,,72000.0,72000.0,,,,,,global_oil_country.csv,114,3,REVIEW
+global-oil-f26153d0e9d9d88004eb,country-95cdad8bfb9652ac584a,Sri Lanka,Sri Lanka,114,114,0,0,0.0,0,89620.0,89620.0,0.0,0,36380.0,36380.0,,global_oil_country.csv,115,0,VALID
+global-oil-0a150e460f4fe63ed00e,country-fd26a087ca744eed8cc4,Cayman Islands,Cayman Islands,115,115,0,0,0.0,0,3141.0,3141.0,0.0,0,0.0,0,,global_oil_country.csv,116,0,VALID
+global-oil-420395c515a529375c1a,country-cf8bdfdd7f896c1ec7ea,Comoros,Comoros,116,116,0,0,0.0,0,1025.0,1025.0,0.0,0,0.0,0,,global_oil_country.csv,117,0,VALID
+global-oil-696287821742e51dce0e,country-ee54b1b1e9bc25ac1a66,Costa Rica,Costa Rica,117,117,0,0,291.0,291.0,50200.0,50200.0,0.0,0,10040.0,10040.0,,global_oil_country.csv,118,0,VALID
+global-oil-07b72bfb23a3dab17081,country-8b7874e4df7887941aaf,Central African Republic,Central African Republic,118,118,0,0,0.0,0,3175.0,3175.0,0.0,0,0.0,0,,global_oil_country.csv,119,0,VALID
+global-oil-a19021ec98e1d110214b,country-1dee6c1f0f6e420013cd,Cabo Verde,Cabo Verde,119,119,0,0,0.0,0,2608.0,2608.0,0.0,0,0.0,0,,global_oil_country.csv,120,0,VALID
+global-oil-97441ec2c3501b0316eb,country-5ad67bb94d1520c313fa,Cook Islands,Cook Islands,120,120,0,0,0.0,0,974.0,974.0,0.0,0,0.0,0,,global_oil_country.csv,121,0,VALID
+global-oil-1382c22a739f8d3de9b0,country-8930d399db295e02aa59,Cyprus,Cyprus,121,121,0,0,8.0,8.0,58430.0,58430.0,0.0,0,0.0,0,,global_oil_country.csv,122,0,VALID
+global-oil-687d9fd9cd2d458d8510,country-e993659a9393585ad798,Djibouti,Djibouti,122,122,0,0,0.0,0,12460.0,12460.0,0.0,0,0.0,0,,global_oil_country.csv,123,0,VALID
+global-oil-6ca1f034ee486eeab250,country-58289961b08e34bb4e29,Dominica,Dominica,123,123,0,0,0.0,0,918.0,918.0,0.0,0,0.0,0,,global_oil_country.csv,124,0,VALID
+global-oil-8f479d7e0225eeca20d5,country-53f2dd02643a17159de2,Dominican Republic,Dominican Republic,124,124,0,0,61.0,61.0,122300.0,122300.0,0.0,0,27260.0,27260.0,,global_oil_country.csv,125,0,VALID
+global-oil-de999f6096cf9a963eb4,country-32f987ecd36719a12041,Ireland,Ireland,125,125,0,0,726.0,726.0,144000.0,144000.0,1858.0,1858.0,62070.0,62070.0,,global_oil_country.csv,126,0,VALID
+global-oil-9d27bdae29e1e7f1256f,country-7275a5863bab4fdcfe20,Estonia,Estonia,126,126,0,0,11000.0,11000.0,26340.0,26340.0,7624.0,7624.0,0.0,0,,global_oil_country.csv,127,0,VALID
+global-oil-0c5f2152b314d55901f4,country-eea67e4f9ca324e3abac,Eritrea,Eritrea,127,127,0,0,0.0,0,4480.0,4480.0,0.0,0,0.0,0,,global_oil_country.csv,128,0,VALID
+global-oil-db910530e3db3a724a6d,country-56e07143bc9a352fdee2,El Salvador,El Salvador,128,128,0,0,0.0,0,44040.0,44040.0,0.0,0,16160.0,16160.0,,global_oil_country.csv,129,0,VALID
+global-oil-74b9bfc119f02847555b,country-243801106c4d7b8f43fb,Finland,Finland,129,129,0,0,13530.0,13530.0,204800.0,204800.0,0.0,0,214700.0,214700.0,,global_oil_country.csv,130,0,VALID
+global-oil-fd1bc58234e553f7d0c6,country-00b025b1e87b88f1e71f,Fiji,Fiji,130,130,0,0,30.0,30.0,17810.0,17810.0,0.0,0,0.0,0,,global_oil_country.csv,131,0,VALID
+global-oil-9497d24c3084fc7c3c3a,country-0c70295131b454314c58,Falkland Islands,Falkland Islands,131,131,0,0,0.0,0,300.0,300.0,0.0,0,0.0,0,,global_oil_country.csv,132,0,VALID
+global-oil-ff77fdc84a78e84fa887,country-3a534ac42c2d806c6002,Faroe Islands,Faroe Islands,132,132,0,0,0.0,0,4871.0,4871.0,0.0,0,0.0,0,,global_oil_country.csv,133,0,VALID
+global-oil-3cc8b5f1c8335011e5d2,country-bee4921955762cf109cc,French Polynesia,French Polynesia,133,133,0,0,0.0,0,8000.0,8000.0,0.0,0,0.0,0,,global_oil_country.csv,134,0,VALID
+global-oil-8aab1dcb5b9ad11afa76,country-1097bf50dd7ffb4cef53,Gambia,Gambia,134,134,0,0,0.0,0,3181.0,3181.0,0.0,0,0.0,0,,global_oil_country.csv,135,0,VALID
+global-oil-3c0214aced7bf8a54dc7,country-91ad0ddb5c2827e4a147,Gibraltar,Gibraltar,135,135,0,0,0.0,0,24920.0,24920.0,0.0,0,0.0,0,,global_oil_country.csv,136,0,VALID
+global-oil-988f13470b4342e16b1d,country-e0eae764f2c00bfd9a4b,Grenada,Grenada,136,136,0,0,0.0,0,2803.0,2803.0,0.0,0,0.0,0,,global_oil_country.csv,137,0,VALID
+global-oil-a61c5b027d45eece0bbc,country-f71ef5459640bf06d3b6,Greenland,Greenland,137,137,0,0,0.0,0,3897.0,3897.0,0.0,0,0.0,0,,global_oil_country.csv,138,0,VALID
+global-oil-7ae26ab68c5e183eb3f4,country-7c2bff5f7a72046990fa,Guam,Guam,138,138,0,0,0.0,0,14490.0,14490.0,0.0,0,0.0,0,,global_oil_country.csv,139,0,VALID
+global-oil-56b1fbb7bd5bfb652c7d,country-3f7351456856a4eecf6c,Guinea,Guinea,139,139,0,0,0.0,0,8671.0,8671.0,0.0,0,0.0,0,,global_oil_country.csv,140,0,VALID
+global-oil-bc400cfc4fa7467a2a1a,country-63b911d37593d484cabb,Guyana,Guyana,140,140,0,0,0.0,0,10910.0,10910.0,0.0,0,0.0,0,,global_oil_country.csv,141,0,VALID
+global-oil-49fc65690fc7b2a9799d,country-9684cac8ca6d8e671e59,Gaza Strip,Gaza Strip,—,,0,0,,,,,,,,,,global_oil_country.csv,142,4,REVIEW
+global-oil-8976407abc5ed5d6e0a0,country-08134d7a6fb39b220f63,Haiti,Haiti,141,141,0,0,0.0,0,14000.0,14000.0,0.0,0,0.0,0,,global_oil_country.csv,143,0,VALID
+global-oil-dcba2b15f8c4abc9a509,country-21bd3229a131a2cc251b,Hong Kong,Hong Kong,142,142,0,0,0.0,0,333900.0,333900.0,0.0,0,0.0,0,,global_oil_country.csv,144,0,VALID
+global-oil-a6a4c5cf69f75ead8286,country-5a381f836ae9e1bab04a,Honduras,Honduras,143,143,0,0,20.0,20.0,58150.0,58150.0,0.0,0,0.0,0,,global_oil_country.csv,145,0,VALID
+global-oil-ab86a3c01cda48f9abf7,country-9eb5c59d70089e53cb31,Iceland,Iceland,144,144,0,0,0.0,0,20770.0,20770.0,0.0,0,0.0,0,,global_oil_country.csv,146,0,VALID
+global-oil-3f4f22093f325c7883d3,country-ff63d149bd73429d489f,Jamaica,Jamaica,145,145,0,0,2120.0,2120.0,78520.0,78520.0,0.0,0,22940.0,22940.0,,global_oil_country.csv,147,0,VALID
+global-oil-27b92e37ea7553c8bf21,country-3b5f7a488f457a7e53fe,Kenya,Kenya,146,146,0,0,0.0,0,79410.0,79410.0,0.0,0,31040.0,31040.0,,global_oil_country.csv,148,0,VALID
+global-oil-6681fd22ffdb94f47429,country-831e4f1d6d77ed43a2da,North Korea,North Korea,147,147,0,0,0.0,0,15000.0,15000.0,0.0,0,10500.0,10500.0,,global_oil_country.csv,149,0,VALID
+global-oil-8751772b202db061994a,country-725789d8d08d48a36d53,Kiribati,Kiribati,148,148,0,0,0.0,0,300.0,300.0,0.0,0,0.0,0,,global_oil_country.csv,150,0,VALID
+global-oil-a9e646aa3997dec53378,country-d83d0388b282d66a754e,South Korea,South Korea,149,149,0,0,0.0,0,2301000.0,2301000.0,0.0,0,2590000.0,2590000.0,,global_oil_country.csv,151,0,VALID
+global-oil-076a87ffca1abc08c218,country-84308789368f0cb09497,Laos,Laos,150,150,0,0,0.0,0,3391.0,3391.0,0.0,0,0.0,0,,global_oil_country.csv,152,0,VALID
+global-oil-9e313beea0c245998381,country-8a57a440886c59423289,Lebanon,Lebanon,151,151,0,0,0.0,0,106700.0,106700.0,0.0,0,0.0,0,,global_oil_country.csv,153,0,VALID
+global-oil-3d6891be483a8bc13807,country-15bc5d87cc42f41470cb,Latvia,Latvia,152,152,0,0,1000.0,1000.0,31340.0,31340.0,0.0,0,0.0,0,,global_oil_country.csv,154,0,VALID
+global-oil-4dc82a94d3d2b32c3214,country-1a8ee6c730a37af2a823,Liberia,Liberia,153,153,0,0,0.0,0,3533.0,3533.0,0.0,0,0.0,0,,global_oil_country.csv,155,0,VALID
+global-oil-58139d0d13991dedcf86,country-7a1de3309cef5e896951,Lesotho,Lesotho,154,154,0,0,0.0,0,1777.0,1777.0,0.0,0,0.0,0,,global_oil_country.csv,156,0,VALID
+global-oil-80a7a0c881b2238cac08,country-68f453c00d9c88ac8834,Luxembourg,Luxembourg,155,155,0,0,0.0,0,61380.0,61380.0,0.0,0,0.0,0,,global_oil_country.csv,157,0,VALID
+global-oil-006dcd53084dda5000a8,country-48a1b7dc93bad7588b46,Madagascar,Madagascar,156,156,0,0,0.0,0,17480.0,17480.0,0.0,0,0.0,0,,global_oil_country.csv,158,0,VALID
+global-oil-c7e1372bf38754c6d574,country-260048fecac2c70eec2c,Macau,Macau,—,,0,0,0.0,0,7376.0,7376.0,0.0,0,0.0,0,,global_oil_country.csv,159,0,REVIEW
+global-oil-c1b43e19adc02109d0a3,country-3eeceb71042dec77ae77,Montserrat,Montserrat,—,,0,0,0.0,0,1000.0,1000.0,0.0,0,0.0,0,,global_oil_country.csv,160,0,REVIEW
+global-oil-0410f69c09156fc4d227,country-e46e98b84eb37c36ed4f,Malawi,Malawi,157,157,0,0,200.0,200.0,12060.0,12060.0,0.0,0,0.0,0,,global_oil_country.csv,161,0,VALID
+global-oil-aeedebed618d27f427be,country-f830720f3e3bed7436b2,Montenegro,Montenegro,158,158,0,0,0.0,0,4446.0,4446.0,0.0,0,0.0,0,,global_oil_country.csv,162,0,VALID
+global-oil-c4f5d8d50c60c7026774,country-cda43d570683ca091ab1,Macedonia,Macedonia,159,159,0,0,0.0,0,17490.0,17490.0,0.0,0,51510.0,51510.0,,global_oil_country.csv,163,0,VALID
+global-oil-276504ba86e7f53b8736,country-937aa06da838dc105431,Mali,Mali,160,160,0,0,0.0,0,4994.0,4994.0,0.0,0,0.0,0,,global_oil_country.csv,164,0,VALID
+global-oil-57cce45c40c5fd87ec60,country-3562494677b9bd33a5af,Mauritius,Mauritius,161,161,0,0,0.0,0,24710.0,24710.0,0.0,0,0.0,0,,global_oil_country.csv,165,0,VALID
+global-oil-e8a14a434410e12a6415,country-79f9550e027130e35b20,Malta,Malta,162,162,0,0,0.0,0,19520.0,19520.0,0.0,0,0.0,0,,global_oil_country.csv,166,0,VALID
+global-oil-bf122a89b16bd04d260d,country-b9aade37f226572c2fbc,Maldives,Maldives,163,163,0,0,0.0,0,6875.0,6875.0,0.0,0,0.0,0,,global_oil_country.csv,167,0,VALID
+global-oil-368b7e18591a5ce46b60,country-2e8a238d84ee730c4be9,Mozambique,Mozambique,164,164,0,0,20.0,20.0,19580.0,19580.0,0.0,0,0.0,0,,global_oil_country.csv,168,0,VALID
+global-oil-99964d21f58dd60460c7,country-96abdb6afaa9e38dcf99,New Caledonia,New Caledonia,165,165,0,0,0.0,0,13640.0,13640.0,0.0,0,0.0,0,,global_oil_country.csv,169,0,VALID
+global-oil-24804e20b7224c54d404,country-56979bcbcec308d6a9db,Niue,Niue,166,166,0,0,0.0,0,0.0,0,0.0,0,0.0,0,,global_oil_country.csv,170,0,VALID
+global-oil-ef1876fe55ca41d0ef05,country-0fc226118263e65d3c71,Vanuatu,Vanuatu,167,167,0,0,0.0,0,1170.0,1170.0,0.0,0,0.0,0,,global_oil_country.csv,171,0,VALID
+global-oil-9846e430a88289b0021f,country-a23e9cdda7a3e0db6beb,Nepal,Nepal,168,168,0,0,0.0,0,18430.0,18430.0,0.0,0,0.0,0,,global_oil_country.csv,172,0,VALID
+global-oil-172d326234ad89386825,country-1620f91609560ef7072f,Nauru,Nauru,169,169,0,0,0.0,0,1000.0,1000.0,0.0,0,0.0,0,,global_oil_country.csv,173,0,VALID
+global-oil-b4b5d55f215b8a8bae0e,country-53dafebc5552bc4301fd,Nicaragua,Nicaragua,170,170,0,0,0.0,0,30690.0,30690.0,0.0,0,12910.0,12910.0,,global_oil_country.csv,174,0,VALID
+global-oil-18eb242c13ef6783c673,country-fa27e700926b5bbbae03,Paraguay,Paraguay,171,171,0,0,2000.0,2000.0,26820.0,26820.0,0.0,0,0.0,0,,global_oil_country.csv,175,0,VALID
+global-oil-c59dfa24c2e7b74b1ec0,country-d1775cdbcf90d7864101,Panama,Panama,172,172,0,0,0.0,0,98890.0,98890.0,0.0,0,0.0,0,,global_oil_country.csv,176,0,VALID
+global-oil-3de622ef891de1dc11c4,country-6636b31811ee0bbf593d,Portugal,Portugal,173,173,0,0,5250.0,5250.0,259700.0,259700.0,0.0,0,222300.0,222300.0,,global_oil_country.csv,177,0,VALID
+global-oil-b8a0510356c88bebaad9,country-dcacc5666aba7cbb3d67,Guinea-Bissau,Guinea-Bissau,174,174,0,0,0.0,0,2922.0,2922.0,0.0,0,0.0,0,,global_oil_country.csv,178,0,VALID
+global-oil-6ca2621cd077f7a21b2d,country-f50b92b29527bc026aa0,Puerto Rico,Puerto Rico,175,175,0,0,674.0,674.0,151600.0,151600.0,0.0,0,0.0,0,,global_oil_country.csv,179,0,VALID
+global-oil-8be412801aa00ffe8422,country-b57e6c30643eaf6a3d52,Rwanda,Rwanda,176,176,0,0,10.0,10.0,5245.0,5245.0,0.0,0,0.0,0,,global_oil_country.csv,180,0,VALID
+global-oil-e21b6844677b95130d21,country-a497936d41767ee349fd,Saint Pierre and Miquelon,Saint Pierre and Miquelon,177,177,0,0,0.0,0,974.0,974.0,0.0,0,0.0,0,,global_oil_country.csv,181,0,VALID
+global-oil-29b1c6efed6b1c4c2fb5,country-1721830ff712793d56c9,Saint Kitts and Nevis,Saint Kitts and Nevis,178,178,0,0,0.0,0,1496.0,1496.0,0.0,0,0.0,0,,global_oil_country.csv,182,0,VALID
+global-oil-c08eb734d42f564e0da9,country-f57147693006c95066d9,Seychelles,Seychelles,179,179,0,0,0.0,0,7793.0,7793.0,0.0,0,0.0,0,,global_oil_country.csv,183,0,VALID
+global-oil-4991f3385cb0f816292a,country-4a724471c49ba697b3e2,Senegal,Senegal,180,180,0,0,0.0,0,40600.0,40600.0,0.0,0,15500.0,15500.0,,global_oil_country.csv,184,0,VALID
+global-oil-1576f280705716cc05a8,country-29d5d38588cd4003df1f,Saint Helena,Saint Helena,181,181,0,0,0.0,0,100.0,100.0,0.0,0,0.0,0,,global_oil_country.csv,185,0,VALID
+global-oil-247f618360d748e82de7,country-70ef838ec62b2fb85a92,Slovenia,Slovenia,182,182,0,0,305.0,305.0,52930.0,52930.0,0.0,0,0.0,0,,global_oil_country.csv,186,0,VALID
+global-oil-c8f60e2c0c047a6b948d,country-70dfea54663e8e2c9969,Sierra Leone,Sierra Leone,183,183,0,0,25.0,25.0,8768.0,8768.0,0.0,0,0.0,0,,global_oil_country.csv,187,0,VALID
+global-oil-4bd97d8f60db5282f555,country-51e2a46721d104d9148d,Singapore,Singapore,184,184,0,0,20170.0,20170.0,1380000.0,1380000.0,0.0,0,1137000.0,1137000.0,,global_oil_country.csv,188,0,VALID
+global-oil-c61ee749d4b23a7ba5c2,country-7d28ff3bd433e26594da,Somalia,Somalia,185,185,0,0,0.0,0,5659.0,5659.0,0.0,0,0.0,0,,global_oil_country.csv,189,0,VALID
+global-oil-c7da50210403801bc6db,country-000f1e1ca955d5188365,Saint Lucia,Saint Lucia,186,186,0,0,0.0,0,2922.0,2922.0,0.0,0,0.0,0,,global_oil_country.csv,190,0,VALID
+global-oil-05f84f81a1549f0d4c2a,country-295099c764e6439694e9,Sweden,Sweden,187,187,0,0,11270.0,11270.0,316000.0,316000.0,0.0,0,398100.0,398100.0,,global_oil_country.csv,191,0,VALID
+global-oil-30b158c4eafd5fca7a2b,country-c32f5de8269a9aced9a2,Switzerland,Switzerland,188,188,0,0,3613.0,3613.0,258200.0,258200.0,0.0,0,258200.0,258200.0,,global_oil_country.csv,192,0,VALID
+global-oil-f12981f04bec33bf437f,country-1bf0283a8976095de648,Turks and Caicos Islands,Turks and Caicos Islands,189,189,0,0,0.0,0,999.0,999.0,0.0,0,0.0,0,,global_oil_country.csv,193,0,VALID
+global-oil-6c6ab45c0e0767402578,country-c3fcefdff6a2ec9e51ba,Tokelau,Tokelau,—,,0,0,,,,,,,,,,global_oil_country.csv,194,4,REVIEW
+global-oil-fbb8c4cfb8159ba60f8c,country-32ad1aca2ef116a4cd17,Tonga,Tonga,190,190,0,0,0.0,0,1221.0,1221.0,0.0,0,0.0,0,,global_oil_country.csv,195,0,VALID
+global-oil-515287f5a12a8a643fbf,country-7d6b68079d4614fd7e3e,Togo,Togo,191,191,0,0,0.0,0,28670.0,28670.0,0.0,0,0.0,0,,global_oil_country.csv,196,0,VALID
+global-oil-7c680ec60d4ccc714776,country-db0a8f84841d9e8286c9,Sao Tome and Principe,Sao Tome and Principe,192,192,0,0,0.0,0,904.0,904.0,0.0,0,0.0,0,,global_oil_country.csv,197,0,VALID
+global-oil-b5271e85c1c5b0ff8094,country-4246e6406ccf630cdfa2,Timor-Leste,Timor-Leste,193,193,0,0,79490.0,79490.0,2755.0,2755.0,87000.0,87000.0,0.0,0,,global_oil_country.csv,198,0,VALID
+global-oil-c29d44592b7502ee246e,country-74947702044149ef9377,Tanzania,Tanzania,194,194,0,0,10.0,10.0,43310.0,43310.0,0.0,0,0.0,0,,global_oil_country.csv,199,0,VALID
+global-oil-a285e29ca6abae280711,country-0f9ea5841e716cb4aa7a,Burkina Faso,Burkina Faso,195,195,0,0,0.0,0,9960.0,9960.0,0.0,0,0.0,0,,global_oil_country.csv,200,0,VALID
+global-oil-63243b6da938f417320c,country-b7d177840ebb22170751,Uruguay,Uruguay,196,196,0,0,1183.0,1183.0,51100.0,51100.0,0.0,0,38680.0,38680.0,,global_oil_country.csv,201,0,VALID
+global-oil-7e46a0d0a722b3da0c54,country-6a5e6bb18132ec7449bb,Saint Vincent and the Grenadines,Saint Vincent and the Grenadines,197,197,0,0,0.0,0,1948.0,1948.0,0.0,0,0.0,0,,global_oil_country.csv,202,0,VALID
+global-oil-afb4b827370b4054be19,country-df3a1b2f37ca9012ce63,British Virgin Islands,British Virgin Islands,198,198,0,0,0.0,0,1000.0,1000.0,0.0,0,0.0,0,,global_oil_country.csv,203,0,VALID
+global-oil-29e2ec569c9129aa3de5,country-b51ebaf9c293a8b7c7df,U.S. Virgin Islands,U.S. Virgin Islands,199,199,0,0,14880.0,14880.0,106100.0,106100.0,0.0,0,402000.0,402000.0,,global_oil_country.csv,204,0,VALID
+global-oil-48143e095fde5d4401f9,country-62b09943d6869aafa20f,Namibia,Namibia,200,200,0,0,0.0,0,22990.0,22990.0,0.0,0,0.0,0,,global_oil_country.csv,205,0,VALID
+global-oil-86fedbb635322c2c13e4,country-d8956af488b4adab00b4,West Bank,West Bank,201,201,0,0,0.0,0,29310.0,29310.0,0.0,0,0.0,0,,global_oil_country.csv,206,0,VALID
+global-oil-eb836d79bdb95adfa5b2,country-f32131a932eb4d673e7a,Western Sahara,Western Sahara,202,202,0,0,0.0,0,1948.0,1948.0,0.0,0,0.0,0,,global_oil_country.csv,207,0,VALID
+global-oil-e1ca0baca0821c51c777,country-0c474a68bcff4e665d34,Samoa,Samoa,203,203,0,0,0.0,0,1070.0,1070.0,0.0,0,0.0,0,,global_oil_country.csv,208,0,VALID
+global-oil-eb579f4a572eb8922d27,country-f0871dafaa9aad08b214,Swaziland,Swaziland,204,204,0,0,0.0,0,4567.0,4567.0,0.0,0,0.0,0,,global_oil_country.csv,209,0,VALID
+global-oil-3eb755cb57007d349bd4,country-71c4d741f010ce317afa,Zambia,Zambia,205,205,0,0,175.0,175.0,19260.0,19260.0,0.0,0,12500.0,12500.0,,global_oil_country.csv,210,0,VALID
+global-oil-5be8ef2a7426b4990a63,country-13291c08152247c4776a,Zimbabwe,Zimbabwe,206,206,0,0,120.0,120.0,19030.0,19030.0,0.0,0,0.0,0,,global_oil_country.csv,211,0,VALID
