@@ -2,5 +2,9 @@
   "name": "ORBIT - Energy Supply-Chain Intelligence",
   "description": "Operational Resilience & Intelligence for Energy Transport - Command platform foundation for energy supply-chain resilience and risk mitigation.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["FIREBASE_EMAIL_PASSWORD_AUTH", "PROTECTED_APPLICATION_SHELL"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API",
+    "FIREBASE_EMAIL_PASSWORD_AUTH",
+    "PROTECTED_APPLICATION_SHELL"
+  ]
 }

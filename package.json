@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "esbuild server.ts --bundle --platform=node --format=cjs --packages=external --outfile=.orbit-dev-server.cjs && node -e \"process.env.ORBIT_START_SERVER='true'; require('./.orbit-dev-server.cjs')\"",
+    "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "start": "node dist/server.cjs --production",
+    "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit",

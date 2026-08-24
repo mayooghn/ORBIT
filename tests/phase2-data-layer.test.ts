@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import test, { after, before } from 'node:test';
@@ -9,7 +9,9 @@ import { openPhase2Database } from '../src/dataLayer/database';
 import { importPhase2Data } from '../src/dataLayer/importer';
 import { Phase2Repository } from '../src/dataLayer/repository';
 
-const processedDir = path.join(process.cwd(), 'data', 'processed');
+const processedDir = existsSync(path.join(process.cwd(), 'Data', 'processed'))
+  ? path.join(process.cwd(), 'Data', 'processed')
+  : path.join(process.cwd(), 'data', 'processed');
 const temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'orbit-phase2-'));
 const databasePath = path.join(temporaryDirectory, 'phase2.sqlite');
 let database = openPhase2Database({ dbPath: databasePath });

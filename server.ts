@@ -1,4 +1,5 @@
 import express, { type Express, type Request, type Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
@@ -9,6 +10,7 @@ if (existsSync(envLocalPath)) loadEnvFile(envLocalPath);
 
 import { fetchGoogleNews, getNewsIngestionStatus } from './src/services/dataIngestion/googleNews';
 import { openPhase2Database } from './src/dataLayer/database';
+import { importPhase2Data } from './src/dataLayer/importer';
 import { Phase2Repository } from './src/dataLayer/repository';
 import { createDigitalTwinRuntime, type DigitalTwinRuntime } from './src/digitalTwin/runtime';
 import { isOperationalState } from './src/digitalTwin/state';
@@ -24,6 +26,7 @@ import type {
   SupplierQuery,
 } from './src/dataLayer/repository';
 import {
+  analyzeGeopoliticalEventDeterministically,
   createGeopoliticalRiskIntelligenceAgent,
   type GeopoliticalRiskAgent,
 } from './src/geopoliticalEvents/agent';
@@ -57,11 +60,13 @@ import {
   validateProcurementRequest,
   type ScenarioProcurementDataProvider,
 } from './src/procurement';
+import type { ProcurementResult } from './src/procurement/model';
 import {
   optimizeStrategicReserve,
   validateStrategicReserveInput,
   type StrategicReserveOptimizationInput,
 } from './src/reserves';
+
 
 const queryText = (
   request: Request,
@@ -1040,6 +1045,46 @@ export const createApp = (
   // PHASE 8 STRATEGIC RESERVE OPTIMIZATION
   // ============================================================
 
+  app.get(
+    '/api/reserves/state',
+    (_request, response) => {
+      try {
+        const state = repository.getCurrentStrategicReserveState();
+        response.json({
+          status: 'AVAILABLE',
+          state,
+        });
+      } catch (error) {
+        console.error('[ORBIT Strategic Reserve] Failed to fetch reserve state:', error);
+        response.status(500).json({
+          status: 'ERROR',
+          error: 'Failed to retrieve strategic reserve state.',
+        });
+      }
+    },
+  );
+
+  app.get(
+    '/api/reserves/history',
+    (request, response) => {
+      try {
+        const limit = queryInteger(request, 'limit', 20, 1, 100) || 20;
+        const runs = repository.getStrategicReserveOptimizationRuns(limit);
+        response.json({
+          status: 'AVAILABLE',
+          count: runs.length,
+          runs,
+        });
+      } catch (error) {
+        console.error('[ORBIT Strategic Reserve] Failed to fetch history:', error);
+        response.status(500).json({
+          status: 'ERROR',
+          error: 'Failed to retrieve reserve optimization history.',
+        });
+      }
+    },
+  );
+
   app.post(
     '/api/reserves/optimize',
     (request, response) => {
@@ -1057,12 +1102,13 @@ export const createApp = (
 
       try {
         const reserve = optimizeStrategicReserve(validation.input);
-        repository.saveStrategicReserveOptimization(
+        const optimizationId = repository.saveStrategicReserveOptimization(
           validation.input,
           reserve,
         );
         response.json({
           status: 'AVAILABLE',
+          optimizationId,
           reserve,
         });
       } catch (error) {
@@ -1073,6 +1119,146 @@ export const createApp = (
         response.status(500).json({
           status: 'ERROR',
           error: 'Strategic reserve optimization failed.',
+        });
+      }
+    },
+  );
+
+  // ============================================================
+  // PHASE 8 END-TO-END PIPELINE: EVENT -> RISK -> IMPACT -> GAP -> PROCUREMENT -> RESERVE
+  // ============================================================
+
+  app.post(
+    '/api/pipeline/run',
+    async (request, response) => {
+      const body = request.body as Record<string, unknown> | undefined;
+      const eventText = typeof body?.text === 'string' && body.text.trim()
+        ? body.text.trim()
+        : typeof body?.request === 'string' && body.request.trim()
+          ? body.request.trim()
+          : null;
+
+      if (!eventText && !body?.event) {
+        response.status(400).json({
+          status: 'ERROR',
+          error: 'Either "text" or "event" is required to execute the pipeline.',
+        });
+        return;
+      }
+
+      try {
+        // Step 1: Geopolitical Event & Risk Analysis
+        const agentAnalysis = eventText
+          ? await geopoliticalRiskAgent.analyze(eventText)
+          : analyzeGeopoliticalEventDeterministically(
+              (body?.event as { title?: string })?.title || 'Pipeline Event',
+              body?.event,
+              digitalTwin,
+            );
+
+        // Step 2: Supply-Chain Impact Identification
+        const graph = digitalTwin.stateEngine.getCurrentTwin();
+        const affectedNodeId =
+          typeof body?.affectedNodeId === 'string' && body.affectedNodeId.trim()
+            ? body.affectedNodeId.trim()
+            : agentAnalysis.digitalTwinImpact.affectedNodeIds[0] ||
+              agentAnalysis.relevance.matchedNodeIds[0] ||
+              graph.nodes.find((n) => n.nodeType === 'supplier' || n.nodeType === 'shipping_route')?.nodeId ||
+              'supplier-default';
+
+        const severity = (
+          body?.severity === 'LOW' || body?.severity === 'MEDIUM' || body?.severity === 'HIGH' || body?.severity === 'CRITICAL'
+            ? body.severity
+            : agentAnalysis.risk.riskLevel === 'critical'
+              ? 'CRITICAL'
+              : agentAnalysis.risk.riskLevel === 'high'
+                ? 'HIGH'
+                : agentAnalysis.risk.riskLevel === 'medium'
+                  ? 'MEDIUM'
+                  : 'LOW'
+        ) as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+        const durationDays = typeof body?.durationDays === 'number' && body.durationDays > 0
+          ? body.durationDays
+          : severity === 'CRITICAL' ? 60 : severity === 'HIGH' ? 30 : severity === 'MEDIUM' ? 14 : 7;
+
+        const defaultReduction = severity === 'CRITICAL' ? 80 : severity === 'HIGH' ? 50 : severity === 'MEDIUM' ? 30 : 15;
+        const capacityReductionPercent = typeof body?.capacityReductionPercent === 'number'
+          ? Math.min(100, Math.max(0, body.capacityReductionPercent))
+          : defaultReduction;
+
+        // Step 3: Scenario Simulation (Supply Gap)
+        const scenarioInput: ScenarioInput = {
+          eventId: agentAnalysis.event.id || 'pipeline-event-1',
+          durationDays,
+          severity,
+          affectedNodeId,
+          capacityReductionPercent,
+        };
+
+        const scenario = scenarioEngine.run(digitalTwin.stateEngine, scenarioInput);
+
+        // Step 4: Procurement Alternatives (GLPK Solver)
+        const resolution = buildProcurementRequestFromScenario(
+          scenario,
+          digitalTwin.stateEngine.getCurrentTwin(),
+          body?.dataSource === 'demo' ? demoProcurementDataProvider : procurementDataProvider,
+        );
+
+        let procurementResult: ProcurementResult | null = null;
+        let alternativeProcured = 0;
+
+        if (resolution.status === 'AVAILABLE' && resolution.request) {
+          procurementResult = await optimizeProcurement(resolution.request);
+          if (procurementResult.status === 'OPTIMAL') {
+            alternativeProcured = procurementResult.totalProcured;
+          }
+        }
+
+        // Step 5: Strategic Reserve Optimization
+        const reserveState = repository.getCurrentStrategicReserveState();
+        const reserveInput: StrategicReserveOptimizationInput = {
+          currentReserve: typeof body?.currentReserve === 'number' ? body.currentReserve : reserveState.currentReserve,
+          demand: typeof body?.demand === 'number' ? body.demand : reserveState.currentDemand,
+          supplyGap: scenario.shortage,
+          disruptionDuration: durationDays,
+          alternativeProcurement: alternativeProcured,
+          replenishmentRate: typeof body?.replenishmentRate === 'number' ? body.replenishmentRate : reserveState.defaultReplenishmentRate,
+          minimumReserveThreshold: typeof body?.minimumReserveThreshold === 'number' ? body.minimumReserveThreshold : reserveState.minimumReserveThreshold,
+        };
+
+        const reserveOptimization = optimizeStrategicReserve(reserveInput);
+        const optimizationId = repository.saveStrategicReserveOptimization(
+          reserveInput,
+          reserveOptimization,
+        );
+
+        response.json({
+          status: 'AVAILABLE',
+          pipeline: {
+            pipelineId: `pipeline-${randomUUID()}`,
+            completedAt: new Date().toISOString(),
+            stages: {
+              geopoliticalAnalysis: agentAnalysis,
+              scenarioSimulation: scenario,
+              procurementAlternatives: {
+                resolutionStatus: resolution.status,
+                source: resolution.source,
+                procurement: procurementResult,
+              },
+              reserveOptimization: {
+                optimizationId,
+                input: reserveInput,
+                result: reserveOptimization,
+              },
+            },
+          },
+        });
+      } catch (error) {
+        console.error('[ORBIT Pipeline] Execution failed:', error);
+        response.status(500).json({
+          status: 'ERROR',
+          error: error instanceof Error ? error.message : 'Pipeline execution failed.',
         });
       }
     },
@@ -1795,6 +1981,15 @@ export async function startServer(): Promise<void> {
       database,
     );
 
+  if (repository.getStatus() === 'NOT_CONNECTED') {
+    try {
+      console.log('[ORBIT Phase 2] Initializing dataset from processed directory...');
+      importPhase2Data();
+    } catch (importError) {
+      console.warn('[ORBIT Phase 2] Auto-import warning:', importError);
+    }
+  }
+
   const digitalTwin =
     createDigitalTwinRuntime(
       repository,
@@ -1898,25 +2093,13 @@ export async function startServer(): Promise<void> {
 
 }
 
-const isServerEntry =
-  process.env.ORBIT_START_SERVER ===
-    'true' ||
-  process.argv.includes(
-    '--production',
-  ) ||
-  /[\\/]server\.(ts|js)$/.test(
-    process.argv[1] || '',
-  );
+const isRunningTests =
+  process.env.NODE_ENV === 'test' ||
+  process.argv.some((arg) => typeof arg === 'string' && (arg.includes('test') || arg.includes('mocha') || arg.includes('jest')));
 
-if (isServerEntry) {
-  startServer().catch(
-    (error) => {
-      console.error(
-        '[ORBIT Core] Failed to start server:',
-        error,
-      );
-
-      process.exit(1);
-    },
-  );
+if (!isRunningTests) {
+  startServer().catch((error) => {
+    console.error('[ORBIT Core] Failed to start server:', error);
+    process.exit(1);
+  });
 }

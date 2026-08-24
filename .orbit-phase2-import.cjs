@@ -435,6 +435,13 @@ CREATE TABLE IF NOT EXISTS relationship_statuses (
   notes TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS strategic_reserve_optimization_runs (
+  optimization_id TEXT PRIMARY KEY,
+  requested_at TEXT NOT NULL,
+  request_json TEXT NOT NULL,
+  result_json TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_country_aliases_status ON country_aliases(mapping_status);
 CREATE INDEX IF NOT EXISTS idx_ports_name ON ports(canonical_port_name);
 CREATE INDEX IF NOT EXISTS idx_ports_status ON ports(mapping_status);
@@ -495,7 +502,12 @@ var openPhase2Database = (options = {}) => {
 };
 
 // src/dataLayer/importer.ts
-var DEFAULT_PROCESSED_DIR = import_node_path2.default.join(process.cwd(), "data", "processed");
+var getProcessedDir = () => {
+  const upperData = import_node_path2.default.join(process.cwd(), "Data", "processed");
+  if ((0, import_node_fs2.existsSync)(upperData)) return upperData;
+  return import_node_path2.default.join(process.cwd(), "data", "processed");
+};
+var DEFAULT_PROCESSED_DIR = getProcessedDir();
 var stableId = (prefix, identity) => {
   const digest = (0, import_node_crypto.createHash)("sha256").update(identity, "utf8").digest("hex").slice(0, 20);
   return `${prefix}-${digest}`;
@@ -753,17 +765,24 @@ var insertFacts = (database, processedDir, sourceIds, periodIds, countryIds, pro
   const globalStatement = database.prepare(`INSERT INTO global_oil_snapshots (global_oil_snapshot_id, country_id, canonical_country_name, source_country_name, source_rank, rank, source_proven_reserves_barrels, proven_reserves_barrels, source_production_barrels_per_day, production_barrels_per_day, source_consumption_barrels_per_day, consumption_barrels_per_day, source_exports_barrels_per_day, exports_barrels_per_day, source_imports_barrels_per_day, imports_barrels_per_day, as_of_date, data_source_id, source_row_number, missing_metric_count, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of globalRows) globalStatement.run(value(row, "global_oil_snapshot_id"), value(row, "country_id"), value(row, "canonical_country_name"), value(row, "source_country_name"), nullable(row, "source_rank"), numberValue(row, "rank"), nullable(row, "source_proven_reserves_barrels"), numberValue(row, "proven_reserves_barrels"), nullable(row, "source_production_barrels_per_day"), numberValue(row, "production_barrels_per_day"), nullable(row, "source_consumption_barrels_per_day"), numberValue(row, "consumption_barrels_per_day"), nullable(row, "source_exports_barrels_per_day"), numberValue(row, "exports_barrels_per_day"), nullable(row, "source_imports_barrels_per_day"), numberValue(row, "imports_barrels_per_day"), nullable(row, "as_of_date"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), requiredNumber(row, "missing_metric_count"), value(row, "validation_status"));
   counts.global_oil_snapshots = globalRows.length;
-  const activityRows = readCsv(processedDir, "daily_port_activity.csv");
-  const identityIds = /* @__PURE__ */ new Map();
-  for (const row of readCsv(processedDir, "port_source_mapping.csv")) identityIds.set(`${value(row, "source_dataset")}|${value(row, "source_record_key")}`, stableId("port-source", `${value(row, "source_dataset")}|${value(row, "source_record_key")}`));
-  const activityFields = ["portcalls_container", "portcalls_dry_bulk", "portcalls_general_cargo", "portcalls_roro", "portcalls_tanker", "portcalls_cargo", "portcalls", "import_container", "import_dry_bulk", "import_general_cargo", "import_roro", "import_tanker", "import_cargo", "import", "export_container", "export_dry_bulk", "export_general_cargo", "export_roro", "export_tanker", "export_cargo", "export"];
-  const activityStatement = database.prepare(`INSERT INTO daily_port_activity (daily_activity_id, port_id, port_source_identity_id, source_port_id, source_port_name, canonical_port_name, port_mapping_status, port_mapping_method, activity_date, source_timestamp, source_year, source_month, source_day, source_country, source_iso3, ${activityFields.join(", ")}, source_object_id, import_export_unit_status, data_source_id, source_row_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${activityFields.map(() => "?").join(", ")}, ?, ?, ?, ?, ?)`);
-  for (const row of activityRows) {
-    const identityId = identityIds.get(`${value(row, "source_dataset")}|${value(row, "source_port_id")}`);
-    if (!identityId) throw new Error(`Missing port source identity for ${value(row, "source_port_id")}`);
-    activityStatement.run(value(row, "daily_activity_id"), nullable(row, "port_id"), identityId, value(row, "source_port_id"), value(row, "source_port_name"), nullable(row, "canonical_port_name"), value(row, "port_mapping_status"), value(row, "port_mapping_method"), value(row, "activity_date"), value(row, "source_timestamp"), requiredNumber(row, "source_year"), requiredNumber(row, "source_month"), requiredNumber(row, "source_day"), value(row, "source_country"), value(row, "source_iso3"), ...activityFields.map((field) => requiredNumber(row, field)), value(row, "source_object_id"), value(row, "import_export_unit_status"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), value(row, "validation_status"));
+  const activityFilePath = import_node_path2.default.join(processedDir, "daily_port_activity.csv");
+  if ((0, import_node_fs2.existsSync)(activityFilePath)) {
+    const activityRows = readCsv(processedDir, "daily_port_activity.csv");
+    const identityIds = /* @__PURE__ */ new Map();
+    for (const row of readCsv(processedDir, "port_source_mapping.csv")) {
+      identityIds.set(`${value(row, "source_dataset")}|${value(row, "source_record_key")}`, stableId("port-source", `${value(row, "source_dataset")}|${value(row, "source_record_key")}`));
+    }
+    const activityFields = ["portcalls_container", "portcalls_dry_bulk", "portcalls_general_cargo", "portcalls_roro", "portcalls_tanker", "portcalls_cargo", "portcalls", "import_container", "import_dry_bulk", "import_general_cargo", "import_roro", "import_tanker", "import_cargo", "import", "export_container", "export_dry_bulk", "export_general_cargo", "export_roro", "export_tanker", "export_cargo", "export"];
+    const activityStatement = database.prepare(`INSERT INTO daily_port_activity (daily_activity_id, port_id, port_source_identity_id, source_port_id, source_port_name, canonical_port_name, port_mapping_status, port_mapping_method, activity_date, source_timestamp, source_year, source_month, source_day, source_country, source_iso3, ${activityFields.join(", ")}, source_object_id, import_export_unit_status, data_source_id, source_row_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${activityFields.map(() => "?").join(", ")}, ?, ?, ?, ?, ?)`);
+    for (const row of activityRows) {
+      const identityId = identityIds.get(`${value(row, "source_dataset")}|${value(row, "source_port_id")}`);
+      if (!identityId) throw new Error(`Missing port source identity for ${value(row, "source_port_id")}`);
+      activityStatement.run(value(row, "daily_activity_id"), nullable(row, "port_id"), identityId, value(row, "source_port_id"), value(row, "source_port_name"), nullable(row, "canonical_port_name"), value(row, "port_mapping_status"), value(row, "port_mapping_method"), value(row, "activity_date"), value(row, "source_timestamp"), requiredNumber(row, "source_year"), requiredNumber(row, "source_month"), requiredNumber(row, "source_day"), value(row, "source_country"), value(row, "source_iso3"), ...activityFields.map((field) => requiredNumber(row, field)), value(row, "source_object_id"), value(row, "import_export_unit_status"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), value(row, "validation_status"));
+    }
+    counts.daily_port_activity = activityRows.length;
+  } else {
+    counts.daily_port_activity = 0;
   }
-  counts.daily_port_activity = activityRows.length;
   return counts;
 };
 var insertQuality = (database, processedDir, sourceIds) => {

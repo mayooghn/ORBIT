@@ -11,6 +11,7 @@ import type { ProcurementResult } from '../procurement/model';
 import type {
   StrategicReserveOptimizationInput,
   StrategicReserveOptimizationResult,
+  StrategicReserveState,
 } from '../reserves/model';
 
 export type ServerHealthStatus = 'AVAILABLE' | 'UNAVAILABLE';
@@ -234,9 +235,51 @@ export interface ScenarioProcurementResponse {
   error?: string;
 }
 
+export interface StrategicReserveStateResponse {
+  status: 'AVAILABLE' | 'ERROR';
+  state?: StrategicReserveState;
+  error?: string;
+}
+
+export interface StrategicReserveHistoryResponse {
+  status: 'AVAILABLE' | 'ERROR';
+  count?: number;
+  runs?: Array<{
+    optimizationId: string;
+    requestedAt: string;
+    input: StrategicReserveOptimizationInput;
+    result: StrategicReserveOptimizationResult;
+  }>;
+  error?: string;
+}
+
 export interface StrategicReserveOptimizationResponse {
   status: 'AVAILABLE' | 'ERROR';
+  optimizationId?: string;
   reserve?: StrategicReserveOptimizationResult;
+  error?: string;
+}
+
+export interface PipelineExecutionResponse {
+  status: 'AVAILABLE' | 'ERROR';
+  pipeline?: {
+    pipelineId: string;
+    completedAt: string;
+    stages: {
+      geopoliticalAnalysis: GeopoliticalRiskAgentResponse;
+      scenarioSimulation: ScenarioResult;
+      procurementAlternatives: {
+        resolutionStatus: string;
+        source: string;
+        procurement: ProcurementResult | null;
+      };
+      reserveOptimization: {
+        optimizationId: string;
+        input: StrategicReserveOptimizationInput;
+        result: StrategicReserveOptimizationResult;
+      };
+    };
+  };
   error?: string;
 }
 
@@ -458,6 +501,72 @@ export async function optimizeStrategicReserve(
   }
 
   return body.reserve;
+}
+
+export async function fetchStrategicReserveState(): Promise<StrategicReserveStateResponse['state']> {
+  const body = await requestJson<StrategicReserveStateResponse>(
+    '/api/reserves/state',
+    {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    },
+  );
+
+  if (body.status !== 'AVAILABLE' || !body.state) {
+    throw new Error(body.error || 'Failed to retrieve strategic reserve state.');
+  }
+
+  return body.state;
+}
+
+export async function fetchStrategicReserveHistory(limit = 20): Promise<NonNullable<StrategicReserveHistoryResponse['runs']>> {
+  const body = await requestJson<StrategicReserveHistoryResponse>(
+    `/api/reserves/history?limit=${limit}`,
+    {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    },
+  );
+
+  if (body.status !== 'AVAILABLE' || !body.runs) {
+    throw new Error(body.error || 'Failed to retrieve strategic reserve optimization history.');
+  }
+
+  return body.runs;
+}
+
+export async function runPipelineOptimization(
+  params: {
+    text?: string;
+    event?: unknown;
+    affectedNodeId?: string;
+    durationDays?: number;
+    severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    capacityReductionPercent?: number;
+    currentReserve?: number;
+    demand?: number;
+    minimumReserveThreshold?: number;
+    replenishmentRate?: number;
+    dataSource?: 'sqlite' | 'demo';
+  },
+): Promise<NonNullable<PipelineExecutionResponse['pipeline']>> {
+  const body = await requestJson<PipelineExecutionResponse>(
+    '/api/pipeline/run',
+    {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    },
+  );
+
+  if (body.status !== 'AVAILABLE' || !body.pipeline) {
+    throw new Error(body.error || 'End-to-end pipeline execution failed.');
+  }
+
+  return body.pipeline;
 }
 
 export async function fetchDigitalTwinNodeState(nodeId: string): Promise<DigitalTwinNodeState> {

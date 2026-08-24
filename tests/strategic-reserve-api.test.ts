@@ -1,25 +1,39 @@
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
+import { mkdtempSync, rmSync } from 'node:fs';
+import path from 'node:path';
+import { tmpdir } from 'node:os';
 import test, { after, before } from 'node:test';
 import { createApp } from '../server';
 import { openPhase2Database } from '../src/dataLayer/database';
+import { importPhase2Data } from '../src/dataLayer/importer';
 import { Phase2Repository } from '../src/dataLayer/repository';
-import { createDigitalTwinRuntime } from '../src/digitalTwin/runtime';
+import { createDigitalTwinRuntime, type DigitalTwinRuntime } from '../src/digitalTwin/runtime';
+import type { DatabaseSync } from 'node:sqlite';
 
-const database = openPhase2Database({ dbPath: './Data/orbit.db' });
-const repository = new Phase2Repository(database);
-const runtime = createDigitalTwinRuntime(repository);
-const sourceNode = runtime.stateEngine
-  .getCurrentTwin()
-  .nodes
-  .find((node) => node.nodeType === 'supplier' && (node.currentFlow?.value || 0) > 0);
+const processedDir = path.join(process.cwd(), 'Data', 'processed');
+const temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'orbit-reserve-api-'));
+const databasePath = path.join(temporaryDirectory, 'phase2.sqlite');
 
-assert.ok(sourceNode);
-
+let database: DatabaseSync;
+let repository: Phase2Repository;
+let runtime: DigitalTwinRuntime;
 let server: Server;
 let baseUrl = '';
+let sourceNodeId = '';
 
 before(async () => {
+  importPhase2Data({ dbPath: databasePath, processedDir });
+  database = openPhase2Database({ dbPath: databasePath });
+  repository = new Phase2Repository(database);
+  runtime = createDigitalTwinRuntime(repository);
+  const nodes = runtime.stateEngine.getCurrentTwin().nodes;
+  const supplierNode = nodes.find((node) => node.nodeType === 'supplier' && (node.currentFlow?.value || 0) > 0);
+  const portNode = nodes.find((node) => node.nodeType === 'port' && (node.currentFlow?.value || 0) > 0);
+  const targetNode = supplierNode || portNode || nodes[0];
+  assert.ok(targetNode);
+  sourceNodeId = targetNode.nodeId;
+
   server = createServer(createApp(repository, runtime));
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const address = server.address();
@@ -30,6 +44,7 @@ before(async () => {
 after(() => {
   server.close();
   database.close();
+  rmSync(temporaryDirectory, { recursive: true, force: true });
 });
 
 const postReserveOptimization = async (body: unknown): Promise<Response> =>
@@ -106,7 +121,7 @@ test('scenario simulation automatically includes reserve analysis when requested
       eventId: 'reserve-workflow-test',
       durationDays: 7,
       severity: 'HIGH',
-      affectedNodeId: sourceNode.nodeId,
+      affectedNodeId: sourceNodeId,
       capacityReductionPercent: 50,
       reserveAnalysis: {
         currentReserve: 1_000_000_000,

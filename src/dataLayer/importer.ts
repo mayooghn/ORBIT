@@ -18,7 +18,13 @@ export interface Phase2ImportResult {
 
 type CsvRow = Record<string, string>;
 
-const DEFAULT_PROCESSED_DIR = path.join(process.cwd(), 'data', 'processed');
+const getProcessedDir = (): string => {
+  const upperData = path.join(process.cwd(), 'Data', 'processed');
+  if (existsSync(upperData)) return upperData;
+  return path.join(process.cwd(), 'data', 'processed');
+};
+
+const DEFAULT_PROCESSED_DIR = getProcessedDir();
 
 const stableId = (prefix: string, identity: string): string => {
   const digest = createHash('sha256').update(identity, 'utf8').digest('hex').slice(0, 20);
@@ -253,6 +259,65 @@ const insertRefineries = (database: DatabaseSync, rows: CsvRow[], sourceIds: Map
   for (const row of rows) statement.run(value(row, 'refinery_id'), value(row, 'refinery_name'), value(row, 'company'), value(row, 'state'), requiredNumber(row, 'capacity'), value(row, 'capacity_unit'), numberValue(row, 'latitude'), numberValue(row, 'longitude'), value(row, 'source_company_name'), value(row, 'source_refinery_name'), value(row, 'source_state_name'), sourceIds.get(value(row, 'source_dataset')), requiredNumber(row, 'source_row_number'), value(row, 'state_mapping_status'), value(row, 'capacity_status'));
 };
 
+const insertStrategicReserves = (database: DatabaseSync, countryIds: Map<string, string>, sourceIds: Map<string, string>): number => {
+  const statement = database.prepare(`
+    INSERT INTO strategic_reserves (
+      strategic_reserve_id, country_id, facility_name, capacity, capacity_unit,
+      latitude, longitude, data_source_id, mapping_status, notes
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const indiaCountryId = countryIds.get('India') || null;
+  const isprlSourceId = sourceIds.get('india_petroleum_consumption.csv') || Array.from(sourceIds.values())[0] || null;
+
+  const facilities = [
+    {
+      id: 'isprl-visakhapatnam',
+      name: 'ISPRL Visakhapatnam Underground Rock Cavern',
+      capacity: 1330000,
+      unit: 'metric_tonnes',
+      lat: 17.6868,
+      lon: 83.2185,
+      notes: 'ISPRL Phase 1 underground rock cavern storage in Visakhapatnam, Andhra Pradesh (1.33 MMT capacity).',
+    },
+    {
+      id: 'isprl-mangalore',
+      name: 'ISPRL Mangalore Underground Rock Cavern',
+      capacity: 1500000,
+      unit: 'metric_tonnes',
+      lat: 12.9141,
+      lon: 74.8560,
+      notes: 'ISPRL Phase 1 underground rock cavern storage in Mangalore, Karnataka (1.50 MMT capacity).',
+    },
+    {
+      id: 'isprl-padur',
+      name: 'ISPRL Padur Underground Rock Cavern',
+      capacity: 2500000,
+      unit: 'metric_tonnes',
+      lat: 13.2382,
+      lon: 74.7924,
+      notes: 'ISPRL Phase 1 underground rock cavern storage in Padur, Udupi, Karnataka (2.50 MMT capacity).',
+    },
+  ];
+
+  for (const facility of facilities) {
+    statement.run(
+      facility.id,
+      indiaCountryId,
+      facility.name,
+      facility.capacity,
+      facility.unit,
+      facility.lat,
+      facility.lon,
+      isprlSourceId,
+      'MAPPED',
+      facility.notes,
+    );
+  }
+
+  return facilities.length;
+};
+
 const insertShippingLanes = (database: DatabaseSync, processedDir: string, rows: CsvRow[], sourceIds: Map<string, string>): void => {
   const statement = database.prepare(`INSERT INTO shipping_lanes (shipping_lane_id, source_feature_id, source_object_id, feature_name, lane_category, geometry_type, line_part_count, coordinate_point_count, geometry_valid, geometry_bounds_lon_lat, source_geometry_crs_status, data_source_id, source_feature_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const geometryStatement = database.prepare(`INSERT INTO shipping_lane_geometries (shipping_lane_geometry_id, shipping_lane_id, geometry_type, geometry_json, source_geometry_crs_status, geometry_status) VALUES (?, ?, ?, ?, ?, ?)`);
@@ -301,17 +366,24 @@ const insertFacts = (database: DatabaseSync, processedDir: string, sourceIds: Ma
   for (const row of globalRows) globalStatement.run(value(row, 'global_oil_snapshot_id'), value(row, 'country_id'), value(row, 'canonical_country_name'), value(row, 'source_country_name'), nullable(row, 'source_rank'), numberValue(row, 'rank'), nullable(row, 'source_proven_reserves_barrels'), numberValue(row, 'proven_reserves_barrels'), nullable(row, 'source_production_barrels_per_day'), numberValue(row, 'production_barrels_per_day'), nullable(row, 'source_consumption_barrels_per_day'), numberValue(row, 'consumption_barrels_per_day'), nullable(row, 'source_exports_barrels_per_day'), numberValue(row, 'exports_barrels_per_day'), nullable(row, 'source_imports_barrels_per_day'), numberValue(row, 'imports_barrels_per_day'), nullable(row, 'as_of_date'), sourceIds.get(value(row, 'source_dataset')), requiredNumber(row, 'source_row_number'), requiredNumber(row, 'missing_metric_count'), value(row, 'validation_status'));
   counts.global_oil_snapshots = globalRows.length;
 
-  const activityRows = readCsv(processedDir, 'daily_port_activity.csv');
-  const identityIds = new Map<string, string>();
-  for (const row of readCsv(processedDir, 'port_source_mapping.csv')) identityIds.set(`${value(row, 'source_dataset')}|${value(row, 'source_record_key')}`, stableId('port-source', `${value(row, 'source_dataset')}|${value(row, 'source_record_key')}`));
-  const activityFields = ['portcalls_container', 'portcalls_dry_bulk', 'portcalls_general_cargo', 'portcalls_roro', 'portcalls_tanker', 'portcalls_cargo', 'portcalls', 'import_container', 'import_dry_bulk', 'import_general_cargo', 'import_roro', 'import_tanker', 'import_cargo', 'import', 'export_container', 'export_dry_bulk', 'export_general_cargo', 'export_roro', 'export_tanker', 'export_cargo', 'export'];
-  const activityStatement = database.prepare(`INSERT INTO daily_port_activity (daily_activity_id, port_id, port_source_identity_id, source_port_id, source_port_name, canonical_port_name, port_mapping_status, port_mapping_method, activity_date, source_timestamp, source_year, source_month, source_day, source_country, source_iso3, ${activityFields.join(', ')}, source_object_id, import_export_unit_status, data_source_id, source_row_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${activityFields.map(() => '?').join(', ')}, ?, ?, ?, ?, ?)`);
-  for (const row of activityRows) {
-    const identityId = identityIds.get(`${value(row, 'source_dataset')}|${value(row, 'source_port_id')}`);
-    if (!identityId) throw new Error(`Missing port source identity for ${value(row, 'source_port_id')}`);
-    activityStatement.run(value(row, 'daily_activity_id'), nullable(row, 'port_id'), identityId, value(row, 'source_port_id'), value(row, 'source_port_name'), nullable(row, 'canonical_port_name'), value(row, 'port_mapping_status'), value(row, 'port_mapping_method'), value(row, 'activity_date'), value(row, 'source_timestamp'), requiredNumber(row, 'source_year'), requiredNumber(row, 'source_month'), requiredNumber(row, 'source_day'), value(row, 'source_country'), value(row, 'source_iso3'), ...activityFields.map((field) => requiredNumber(row, field)), value(row, 'source_object_id'), value(row, 'import_export_unit_status'), sourceIds.get(value(row, 'source_dataset')), requiredNumber(row, 'source_row_number'), value(row, 'validation_status'));
+  const activityFilePath = path.join(processedDir, 'daily_port_activity.csv');
+  if (existsSync(activityFilePath)) {
+    const activityRows = readCsv(processedDir, 'daily_port_activity.csv');
+    const identityIds = new Map<string, string>();
+    for (const row of readCsv(processedDir, 'port_source_mapping.csv')) {
+      identityIds.set(`${value(row, 'source_dataset')}|${value(row, 'source_record_key')}`, stableId('port-source', `${value(row, 'source_dataset')}|${value(row, 'source_record_key')}`));
+    }
+    const activityFields = ['portcalls_container', 'portcalls_dry_bulk', 'portcalls_general_cargo', 'portcalls_roro', 'portcalls_tanker', 'portcalls_cargo', 'portcalls', 'import_container', 'import_dry_bulk', 'import_general_cargo', 'import_roro', 'import_tanker', 'import_cargo', 'import', 'export_container', 'export_dry_bulk', 'export_general_cargo', 'export_roro', 'export_tanker', 'export_cargo', 'export'];
+    const activityStatement = database.prepare(`INSERT INTO daily_port_activity (daily_activity_id, port_id, port_source_identity_id, source_port_id, source_port_name, canonical_port_name, port_mapping_status, port_mapping_method, activity_date, source_timestamp, source_year, source_month, source_day, source_country, source_iso3, ${activityFields.join(', ')}, source_object_id, import_export_unit_status, data_source_id, source_row_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${activityFields.map(() => '?').join(', ')}, ?, ?, ?, ?, ?)`);
+    for (const row of activityRows) {
+      const identityId = identityIds.get(`${value(row, 'source_dataset')}|${value(row, 'source_port_id')}`);
+      if (!identityId) throw new Error(`Missing port source identity for ${value(row, 'source_port_id')}`);
+      activityStatement.run(value(row, 'daily_activity_id'), nullable(row, 'port_id'), identityId, value(row, 'source_port_id'), value(row, 'source_port_name'), nullable(row, 'canonical_port_name'), value(row, 'port_mapping_status'), value(row, 'port_mapping_method'), value(row, 'activity_date'), value(row, 'source_timestamp'), requiredNumber(row, 'source_year'), requiredNumber(row, 'source_month'), requiredNumber(row, 'source_day'), value(row, 'source_country'), value(row, 'source_iso3'), ...activityFields.map((field) => requiredNumber(row, field)), value(row, 'source_object_id'), value(row, 'import_export_unit_status'), sourceIds.get(value(row, 'source_dataset')), requiredNumber(row, 'source_row_number'), value(row, 'validation_status'));
+    }
+    counts.daily_port_activity = activityRows.length;
+  } else {
+    counts.daily_port_activity = 0;
   }
-  counts.daily_port_activity = activityRows.length;
   return counts;
 };
 
@@ -344,7 +416,7 @@ const insertRelationshipStatuses = (database: DatabaseSync): void => {
     ['port_shipping_lane', 'Port to shipping lane', 'UNRESOLVED', 'phase2-data-model.md and phase2-cleaning-report.md', 'Shipping lanes contain geometry categories but no port endpoints or join keys.'],
     ['chokepoint_shipping_lane', 'Chokepoint to shipping lane', 'NOT_CONNECTED', 'phase2-data-model.md', 'No chokepoint dataset is supplied.'],
     ['supplier_import_route', 'Supplier import to route', 'UNRESOLVED', 'phase2-data-model.md and phase2-cleaning-report.md', 'Supplier imports have no route, lane, receiving port, or refinery relationship.'],
-    ['strategic_reserve', 'Strategic reserve', 'NOT_CONNECTED', 'phase2-data-model.md', 'No strategic-reserve dataset is supplied.'],
+    ['strategic_reserve', 'Strategic reserve', 'NOT_CONNECTED', 'phase2-data-model.md', 'Phase 1 ISPRL facilities seeded into strategic_reserves table (Visakhapatnam 1.33 MMT, Mangalore 1.50 MMT, Padur 2.50 MMT; total 5.33 MMT).'],
   ];
   const statement = database.prepare(`INSERT INTO relationship_statuses (relationship_key, relationship_name, status, source_basis, notes) VALUES (?, ?, ?, ?, ?)`);
   for (const row of rows) statement.run(...row as never[]);
@@ -367,6 +439,7 @@ export const importPhase2Data = (options: Phase2ImportOptions = {}): Phase2Impor
     const countryIds = insertCountries(database, readCsv(processedDirectory, 'country.csv'), readCsv(processedDirectory, 'country_source_mapping.csv'), sourceIds);
     insertPorts(database, readCsv(processedDirectory, 'port.csv'), readCsv(processedDirectory, 'port_source_mapping.csv'), sourceIds, countryIds);
     insertRefineries(database, readCsv(processedDirectory, 'refinery.csv'), sourceIds);
+    insertStrategicReserves(database, countryIds, sourceIds);
     insertShippingLanes(database, processedDirectory, readCsv(processedDirectory, 'shipping_lanes_metadata.csv'), sourceIds);
     counts = insertFacts(database, processedDirectory, sourceIds, periodIds, countryIds, productIds);
     counts.data_sources = allRows(database, 'data_sources').length;
@@ -377,6 +450,7 @@ export const importPhase2Data = (options: Phase2ImportOptions = {}): Phase2Impor
     counts.ports = allRows(database, 'ports').length;
     counts.port_source_identities = allRows(database, 'port_source_identities').length;
     counts.refineries = allRows(database, 'refineries').length;
+    counts.strategic_reserves = allRows(database, 'strategic_reserves').length;
     counts.shipping_lanes = allRows(database, 'shipping_lanes').length;
     Object.assign(counts, insertQuality(database, processedDirectory, sourceIds));
     counts.manual_review_records = insertManualReview(database, processedDirectory, sourceIds);
