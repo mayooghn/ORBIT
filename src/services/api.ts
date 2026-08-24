@@ -12,6 +12,8 @@ import type {
   StrategicReserveOptimizationInput,
   StrategicReserveOptimizationResult,
   StrategicReserveState,
+  RealAlternativeProcurementState,
+  ProcurementProvenance,
 } from '../reserves/model';
 
 export type ServerHealthStatus = 'AVAILABLE' | 'UNAVAILABLE';
@@ -257,6 +259,13 @@ export interface StrategicReserveOptimizationResponse {
   status: 'AVAILABLE' | 'ERROR';
   optimizationId?: string;
   reserve?: StrategicReserveOptimizationResult;
+  procurementProvenance?: ProcurementProvenance;
+  error?: string;
+}
+
+export interface RealAlternativeProcurementResponse {
+  status: 'AVAILABLE' | 'ERROR';
+  procurement?: RealAlternativeProcurementState;
   error?: string;
 }
 
@@ -483,7 +492,7 @@ export async function runScenarioProcurement(
 
 export async function optimizeStrategicReserve(
   input: StrategicReserveOptimizationInput,
-): Promise<StrategicReserveOptimizationResult> {
+): Promise<StrategicReserveOptimizationResult & { procurementProvenance?: ProcurementProvenance; optimizationId?: string }> {
   const body = await requestJson<StrategicReserveOptimizationResponse>(
     '/api/reserves/optimize',
     {
@@ -500,7 +509,37 @@ export async function optimizeStrategicReserve(
     throw new Error(body.error || 'Strategic reserve optimization returned no result.');
   }
 
-  return body.reserve;
+  return {
+    ...body.reserve,
+    procurementProvenance: body.procurementProvenance,
+    optimizationId: body.optimizationId,
+  };
+}
+
+export async function fetchRealAlternativeProcurement(params?: {
+  excludedCountry?: string;
+  financialYear?: string;
+  limit?: number;
+}): Promise<RealAlternativeProcurementState> {
+  const query = new URLSearchParams();
+  if (params?.excludedCountry) query.set('excludedCountry', params.excludedCountry);
+  if (params?.financialYear) query.set('financialYear', params.financialYear);
+  if (params?.limit) query.set('limit', String(params.limit));
+
+  const qs = query.toString() ? `?${query.toString()}` : '';
+  const body = await requestJson<RealAlternativeProcurementResponse>(
+    `/api/reserves/alternative-procurement${qs}`,
+    {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    },
+  );
+
+  if (body.status !== 'AVAILABLE' || !body.procurement) {
+    throw new Error(body.error || 'Failed to retrieve real alternative procurement from SQLite.');
+  }
+
+  return body.procurement;
 }
 
 export async function fetchStrategicReserveState(): Promise<StrategicReserveStateResponse['state']> {

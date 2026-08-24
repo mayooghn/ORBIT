@@ -5,6 +5,8 @@ import type {
   StrategicReserveOptimizationInput,
   StrategicReserveOptimizationResult,
   StrategicReserveState,
+  RealAlternativeProcurementState,
+  RealAlternativeSupplier,
 } from '../reserves';
 
 type QueryValue = string | number | null;
@@ -309,6 +311,8 @@ export class Phase2Repository {
       notes: typeof f.notes === 'string' ? f.notes : null,
     }));
 
+    const alternativeProcurement = this.getRealAlternativeProcurement();
+
     return {
       facilityName: 'India Strategic Petroleum Reserve (ISPRL)',
       country: 'India',
@@ -331,7 +335,99 @@ export class Phase2Repository {
       replenishmentPolicyBasis,
       unit: 'tonnes',
       facilities: formattedFacilities,
+      alternativeProcurement,
       lastUpdated: new Date().toISOString(),
+    };
+  }
+
+  getRealAlternativeProcurement(options: {
+    excludedCountry?: string;
+    financialYear?: string;
+    limit?: number;
+  } = {}): RealAlternativeProcurementState {
+    const specifiedYear = options.financialYear?.trim();
+    let targetYear = specifiedYear;
+
+    if (!targetYear) {
+      const latestPeriod = this.database.prepare(`
+        SELECT f.financial_year
+        FROM supplier_imports s
+        JOIN financial_periods f ON f.financial_period_id = s.financial_period_id
+        ORDER BY f.financial_year_start DESC
+        LIMIT 1
+      `).get() as { financial_year?: string } | undefined;
+
+      targetYear = latestPeriod?.financial_year || '2016-17';
+    }
+
+    const excluded = options.excludedCountry?.trim().toLowerCase();
+
+    const rows = this.database.prepare(`
+      SELECT 
+        s.country_id,
+        s.source_country_name,
+        COALESCE(c.canonical_name, s.source_country_normalized_name, s.source_country_name) AS canonical_name,
+        f.financial_year,
+        s.quantity_tonnes,
+        p.canonical_name AS product_name
+      FROM supplier_imports s
+      JOIN financial_periods f ON f.financial_period_id = s.financial_period_id
+      LEFT JOIN countries c ON c.country_id = s.country_id
+      JOIN products p ON p.product_id = s.product_id
+      WHERE f.financial_year = ?
+      ORDER BY s.quantity_tonnes DESC
+    `).all(targetYear) as Array<{
+      country_id?: string;
+      source_country_name?: string;
+      canonical_name?: string;
+      financial_year?: string;
+      quantity_tonnes?: number;
+      product_name?: string;
+    }>;
+
+    const totalAnnualAllSuppliers = rows.reduce((sum, r) => sum + (Number(r.quantity_tonnes) || 0), 0);
+
+    const filteredRows = rows.filter((r) => {
+      if (!excluded) return true;
+      const srcName = (r.source_country_name || '').toLowerCase();
+      const canName = (r.canonical_name || '').toLowerCase();
+      return !srcName.includes(excluded) && !canName.includes(excluded);
+    });
+
+    const totalAnnualImportTonnes = filteredRows.reduce((sum, r) => sum + (Number(r.quantity_tonnes) || 0), 0);
+    const availableAlternativeDailyTonnes = Math.round((totalAnnualImportTonnes / 365) * 100) / 100;
+
+    const limit = typeof options.limit === 'number' && options.limit > 0 ? options.limit : 50;
+
+    const suppliers: RealAlternativeSupplier[] = filteredRows.slice(0, limit).map((r) => {
+      const annualQty = Number(r.quantity_tonnes) || 0;
+      const dailyCap = Math.round((annualQty / 365) * 100) / 100;
+      const share = totalAnnualAllSuppliers > 0
+        ? Math.round((annualQty / totalAnnualAllSuppliers) * 10000) / 100
+        : 0;
+
+      return {
+        countryId: String(r.country_id || ''),
+        sourceCountryName: String(r.source_country_name || ''),
+        canonicalName: String(r.canonical_name || r.source_country_name || ''),
+        financialYear: String(r.financial_year || targetYear),
+        annualQuantityTonnes: annualQty,
+        dailyCapacityTonnes: dailyCap,
+        shareOfTotalImportsPercent: share,
+        productName: String(r.product_name || 'Crude Oil'),
+      };
+    });
+
+    return {
+      availableAlternativeDailyTonnes,
+      totalAnnualImportTonnes,
+      financialYear: targetYear,
+      supplierCount: filteredRows.length,
+      suppliers,
+      commercialCostStatus: 'Commercial lane-cost data unavailable',
+      isCommercialCostAvailable: false,
+      dataSource: 'Phase 2 SQLite supplier_imports table (real import records)',
+      provenance: `Derived from ${filteredRows.length} real supplier import records for FY ${targetYear} in supplier_imports (${totalAnnualImportTonnes.toLocaleString()} tonnes/yr ÷ 365 days = ${availableAlternativeDailyTonnes.toLocaleString()} tonnes/day). Commercial lane-cost data unavailable.`,
     };
   }
 

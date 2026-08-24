@@ -13,6 +13,9 @@ import {
   TrendingDown,
   History,
   Info,
+  Globe,
+  Ship,
+  Truck,
 } from 'lucide-react';
 import { ErrorState } from '../components/common/ErrorState';
 import { LoadingState } from '../components/common/LoadingState';
@@ -23,11 +26,14 @@ import {
   optimizeStrategicReserve,
   fetchStrategicReserveState,
   fetchStrategicReserveHistory,
+  fetchRealAlternativeProcurement,
 } from '../services/api';
 import type {
   StrategicReserveOptimizationInput,
   StrategicReserveOptimizationResult,
   StrategicReserveState,
+  RealAlternativeProcurementState,
+  ProcurementProvenance,
 } from '../reserves/model';
 
 export const ROUND_ONE_RESERVE_DEMO_INPUT: StrategicReserveOptimizationInput = {
@@ -122,12 +128,14 @@ const ResultMetric: React.FC<{
 
 export const ReservesPage: React.FC = () => {
   const [activeInput, setActiveInput] = useState<StrategicReserveOptimizationInput>(ROUND_ONE_RESERVE_DEMO_INPUT);
-  const [result, setResult] = useState<StrategicReserveOptimizationResult | null>(null);
+  const [result, setResult] = useState<(StrategicReserveOptimizationResult & { procurementProvenance?: ProcurementProvenance; optimizationId?: string }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [liveState, setLiveState] = useState<StrategicReserveState | null>(null);
   const [liveStateLoading, setLiveStateLoading] = useState(false);
+  const [realProcurement, setRealProcurement] = useState<RealAlternativeProcurementState | null>(null);
+  const [procurementLoading, setProcurementLoading] = useState(false);
   const [historyRuns, setHistoryRuns] = useState<Array<{
     optimizationId: string;
     requestedAt: string;
@@ -172,11 +180,28 @@ export const ReservesPage: React.FC = () => {
       const state = await fetchStrategicReserveState();
       if (state) {
         setLiveState(state);
+        if (state.alternativeProcurement) {
+          setRealProcurement(state.alternativeProcurement);
+        }
       }
     } catch {
       // Non-blocking live state load
     } finally {
       setLiveStateLoading(false);
+    }
+  }, []);
+
+  const loadRealProcurement = useCallback(async () => {
+    try {
+      setProcurementLoading(true);
+      const data = await fetchRealAlternativeProcurement({ limit: 20 });
+      if (data) {
+        setRealProcurement(data);
+      }
+    } catch {
+      // Non-blocking
+    } finally {
+      setProcurementLoading(false);
     }
   }, []);
 
@@ -189,7 +214,8 @@ export const ReservesPage: React.FC = () => {
 
     void loadHistory();
     void loadLiveState();
-  }, [loadHistory, loadLiveState]);
+    void loadRealProcurement();
+  }, [loadHistory, loadLiveState, loadRealProcurement]);
 
   const handleSelectPreset = (presetInput: StrategicReserveOptimizationInput) => {
     setActiveInput(presetInput);
@@ -203,12 +229,18 @@ export const ReservesPage: React.FC = () => {
       demand: Math.round(liveState.currentDemand),
       supplyGap: 100_000,
       disruptionDuration: 30,
-      alternativeProcurement: 25_000,
+      alternativeProcurement: realProcurement?.availableAlternativeDailyTonnes || 25_000,
       replenishmentRate: liveState.defaultReplenishmentRate,
       minimumReserveThreshold: liveState.minimumReserveThreshold,
     };
     setActiveInput(baselineInput);
     void runOptimization(baselineInput);
+  };
+
+  const handleApplyRealAlternative = (dailyTonnes: number) => {
+    const updated = { ...activeInput, alternativeProcurement: Math.round(dailyTonnes) };
+    setActiveInput(updated);
+    void runOptimization(updated);
   };
 
   const handleInputChange = (field: keyof StrategicReserveOptimizationInput, value: number) => {
@@ -295,6 +327,96 @@ export const ReservesPage: React.FC = () => {
               <p className="mt-0.5 text-[10px] text-[#777777]">Mandatory 30-day safety reserve</p>
             </div>
           </div>
+        </section>
+      )}
+
+      {/* Real Alternative Procurement Integration (Phase 2 SQLite Data Layer) */}
+      {realProcurement && (
+        <section className="rounded-xl border border-indigo-500/30 bg-indigo-950/10 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-indigo-400" />
+                <h2 className="text-lg font-semibold text-[#EDEDED]">Real Alternative Procurement (SQLite Data Layer)</h2>
+                <StatusBadge level="AVAILABLE" label="REAL DATA" size="sm" />
+              </div>
+              <p className="mt-1 text-xs text-[#888888]">
+                Real historical supplier import volumes sourced from SQLite <code className="text-indigo-300">supplier_imports</code> table ({formatValue(realProcurement.totalAnnualImportTonnes)} tonnes/year across {realProcurement.supplierCount} registered supplier countries for FY {realProcurement.financialYear}).
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleApplyRealAlternative(realProcurement.availableAlternativeDailyTonnes)}
+                className="inline-flex items-center gap-2 rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition"
+              >
+                <Ship className="h-3.5 w-3.5" /> Apply Real Supply ({formatValue(realProcurement.availableAlternativeDailyTonnes)} t/d)
+              </button>
+            </div>
+          </div>
+
+          {/* Cost Notice & Data Constraints */}
+          <div className="mt-3 flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+            <Info className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+            <div>
+              <span className="font-semibold text-amber-200">Commercial lane-cost data unavailable</span>
+              <p className="mt-0.5 text-[11px] text-amber-300/80">
+                The SQLite data layer contains verified physical crude import tonnages per supplier country, but commercial spot freight rates and per-barrel procurement costs are unrecorded. The optimizer uses real physical supply capacity as an operational constraint without fabricating costs.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-[#222222] bg-[#121212] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#666666]">Available Daily Alternatives</p>
+              <p className="mt-1 font-mono text-lg font-bold text-indigo-400">{formatValue(realProcurement.availableAlternativeDailyTonnes)} t/d</p>
+              <p className="mt-0.5 text-[10px] text-[#777777]">Annual volume ÷ 365 days</p>
+            </div>
+            <div className="rounded-lg border border-[#222222] bg-[#121212] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#666666]">Annual Real Imports</p>
+              <p className="mt-1 font-mono text-lg font-bold text-[#EDEDED]">{formatValue(realProcurement.totalAnnualImportTonnes)} tonnes</p>
+              <p className="mt-0.5 text-[10px] text-[#777777]">FY {realProcurement.financialYear} crude imports</p>
+            </div>
+            <div className="rounded-lg border border-[#222222] bg-[#121212] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#666666]">Active Supplier Sources</p>
+              <p className="mt-1 font-mono text-lg font-bold text-emerald-400">{realProcurement.supplierCount} countries</p>
+              <p className="mt-0.5 text-[10px] text-[#777777]">Real bilateral import origins</p>
+            </div>
+            <div className="rounded-lg border border-[#222222] bg-[#121212] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#666666]">Lane Cost Status</p>
+              <p className="mt-1 font-mono text-xs font-semibold text-amber-400">{realProcurement.commercialCostStatus}</p>
+              <p className="mt-0.5 text-[10px] text-[#777777]">No fabricated costs used</p>
+            </div>
+          </div>
+
+          {/* Top Real Suppliers Table */}
+          {realProcurement.suppliers.length > 0 && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-[#CCCCCC]">Real Supplier Import Volumes (Top Origins)</span>
+                <span className="text-[11px] text-[#777777]">Click a supplier to use their capacity in optimizer</span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {realProcurement.suppliers.slice(0, 8).map((s) => (
+                  <button
+                    key={s.countryId}
+                    type="button"
+                    onClick={() => handleApplyRealAlternative(s.dailyCapacityTonnes)}
+                    className="flex flex-col text-left rounded-lg border border-[#242424] bg-[#141414] p-2.5 hover:border-indigo-500/50 hover:bg-indigo-950/20 transition group"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-xs font-semibold text-[#EDEDED] group-hover:text-indigo-300">{s.canonicalName}</span>
+                      <span className="text-[10px] font-mono text-indigo-400">{s.shareOfTotalImportsPercent}%</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between w-full text-[11px] text-[#888888]">
+                      <span>{formatValue(s.dailyCapacityTonnes)} t/d</span>
+                      <span className="text-[10px] text-[#666666]">{formatValue(s.annualQuantityTonnes)} t/yr</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -586,6 +708,22 @@ export const ReservesPage: React.FC = () => {
                     <span className="font-semibold">Infeasible Reserve Drawdown: </span>
                     Current reserve ({formatValue(activeInput.currentReserve)}) is already below the minimum safety threshold ({formatValue(result.minimumReserveConstraint)}). Drawdown is locked at 0.
                   </div>
+                </div>
+              )}
+
+              {/* Real Alternative Procurement Provenance */}
+              {result.procurementProvenance && (
+                <div className="mt-3 rounded border border-indigo-500/30 bg-indigo-950/20 p-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-indigo-400" />
+                    <span className="font-semibold text-indigo-200">Procurement Provenance & Cost Constraints</span>
+                    <span className="rounded bg-amber-950/60 border border-amber-800/80 px-2 py-0.5 text-[10px] font-mono text-amber-300">
+                      {result.procurementProvenance.commercialCostStatus}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-[#A0A0A0]">
+                    {result.procurementProvenance.notes} (Source: {result.procurementProvenance.source}, FY {result.procurementProvenance.financialYear}, {result.procurementProvenance.activeSuppliersCount} verified suppliers).
+                  </p>
                 </div>
               )}
             </div>

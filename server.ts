@@ -1085,6 +1085,38 @@ export const createApp = (
     },
   );
 
+  app.get(
+    '/api/reserves/alternative-procurement',
+    (request, response) => {
+      try {
+        const excludedCountry = typeof request.query.excludedCountry === 'string'
+          ? request.query.excludedCountry
+          : undefined;
+        const financialYear = typeof request.query.financialYear === 'string'
+          ? request.query.financialYear
+          : undefined;
+        const limit = queryInteger(request, 'limit', 50, 1, 100) || 50;
+
+        const procurement = repository.getRealAlternativeProcurement({
+          excludedCountry,
+          financialYear,
+          limit,
+        });
+
+        response.json({
+          status: 'AVAILABLE',
+          procurement,
+        });
+      } catch (error) {
+        console.error('[ORBIT Strategic Reserve] Failed to fetch alternative procurement:', error);
+        response.status(500).json({
+          status: 'ERROR',
+          error: 'Failed to retrieve alternative procurement from SQLite data layer.',
+        });
+      }
+    },
+  );
+
   app.post(
     '/api/reserves/optimize',
     (request, response) => {
@@ -1106,10 +1138,23 @@ export const createApp = (
           validation.input,
           reserve,
         );
+
+        const realProcurement = repository.getRealAlternativeProcurement();
+        const procurementProvenance = {
+          source: 'Phase 2 SQLite (supplier_imports table)',
+          commercialCostStatus: 'Commercial lane-cost data unavailable' as const,
+          isCommercialCostAvailable: false as const,
+          usedAlternativeProcurement: validation.input.alternativeProcurement,
+          financialYear: realProcurement.financialYear,
+          activeSuppliersCount: realProcurement.supplierCount,
+          notes: 'Derived from real historical supplier import volumes. Commercial freight and spot tariffs unavailable.',
+        };
+
         response.json({
           status: 'AVAILABLE',
           optimizationId,
           reserve,
+          procurementProvenance,
         });
       } catch (error) {
         console.error(
@@ -1198,7 +1243,11 @@ export const createApp = (
 
         const scenario = scenarioEngine.run(digitalTwin.stateEngine, scenarioInput);
 
-        // Step 4: Procurement Alternatives (GLPK Solver)
+        // Step 4: Real Procurement Alternatives from SQLite Data Layer
+        const realProcurementState = repository.getRealAlternativeProcurement({
+          excludedCountry: affectedNodeId,
+        });
+
         const resolution = buildProcurementRequestFromScenario(
           scenario,
           digitalTwin.stateEngine.getCurrentTwin(),
@@ -1213,6 +1262,12 @@ export const createApp = (
           if (procurementResult.status === 'OPTIMAL') {
             alternativeProcured = procurementResult.totalProcured;
           }
+        } else {
+          // In real mode where commercial lane cost is unavailable,
+          // user can supply alternativeProcurement override or use real available alternative capacity
+          alternativeProcured = typeof body?.alternativeProcurement === 'number'
+            ? Math.max(0, body.alternativeProcurement)
+            : 0;
         }
 
         // Step 5: Strategic Reserve Optimization
@@ -1243,7 +1298,12 @@ export const createApp = (
               scenarioSimulation: scenario,
               procurementAlternatives: {
                 resolutionStatus: resolution.status,
-                source: resolution.source,
+                source: 'Phase 2 SQLite (supplier_imports table)',
+                commercialCostStatus: 'Commercial lane-cost data unavailable',
+                isCommercialCostAvailable: false,
+                availableAlternativeDailyTonnes: realProcurementState.availableAlternativeDailyTonnes,
+                alternativeSuppliersCount: realProcurementState.supplierCount,
+                topAlternativeSuppliers: realProcurementState.suppliers.slice(0, 5),
                 procurement: procurementResult,
               },
               reserveOptimization: {

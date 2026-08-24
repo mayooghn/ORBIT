@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import test, { after, before } from 'node:test';
-import { openPhase2Database } from '../src/dataLayer/database';
+import { openPhase2Database, defaultPhase2DbPath } from '../src/dataLayer/database';
+import { importPhase2Data } from '../src/dataLayer/importer';
 import { Phase2Repository } from '../src/dataLayer/repository';
 import { createDigitalTwinRuntime } from '../src/digitalTwin/runtime';
 import {
@@ -14,7 +15,9 @@ import { ScenarioEngine } from '../src/scenarios/scenario-engine';
 import { SqliteScenarioBaselineProvider } from '../src/scenarios/sqlite-baseline-provider';
 import type { ScenarioInput, ScenarioResult } from '../src/scenarios/model';
 
-const database = openPhase2Database({ dbPath: './Data/orbit.db' });
+const dbPath = defaultPhase2DbPath();
+importPhase2Data({ dbPath, processedDir: './Data/processed' });
+const database = openPhase2Database({ dbPath });
 const repository = new Phase2Repository(database);
 const runtime = createDigitalTwinRuntime(repository);
 const scenarioEngine = new ScenarioEngine(

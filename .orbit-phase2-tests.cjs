@@ -1372,6 +1372,7 @@ var Phase2Repository = class {
       mappingStatus: String(f.mapping_status || "MAPPED"),
       notes: typeof f.notes === "string" ? f.notes : null
     }));
+    const alternativeProcurement = this.getRealAlternativeProcurement();
     return {
       facilityName: "India Strategic Petroleum Reserve (ISPRL)",
       country: "India",
@@ -1392,7 +1393,74 @@ var Phase2Repository = class {
       replenishmentPolicyBasis,
       unit: "tonnes",
       facilities: formattedFacilities,
+      alternativeProcurement,
       lastUpdated: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  getRealAlternativeProcurement(options = {}) {
+    const specifiedYear = options.financialYear?.trim();
+    let targetYear = specifiedYear;
+    if (!targetYear) {
+      const latestPeriod = this.database.prepare(`
+        SELECT f.financial_year
+        FROM supplier_imports s
+        JOIN financial_periods f ON f.financial_period_id = s.financial_period_id
+        ORDER BY f.financial_year_start DESC
+        LIMIT 1
+      `).get();
+      targetYear = latestPeriod?.financial_year || "2016-17";
+    }
+    const excluded = options.excludedCountry?.trim().toLowerCase();
+    const rows = this.database.prepare(`
+      SELECT 
+        s.country_id,
+        s.source_country_name,
+        COALESCE(c.canonical_name, s.source_country_normalized_name, s.source_country_name) AS canonical_name,
+        f.financial_year,
+        s.quantity_tonnes,
+        p.canonical_name AS product_name
+      FROM supplier_imports s
+      JOIN financial_periods f ON f.financial_period_id = s.financial_period_id
+      LEFT JOIN countries c ON c.country_id = s.country_id
+      JOIN products p ON p.product_id = s.product_id
+      WHERE f.financial_year = ?
+      ORDER BY s.quantity_tonnes DESC
+    `).all(targetYear);
+    const totalAnnualAllSuppliers = rows.reduce((sum, r) => sum + (Number(r.quantity_tonnes) || 0), 0);
+    const filteredRows = rows.filter((r) => {
+      if (!excluded) return true;
+      const srcName = (r.source_country_name || "").toLowerCase();
+      const canName = (r.canonical_name || "").toLowerCase();
+      return !srcName.includes(excluded) && !canName.includes(excluded);
+    });
+    const totalAnnualImportTonnes = filteredRows.reduce((sum, r) => sum + (Number(r.quantity_tonnes) || 0), 0);
+    const availableAlternativeDailyTonnes = Math.round(totalAnnualImportTonnes / 365 * 100) / 100;
+    const limit = typeof options.limit === "number" && options.limit > 0 ? options.limit : 50;
+    const suppliers = filteredRows.slice(0, limit).map((r) => {
+      const annualQty = Number(r.quantity_tonnes) || 0;
+      const dailyCap = Math.round(annualQty / 365 * 100) / 100;
+      const share = totalAnnualAllSuppliers > 0 ? Math.round(annualQty / totalAnnualAllSuppliers * 1e4) / 100 : 0;
+      return {
+        countryId: String(r.country_id || ""),
+        sourceCountryName: String(r.source_country_name || ""),
+        canonicalName: String(r.canonical_name || r.source_country_name || ""),
+        financialYear: String(r.financial_year || targetYear),
+        annualQuantityTonnes: annualQty,
+        dailyCapacityTonnes: dailyCap,
+        shareOfTotalImportsPercent: share,
+        productName: String(r.product_name || "Crude Oil")
+      };
+    });
+    return {
+      availableAlternativeDailyTonnes,
+      totalAnnualImportTonnes,
+      financialYear: targetYear,
+      supplierCount: filteredRows.length,
+      suppliers,
+      commercialCostStatus: "Commercial lane-cost data unavailable",
+      isCommercialCostAvailable: false,
+      dataSource: "Phase 2 SQLite supplier_imports table (real import records)",
+      provenance: `Derived from ${filteredRows.length} real supplier import records for FY ${targetYear} in supplier_imports (${totalAnnualImportTonnes.toLocaleString()} tonnes/yr \xF7 365 days = ${availableAlternativeDailyTonnes.toLocaleString()} tonnes/day). Commercial lane-cost data unavailable.`
     };
   }
   saveStrategicReserveOptimization(input, result) {
@@ -6444,6 +6512,31 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
       }
     }
   );
+  app.get(
+    "/api/reserves/alternative-procurement",
+    (request, response) => {
+      try {
+        const excludedCountry = typeof request.query.excludedCountry === "string" ? request.query.excludedCountry : void 0;
+        const financialYear = typeof request.query.financialYear === "string" ? request.query.financialYear : void 0;
+        const limit = queryInteger(request, "limit", 50, 1, 100) || 50;
+        const procurement = repository2.getRealAlternativeProcurement({
+          excludedCountry,
+          financialYear,
+          limit
+        });
+        response.json({
+          status: "AVAILABLE",
+          procurement
+        });
+      } catch (error) {
+        console.error("[ORBIT Strategic Reserve] Failed to fetch alternative procurement:", error);
+        response.status(500).json({
+          status: "ERROR",
+          error: "Failed to retrieve alternative procurement from SQLite data layer."
+        });
+      }
+    }
+  );
   app.post(
     "/api/reserves/optimize",
     (request, response) => {
@@ -6462,10 +6555,21 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           validation.input,
           reserve
         );
+        const realProcurement = repository2.getRealAlternativeProcurement();
+        const procurementProvenance = {
+          source: "Phase 2 SQLite (supplier_imports table)",
+          commercialCostStatus: "Commercial lane-cost data unavailable",
+          isCommercialCostAvailable: false,
+          usedAlternativeProcurement: validation.input.alternativeProcurement,
+          financialYear: realProcurement.financialYear,
+          activeSuppliersCount: realProcurement.supplierCount,
+          notes: "Derived from real historical supplier import volumes. Commercial freight and spot tariffs unavailable."
+        };
         response.json({
           status: "AVAILABLE",
           optimizationId,
-          reserve
+          reserve,
+          procurementProvenance
         });
       } catch (error) {
         console.error(
@@ -6511,6 +6615,9 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           capacityReductionPercent
         };
         const scenario = scenarioEngine.run(digitalTwin.stateEngine, scenarioInput);
+        const realProcurementState = repository2.getRealAlternativeProcurement({
+          excludedCountry: affectedNodeId
+        });
         const resolution = buildProcurementRequestFromScenario(
           scenario,
           digitalTwin.stateEngine.getCurrentTwin(),
@@ -6523,6 +6630,8 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           if (procurementResult.status === "OPTIMAL") {
             alternativeProcured = procurementResult.totalProcured;
           }
+        } else {
+          alternativeProcured = typeof body?.alternativeProcurement === "number" ? Math.max(0, body.alternativeProcurement) : 0;
         }
         const reserveState = repository2.getCurrentStrategicReserveState();
         const reserveInput = {
@@ -6549,7 +6658,12 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
               scenarioSimulation: scenario,
               procurementAlternatives: {
                 resolutionStatus: resolution.status,
-                source: resolution.source,
+                source: "Phase 2 SQLite (supplier_imports table)",
+                commercialCostStatus: "Commercial lane-cost data unavailable",
+                isCommercialCostAvailable: false,
+                availableAlternativeDailyTonnes: realProcurementState.availableAlternativeDailyTonnes,
+                alternativeSuppliersCount: realProcurementState.supplierCount,
+                topAlternativeSuppliers: realProcurementState.suppliers.slice(0, 5),
                 procurement: procurementResult
               },
               reserveOptimization: {

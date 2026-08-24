@@ -82,6 +82,40 @@ export interface StrategicReserveFacility {
   notes: string | null;
 }
 
+export interface RealAlternativeSupplier {
+  countryId: string;
+  sourceCountryName: string;
+  canonicalName: string;
+  financialYear: string;
+  annualQuantityTonnes: number;
+  dailyCapacityTonnes: number;
+  shareOfTotalImportsPercent: number;
+  productName: string;
+}
+
+export interface RealAlternativeProcurementState {
+  availableAlternativeDailyTonnes: number;
+  totalAnnualImportTonnes: number;
+  financialYear: string;
+  supplierCount: number;
+  suppliers: RealAlternativeSupplier[];
+  commercialCostStatus: 'Commercial lane-cost data unavailable';
+  isCommercialCostAvailable: false;
+  dataSource: string;
+  provenance: string;
+}
+
+export interface ProcurementProvenance {
+  source: string;
+  commercialCostStatus: 'Commercial lane-cost data unavailable';
+  isCommercialCostAvailable: false;
+  usedAlternativeProcurement: number;
+  financialYear?: string;
+  activeSuppliersCount?: number;
+  disruptedSupplierExcluded?: string | null;
+  notes?: string;
+}
+
 export interface StrategicReserveState {
   facilityName: string;
   country: string;
@@ -102,6 +136,7 @@ export interface StrategicReserveState {
   replenishmentPolicyBasis: string;
   unit: string;
   facilities: StrategicReserveFacility[];
+  alternativeProcurement?: RealAlternativeProcurementState;
   lastUpdated: string;
 }
 
