@@ -81,3 +81,39 @@ test('Phase 8.2 Reserve Optimizer: Operates with database-derived values and enf
 
   db.close();
 });
+
+test('Phase 8.2 & 8.3: Apply Real Baseline produces valid optimization with real database-backed parameters and safety floor', () => {
+  const dbPath = defaultPhase2DbPath();
+  const db = openPhase2Database({ dbPath });
+  const repo = new Phase2Repository(db);
+  const state = repo.getCurrentStrategicReserveState();
+  const procurement = repo.getRealAlternativeProcurement({ limit: 50 });
+
+  // Full Real Baseline Input as generated when clicking "Apply Real Baseline to Optimizer"
+  const realBaselineInput: StrategicReserveOptimizationInput = {
+    currentReserve: state.currentReserve, // 5,000,000
+    demand: Math.round(state.currentDemand), // 655,271
+    supplyGap: 100_000, // Scenario-controlled deficit
+    disruptionDuration: 30, // Scenario-controlled duration
+    alternativeProcurement: Math.round(procurement.availableAlternativeDailyTonnes), // ~588,810 t/d from SQLite
+    replenishmentRate: state.defaultReplenishmentRate, // 20,000
+    minimumReserveThreshold: state.minimumReserveThreshold, // 1,500,000
+  };
+
+  const result = optimizeStrategicReserve(realBaselineInput);
+
+  assert.equal(result.isFeasible, true);
+  // Real alternative procurement (588,810 t/d) exceeds 100,000 t/d gap, so effectiveGap is 0
+  assert.equal(result.effectiveGap, 0);
+  assert.equal(result.drawdownAmount, 0);
+  assert.equal(result.remainingReserve, 5_000_000);
+  assert.ok(
+    result.remainingReserve >= realBaselineInput.minimumReserveThreshold,
+    'Remaining reserve must always satisfy the safety floor invariant',
+  );
+  assert.equal(result.fullyCovered, true);
+  assert.equal(result.constraintStatus, 'SATISFIED');
+
+  db.close();
+});
+

@@ -7,3 +7,5 @@ export * from './feasibility-validator';
 export * from './orchestrator';
 export * from './scenario-adapter';
 export * from './demo-scenario-provider';
+export * from './real-scenario-provider';
+export * from './eia-price-service';

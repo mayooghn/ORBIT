@@ -4,7 +4,9 @@ import path from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import test from 'node:test';
-import { ReservesPage } from '../src/pages/ReservesPage';
+import { ReservesPage, buildRealBaselineOptimizationInput } from '../src/pages/ReservesPage';
+import { optimizeStrategicReserve, validateStrategicReserveInput } from '../src/reserves/optimizer';
+import type { StrategicReserveState, RealAlternativeProcurementState } from '../src/reserves/model';
 
 const pageSource = readFileSync(
   path.join(process.cwd(), 'src/pages/ReservesPage.tsx'),
@@ -15,14 +17,86 @@ const apiSource = readFileSync(
   'utf8',
 );
 
-test('Strategic Reserves page presents the Round 1 real-optimizer demo', () => {
+test('Strategic Reserves page starts in a clean loading state waiting for real database data (no fake numbers)', () => {
   const markup = renderToStaticMarkup(React.createElement(ReservesPage));
 
   assert.match(markup, /Strategic Reserves/);
-  assert.match(markup, /Round 1 Demo Inputs/);
-  assert.match(markup, /DEMO \/ MOCK DATA/);
-  assert.match(markup, /Calculating\.\.\.|Run Reserve Optimization/);
-  assert.match(markup, /Not live telemetry/);
+  assert.match(markup, /LOADING REAL DATA/);
+  assert.match(markup, /Loading real strategic reserve and procurement data\.\.\./);
+  assert.match(markup, /Querying SQLite database/);
+
+  // Must not render demo/mock badges or fake numbers on initial mount
+  assert.doesNotMatch(markup, /DEMO \/ MOCK DATA/);
+  assert.doesNotMatch(markup, /Round 1 Demo Inputs/);
+});
+
+test('Strategic Reserves page permanently removed "Apply Real Baseline to Optimizer" button and handlers', () => {
+  // Verifies the manual button is completely removed
+  assert.doesNotMatch(pageSource, /id="apply-real-baseline-btn"/);
+  assert.doesNotMatch(pageSource, /Apply Real Baseline to Optimizer/);
+  assert.doesNotMatch(pageSource, /handleApplyLiveBaseline/);
+
+  // Verifies no silent fallbacks to 25,000 t/d or 4,500,000 demand
+  assert.doesNotMatch(pageSource, /availableAlternativeDailyTonnes\s*\|\|\s*25_?000/);
+  assert.doesNotMatch(pageSource, /ROUND_ONE_RESERVE_DEMO_INPUT/);
+});
+
+test('Strategic Reserves page automatically builds real database-backed baseline for optimizer', () => {
+  const mockState: StrategicReserveState = {
+    facilityName: 'India Strategic Petroleum Reserve (ISPRL)',
+    country: 'India',
+    totalCapacity: 5_330_000,
+    capacityUnit: 'metric_tonnes',
+    capacitySource: 'strategic_reserves table',
+    isCapacityFromDatabase: true,
+    currentReserve: 5_000_000,
+    currentReserveStatus: 'POLICY_ESTIMATE_UNAVAILABLE_TELEMETRY',
+    currentReserveSource: 'Policy operational baseline',
+    minimumReserveThreshold: 1_500_000,
+    minimumReservePolicyBasis: 'Mandatory 30-day safety reserve',
+    currentDemand: 655_271.23,
+    demandBasis: 'FY 2024-25 petroleum consumption',
+    demandFinancialYear: '2024-25',
+    isDemandFromDatabase: true,
+    defaultReplenishmentRate: 20_000,
+    replenishmentPolicyBasis: 'ISPRL injection capacity',
+    unit: 'tonnes',
+    facilities: [
+      { strategicReserveId: 'isprl-visakhapatnam', facilityName: 'Visakhapatnam', capacity: 1_330_000, capacityUnit: 'metric_tonnes', latitude: 17.68, longitude: 83.21, mappingStatus: 'MAPPED', notes: null },
+      { strategicReserveId: 'isprl-mangalore', facilityName: 'Mangalore', capacity: 1_500_000, capacityUnit: 'metric_tonnes', latitude: 12.91, longitude: 74.85, mappingStatus: 'MAPPED', notes: null },
+      { strategicReserveId: 'isprl-padur', facilityName: 'Padur', capacity: 2_500_000, capacityUnit: 'metric_tonnes', latitude: 13.23, longitude: 74.78, mappingStatus: 'MAPPED', notes: null },
+    ],
+    lastUpdated: new Date().toISOString(),
+  };
+
+  const mockProcurement: RealAlternativeProcurementState = {
+    availableAlternativeDailyTonnes: 588_809.99,
+    totalAnnualImportTonnes: 214_915_646,
+    financialYear: '2016-17',
+    supplierCount: 41,
+    suppliers: [],
+    commercialCostStatus: 'Commercial lane-cost data unavailable',
+    isCommercialCostAvailable: false,
+    dataSource: 'Phase 2 SQLite supplier_imports table',
+    provenance: 'Derived from real records',
+  };
+
+  const autoInput = buildRealBaselineOptimizationInput(mockState, mockProcurement);
+
+  assert.equal(autoInput.currentReserve, 5_000_000);
+  assert.equal(autoInput.demand, 655_271);
+  assert.equal(autoInput.alternativeProcurement, 588_810);
+  assert.equal(autoInput.replenishmentRate, 20_000);
+  assert.equal(autoInput.minimumReserveThreshold, 1_500_000);
+
+  // Scenario disruption parameters are present and distinct
+  assert.equal(autoInput.supplyGap, 100_000);
+  assert.equal(autoInput.disruptionDuration, 30);
+
+  // Optimization runs deterministically on auto-loaded real inputs
+  const result = optimizeStrategicReserve(autoInput);
+  assert.equal(result.isFeasible, true);
+  assert.ok(result.remainingReserve >= autoInput.minimumReserveThreshold);
 });
 
 test('Strategic Reserves page renders API-backed result fields and failure handling', () => {
@@ -39,7 +113,17 @@ test('Strategic Reserves page renders API-backed result fields and failure handl
     assert.match(pageSource, new RegExp(label));
   }
 
-  assert.match(pageSource, /optimizeStrategicReserve\(ROUND_ONE_RESERVE_DEMO_INPUT\)/);
+  assert.match(pageSource, /optimizeStrategicReserve/);
   assert.match(apiSource, /\/api\/reserves\/optimize/);
   assert.match(apiSource, /StrategicReserveOptimizationResult/);
+});
+
+test('Optimizer cannot be executed with missing or invalid baseline inputs', () => {
+  const invalid = validateStrategicReserveInput({
+    currentReserve: -100,
+    demand: 655271,
+  });
+
+  assert.equal(invalid.valid, false);
+  assert.ok(invalid.issues.length > 0);
 });

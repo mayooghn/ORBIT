@@ -56,6 +56,7 @@ import {
   optimizeProcurement,
   buildProcurementRequestFromScenario,
   DemoScenarioProcurementDataProvider,
+  RealScenarioProcurementDataProvider,
   SqliteScenarioProcurementDataProvider,
   validateProcurementRequest,
   type ScenarioProcurementDataProvider,
@@ -482,7 +483,7 @@ export const createApp = (
 
   const procurementDataProvider =
     scenarioProcurementDataProvider ??
-    new SqliteScenarioProcurementDataProvider(repository);
+    new RealScenarioProcurementDataProvider(repository);
   const demoProcurementDataProvider =
     new DemoScenarioProcurementDataProvider();
 

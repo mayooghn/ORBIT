@@ -79,7 +79,7 @@ export const ProcurementPage: React.FC = () => {
   const [durationDays, setDurationDays] = useState(14);
   const [severity, setSeverity] = useState<ScenarioSeverity>('HIGH');
   const [capacityReductionPercent, setCapacityReductionPercent] = useState(50);
-  const [useDemoData, setUseDemoData] = useState(true);
+  const [useDemoData, setUseDemoData] = useState(false);
   const [status, setStatus] = useState<ProcurementPageStatus>('IDLE');
   const [scenario, setScenario] = useState<ScenarioResult | null>(null);
   const [procurement, setProcurement] = useState<ProcurementResult | null>(null);
