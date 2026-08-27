@@ -126,7 +126,11 @@ const PHASE_37_NODES: readonly DigitalTwinNodeInput[] = [
     operationalState: 'operational',
     stateSource: 'BASELINE',
     sourceReferences: [externalReference(EIA_HORMUZ_URL)],
-    metadata: { documentedRole: 'major oil chokepoint' },
+    metadata: {
+      latitude: 26.5667,
+      longitude: 56.25,
+      documentedRole: 'major oil chokepoint'
+    },
   },
   {
     nodeId: 'chokepoint-strait-of-malacca',
@@ -139,7 +143,11 @@ const PHASE_37_NODES: readonly DigitalTwinNodeInput[] = [
     operationalState: 'operational',
     stateSource: 'BASELINE',
     sourceReferences: [externalReference(EIA_HORMUZ_URL)],
-    metadata: { documentedRole: 'major Asian oil chokepoint' },
+    metadata: {
+      latitude: 1.43,
+      longitude: 103.0,
+      documentedRole: 'major Asian oil chokepoint'
+    },
   },
   {
     nodeId: 'shipping-route-persian-gulf-hormuz-arabian-sea',

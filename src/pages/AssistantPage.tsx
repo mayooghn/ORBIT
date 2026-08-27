@@ -122,28 +122,38 @@ const nodeTypePrefixes: Array<[string, string]> = [
   ['port', 'Port'],
 ];
 
-const friendlyNodeLabel = (nodeId: string, nodeType?: string): string => {
+const friendlyNodeLabel = (nodeId: string, nodeType?: string, nodeName?: string): string => {
+  if (nodeName && nodeName.trim() && !nodeName.startsWith('refinery-') && !nodeName.startsWith('port-') && !nodeName.startsWith('supplier-') && !nodeName.startsWith('shipping_route-') && !nodeName.startsWith('chokepoint-')) {
+    return nodeName.trim();
+  }
   const normalizedId = nodeId.trim().toLowerCase();
   const prefix = nodeTypePrefixes.find(([candidate]) => normalizedId.startsWith(`${candidate}-`));
   const typeLabel = nodeType ? humanizeLabel(nodeType) : prefix?.[1];
-  if (!typeLabel) return 'Supply Chain Asset';
 
   const suffix = prefix ? nodeId.slice(prefix[0].length + 1).replace(/[_-]+/g, ' ').trim() : '';
   const compactSuffix = suffix.replace(/\s/g, '');
   const opaqueSuffix = compactSuffix.length >= 16 && /^[a-z0-9]+$/i.test(compactSuffix) && /\d/.test(compactSuffix);
-  if (suffix && !opaqueSuffix && (typeLabel === 'Shipping route' || typeLabel === 'Chokepoint')) {
-    return `${typeLabel}: ${humanizeLabel(suffix)}`;
+
+  if (suffix && !opaqueSuffix) {
+    const formattedSuffix = humanizeLabel(suffix);
+    if (typeLabel && !formattedSuffix.toLowerCase().includes(typeLabel.toLowerCase())) {
+      return `${typeLabel}: ${formattedSuffix}`;
+    }
+    return formattedSuffix;
   }
-  return typeLabel;
+  return typeLabel || 'Supply Chain Asset';
 };
 
 const humanizeTechnicalText = (value: unknown, preserveMarkdown = false): string => {
   let text = valueOrUnavailable(value)
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\bevt-[a-z0-9-]+\b/gi, 'the event')
-    .replace(/\b(?:rel|edge)-[a-z0-9-]+\b/gi, 'connected relationship');
+    .replace(/\b(?:rel|edge)-[a-z0-9-]+\b/gi, 'connected relationship')
+    .replace(/,?\s*(?:calculated from|driven by)\s+.*?(?:event severity|energy relevance|digital twin relevance|supplier exposure|severity|points for)[^.\n]*/gi, '')
+    .replace(/\s*\(\d+\s+points for [^)]+\)/gi, '');
   const technicalIdentifierPattern = /\b(?:shipping[-_]route|chokepoint|supplier|port|refinery|pipeline|terminal|storage|reserve|node|edge)[-_][a-z0-9_-]+\b/gi;
   text = text.replace(technicalIdentifierPattern, (identifier) => friendlyNodeLabel(identifier));
+  text = text.replace(/\s+\./g, '.').replace(/\.{2,}/g, '.').replace(/\s{2,}/g, ' ');
   return (preserveMarkdown ? text : text.replace(/\*\*/g, '')).replace(/[^\S\r\n]+/g, ' ').trim();
 };
 
@@ -181,6 +191,16 @@ const formatMeasurement = (summary?: MeasurementSummary): string => {
     : 'Not available';
 };
 
+const formatMeasurementParts = (summary?: MeasurementSummary): { value: string; unit: string } => {
+  const values = [...(summary?.nodeTotals || []), ...(summary?.edgeTotals || [])]
+    .filter((measurement) => typeof measurement.value === 'number' && typeof measurement.unit === 'string' && measurement.unit.trim());
+  if (!values.length) return { value: 'Not available', unit: '' };
+  const first = values[0];
+  const valStr = first.value != null ? first.value.toLocaleString() : '0';
+  const unitStr = first.unit ? first.unit.replaceAll('_', ' ') : '';
+  return { value: valStr, unit: unitStr };
+};
+
 const normalizedRiskLevel = (level?: string): 'low' | 'medium' | 'high' | 'critical' | 'unknown' => {
   const normalized = level?.toLowerCase();
   if (normalized === 'low' || normalized === 'medium' || normalized === 'high' || normalized === 'critical') {
@@ -211,9 +231,7 @@ const humanizeReason = (reason: string): string => {
 };
 
 const compactAssessmentText = (value: unknown): string => {
-  const cleaned = humanizeTechnicalText(value, true);
-  const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 3).join(' ');
-  return sentences.length > 420 ? `${sentences.slice(0, 417).trimEnd()}...` : sentences;
+  return humanizeTechnicalText(value, true);
 };
 
 export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
@@ -556,18 +574,36 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
                         {result.digitalTwinImpact?.affectedNodeIds?.length || 0} Nodes
                       </span>
                     </div>
-                    <div className="p-3 rounded-lg border border-slate-800 bg-[#070a10]">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Flow Reduction</span>
-                      <span className="text-base font-bold font-mono text-orange-400 mt-1 block">
-                        {formatMeasurement(result.digitalTwinImpact?.affectedFlow)}
-                      </span>
-                    </div>
-                    <div className="p-3 rounded-lg border border-slate-800 bg-[#070a10] col-span-2 sm:col-span-1">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Capacity Exposed</span>
-                      <span className="text-base font-bold font-mono text-amber-400 mt-1 block truncate">
-                        {formatMeasurement(result.digitalTwinImpact?.affectedCapacity)}
-                      </span>
-                    </div>
+                    {(() => {
+                      const flowParts = formatMeasurementParts(result.digitalTwinImpact?.affectedFlow);
+                      const capacityParts = formatMeasurementParts(result.digitalTwinImpact?.affectedCapacity);
+                      return (
+                        <>
+                          <div className="p-3 rounded-lg border border-slate-800 bg-[#070a10]">
+                            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Flow Reduction</span>
+                            <span className="text-base font-bold font-mono text-orange-400 mt-1 block">
+                              {flowParts.value}
+                            </span>
+                            {flowParts.unit && (
+                              <span className="text-xs font-mono text-orange-400/80 block mt-0.5 leading-snug">
+                                {flowParts.unit}
+                              </span>
+                            )}
+                          </div>
+                          <div className="p-3 rounded-lg border border-slate-800 bg-[#070a10] col-span-2 sm:col-span-1">
+                            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Capacity Exposed</span>
+                            <span className="text-base font-bold font-mono text-amber-400 mt-1 block">
+                              {capacityParts.value}
+                            </span>
+                            {capacityParts.unit && (
+                              <span className="text-xs font-mono text-amber-400/80 block mt-0.5 leading-snug">
+                                {capacityParts.unit}
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -585,8 +621,8 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              {/* Organized 3-Column Bento Grid for Details */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Organized 2-Column Grid for Details */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* 1. Infrastructure Impact */}
                 <div className="rounded-xl border border-slate-800 bg-[#0c1019] p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
@@ -597,63 +633,38 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
                   </div>
 
                   <div className="space-y-3 text-xs">
-                    <div>
-                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">Impacted Assets</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {result.digitalTwinImpact?.affectedNodeIds?.length ? (
-                          result.digitalTwinImpact.affectedNodeIds.map((nodeId, idx) => (
-                            <span key={nodeId} className="px-2.5 py-1 rounded-md border border-slate-800 bg-slate-900 text-[11px] font-mono text-slate-300">
-                              {friendlyNodeLabel(nodeId, result.digitalTwinImpact?.affectedNodeTypes?.[idx])}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-slate-500 italic">No specific nodes impacted</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-800/60">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">Key Impact Drivers</span>
-                      <ul className="space-y-1.5">
-                        {result.digitalTwinImpact?.impactReasons?.slice(0, 3).map((reason, i) => (
-                          <li key={i} className="text-slate-400 text-[11px] leading-relaxed pl-2.5 border-l-2 border-orange-500/40">
-                            {humanizeReason(reason)}
-                          </li>
-                        )) || <li className="text-slate-500">Standard flow impact</li>}
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">Impacted Assets</span>
+                    {result.digitalTwinImpact?.affectedNodeIds?.length ? (
+                      <ul className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        {result.digitalTwinImpact.affectedNodeIds.map((nodeId, idx) => {
+                          const nodeType = result.digitalTwinImpact?.affectedNodeTypes?.[idx];
+                          const nodeName = result.digitalTwinImpact?.affectedNodeNames?.[idx];
+                          const label = friendlyNodeLabel(nodeId, nodeType, nodeName);
+                          return (
+                            <li
+                              key={`${nodeId}-${idx}`}
+                              className="flex items-center justify-between p-2.5 rounded-lg border border-slate-800/80 bg-[#070a10] font-mono text-xs"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shrink-0" />
+                                <span className="font-semibold text-slate-200">{label}</span>
+                              </div>
+                              {nodeType && (
+                                <span className="px-2 py-0.5 rounded text-[10px] uppercase font-mono bg-slate-800 text-slate-400 border border-slate-700/50">
+                                  {humanizeLabel(nodeType)}
+                                </span>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Risk Scoring Factors */}
-                <div className="rounded-xl border border-slate-800 bg-[#0c1019] p-5 space-y-4">
-                  <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-                    <ShieldAlert className="w-4 h-4 text-amber-400" />
-                    <h4 className="text-xs font-mono uppercase tracking-wider font-semibold text-slate-200">
-                      Risk Drivers & Factors
-                    </h4>
-                  </div>
-
-                  <div className="space-y-3">
-                    {result.risk?.factors?.length ? (
-                      result.risk.factors.map((factor, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg border border-slate-800/80 bg-[#070a10]">
-                          <div className="flex items-center justify-between text-xs font-semibold text-slate-200 mb-1">
-                            <span>{humanizeLabel(factor.name)}</span>
-                            <span className="font-mono text-orange-400">+{factor.points} pts</span>
-                          </div>
-                          <p className="text-[11px] text-slate-400 leading-snug">
-                            {humanizeTechnicalText(factor.explanation)}
-                          </p>
-                        </div>
-                      ))
                     ) : (
-                      <p className="text-xs text-slate-500">Deterministic risk calculation applied.</p>
+                      <span className="text-slate-500 italic">No specific nodes impacted</span>
                     )}
                   </div>
                 </div>
 
-                {/* 3. Event Classification & Metadata */}
+                {/* 2. Event Classification & Metadata */}
                 <div className="rounded-xl border border-slate-800 bg-[#0c1019] p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
                     <Globe2 className="w-4 h-4 text-cyan-400" />
@@ -662,33 +673,35 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
                     </h4>
                   </div>
 
-                  <dl className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="p-2.5 rounded-lg border border-slate-800/80 bg-[#070a10]">
-                      <dt className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Region</dt>
-                      <dd className="font-semibold text-slate-200 mt-0.5">{humanizeLabel(result.classification?.region)}</dd>
-                    </div>
-                    <div className="p-2.5 rounded-lg border border-slate-800/80 bg-[#070a10]">
-                      <dt className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Category</dt>
-                      <dd className="font-semibold text-slate-200 mt-0.5">{humanizeLabel(result.classification?.category)}</dd>
-                    </div>
-                    <div className="p-2.5 rounded-lg border border-slate-800/80 bg-[#070a10]">
-                      <dt className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Severity</dt>
-                      <dd className="font-semibold text-orange-400 mt-0.5">{humanizeLabel(result.classification?.severity)}</dd>
-                    </div>
-                    <div className="p-2.5 rounded-lg border border-slate-800/80 bg-[#070a10]">
-                      <dt className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Energy Relevance</dt>
-                      <dd className="font-semibold text-emerald-400 mt-0.5">
-                        {result.classification?.energyRelevant ? 'Confirmed' : 'Indirect'}
-                      </dd>
-                    </div>
-                  </dl>
+                  <div className="space-y-3 text-xs">
+                    <ul className="divide-y divide-slate-800/80 rounded-lg border border-slate-800/80 bg-[#070a10] overflow-hidden font-mono">
+                      <li className="flex items-center justify-between p-3">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">Region</span>
+                        <span className="font-semibold text-slate-200">{humanizeLabel(result.classification?.region)}</span>
+                      </li>
+                      <li className="flex items-center justify-between p-3">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">Category</span>
+                        <span className="font-semibold text-slate-200">{humanizeLabel(result.classification?.category)}</span>
+                      </li>
+                      <li className="flex items-center justify-between p-3">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">Severity</span>
+                        <span className="font-semibold text-orange-400">{humanizeLabel(result.classification?.severity)}</span>
+                      </li>
+                      <li className="flex items-center justify-between p-3">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">Energy Relevance</span>
+                        <span className="font-semibold text-emerald-400">
+                          {result.classification?.energyRelevant ? 'Confirmed' : 'Indirect'}
+                        </span>
+                      </li>
+                    </ul>
 
-                  {result.event?.description && (
-                    <div className="pt-2 border-t border-slate-800/60 text-xs">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">Scenario Description</span>
-                      <p className="text-slate-400 leading-relaxed text-[11px]">{result.event.description}</p>
-                    </div>
-                  )}
+                    {result.event?.description && (
+                      <div className="pt-2 border-t border-slate-800/60 text-xs">
+                        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider block mb-1">Scenario Description</span>
+                        <p className="text-slate-400 leading-relaxed text-[11px] font-sans">{result.event.description}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -901,11 +914,6 @@ const FeedCard: React.FC<{ record: MonitoredEventRecord }> = ({ record }) => {
             <span className={`px-2.5 py-0.5 rounded-md border text-[10px] font-mono font-bold tracking-wider ${cfg.bg} ${cfg.border} ${cfg.text}`}>
               {cfg.label}
             </span>
-            {typeof analysis?.risk?.riskScore === 'number' && (
-              <span className="text-xs font-mono font-bold text-slate-300">
-                Score: <span className={cfg.text}>{analysis.risk.riskScore}</span>/100
-              </span>
-            )}
             <span className="text-[11px] font-mono text-slate-500">· {publishedAt}</span>
             <span className="text-[11px] font-mono text-slate-500">· {location}</span>
           </div>
@@ -916,19 +924,16 @@ const FeedCard: React.FC<{ record: MonitoredEventRecord }> = ({ record }) => {
         </div>
       </div>
 
-      {/* Narrative Explanation */}
-      {analysis?.explanation && (
-        <p className="text-xs text-slate-300 leading-relaxed font-sans line-clamp-2">
-          {renderSafeAssessmentMarkdown(compactAssessmentText(analysis.explanation))}
-        </p>
-      )}
-
       {/* Impacted Assets Pills & Source Link */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/60">
         <div className="flex items-center gap-1.5 flex-wrap">
           {affectedNodes.slice(0, 3).map((nodeId, idx) => (
             <span key={nodeId} className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900 text-[10px] font-mono text-slate-400">
-              {friendlyNodeLabel(nodeId, analysis?.digitalTwinImpact?.affectedNodeTypes?.[idx])}
+              {friendlyNodeLabel(
+                nodeId,
+                analysis?.digitalTwinImpact?.affectedNodeTypes?.[idx],
+                analysis?.digitalTwinImpact?.affectedNodeNames?.[idx]
+              )}
             </span>
           ))}
           {affectedNodes.length > 3 && (
@@ -1012,8 +1017,8 @@ const Pagination: React.FC<{
   );
 };
 
-export const NodeIdList: React.FC<{ label: string; nodeIds?: string[]; nodeTypes?: string[]; onViewDigitalTwin?: () => void }> = ({ label, nodeIds, nodeTypes, onViewDigitalTwin }) => {
-  const friendlyLabels = [...new Set((nodeIds || []).map((nodeId, index) => friendlyNodeLabel(nodeId, nodeTypes?.[index])))];
+export const NodeIdList: React.FC<{ label: string; nodeIds?: string[]; nodeTypes?: string[]; nodeNames?: string[]; onViewDigitalTwin?: () => void }> = ({ label, nodeIds, nodeTypes, nodeNames, onViewDigitalTwin }) => {
+  const friendlyLabels = [...new Set((nodeIds || []).map((nodeId, index) => friendlyNodeLabel(nodeId, nodeTypes?.[index], nodeNames?.[index])))];
   return (
     <div>
       <div className="flex items-center justify-between gap-3 mb-1.5">

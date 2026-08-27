@@ -75,7 +75,7 @@ test('repository queries return real processed values', () => {
   const refinery = repository.getRefineries({ search: 'Digboi', pageSize: 10 });
   assert.equal(refinery.data.length, 1);
   assert.equal(refinery.data[0].capacity, 650);
-  assert.equal(refinery.data[0].latitude, null);
+  assert.equal(refinery.data[0].latitude, 27.3881);
 
   const suppliers = repository.getSuppliers({ financialYear: '2014-15', country: 'Saudi', pageSize: 10 });
   assert.equal(suppliers.data.length, 1);

@@ -96,7 +96,7 @@ const geopoliticalEventSchema: Record<string, unknown> = {
 
 const extractionSystemPrompt = 'Return one JSON ORBIT event matching the schema. Extract only event facts; do not calculate risk or invent Digital Twin assets. For hypothetical requests, use the request as source and current time as timestamp.';
 
-const explanationSystemPrompt = 'Write 2 concise sentences explaining the supplied deterministic ORBIT result. Use only its values; do not recalculate risk or invent assets, relationships, capacities, or flows.';
+const explanationSystemPrompt = 'Write 2 concise sentences explaining the supplied deterministic ORBIT result. Focus on the event impact, risk level, and affected supply chain assets. Do NOT include mathematical point breakdowns or individual factor scores (such as event severity (20), energy relevance (10), etc.). Use only its values; do not recalculate risk or invent assets, relationships, capacities, or flows.';
 
 const DEFAULT_RATE_LIMIT_RETRY_MS = 24 * 60 * 60 * 1000;
 
@@ -200,7 +200,6 @@ const compactExplanationInput = (input: GroqExplanationInput): Record<string, un
   risk: {
     riskLevel: input.risk?.riskLevel,
     riskScore: input.risk?.riskScore,
-    factors: input.risk?.factors?.map(({ name, points }) => ({ name, points })),
   },
   digitalTwinImpact: {
     relevant: input.digitalTwinImpact?.relevant,

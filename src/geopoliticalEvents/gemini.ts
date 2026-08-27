@@ -71,7 +71,9 @@ ${request}
 
 const explanationPrompt = (input: GeminiExplanationInput): string => `
 You are the explanation component of the ORBIT geopolitical risk agent.
-Explain the deterministic ORBIT result in 2-4 concise sentences for a human operator.
+Explain the deterministic ORBIT result in 2 concise sentences for a human operator.
+Focus on the event impact, risk level, and affected supply chain assets.
+Do NOT include mathematical point breakdowns or individual factor scores (such as event severity 20, energy relevance 10, etc.).
 Use only the supplied JSON. Do not recalculate or change riskLevel, riskScore, node IDs, edge IDs, capacities, flows, or any other factual value. If a value is empty or unavailable, say so plainly. Do not introduce assets or relationships not present in the supplied result.
 
 Supplied ORBIT result:

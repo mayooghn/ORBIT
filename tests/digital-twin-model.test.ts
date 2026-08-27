@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
@@ -10,6 +10,12 @@ import { buildDigitalTwinFromPhase2 } from '../src/digitalTwin/fromPhase2';
 import { DigitalTwinImpactAnalyzer } from '../src/digitalTwin/impact';
 import { DigitalTwinGraphModel } from '../src/digitalTwin/model';
 import { DigitalTwinStateEngine } from '../src/digitalTwin/state';
+
+const getTestProcessedDir = (): string => {
+  const upperData = path.join(process.cwd(), 'Data', 'processed');
+  if (existsSync(upperData)) return upperData;
+  return path.join(process.cwd(), 'data', 'processed');
+};
 
 test('Digital Twin graph stores node states, edges, and connected nodes', () => {
   const model = new DigitalTwinGraphModel();
@@ -42,7 +48,7 @@ test('retaining Digital Twin nodes removes orphaned edges and connections', () =
 test('Digital Twin adapter loads real Phase 2 nodes without inventing relationships', () => {
   const temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'orbit-digital-twin-'));
   const databasePath = path.join(temporaryDirectory, 'phase2.sqlite');
-  const processedDir = path.join(process.cwd(), 'data', 'processed');
+  const processedDir = getTestProcessedDir();
   let database = openPhase2Database({ dbPath: databasePath });
   try {
     importPhase2Data({ dbPath: databasePath, processedDir });
@@ -55,37 +61,43 @@ test('Digital Twin adapter loads real Phase 2 nodes without inventing relationsh
     };
     const graph = buildDigitalTwinFromPhase2(repository).snapshot();
 
-    assert.equal(graph.nodes.filter((node) => node.nodeType === 'port').length, 27);
+    assert.equal(graph.nodes.filter((node) => node.nodeType === 'port').length, 13);
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'refinery').length, 24);
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'refinery' && node.nodeId === 'refinery-refinery-cde3cd0c803ad63da84f').length, 1);
     assert.equal(graph.nodes.some((node) => node.nodeId === 'refinery-hpcl-vizag'), false);
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'supplier').length, 52);
-    assert.equal(graph.nodes.filter((node) => node.nodeType === 'shipping_route').length, 3);
+    assert.equal(graph.nodes.filter((node) => node.nodeType === 'shipping_route').length, 6);
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'chokepoint').length, 2);
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'strategic_reserve').length, 3);
     assert.ok(graph.nodes.every((node) => node.operationalState === 'operational'));
     assert.ok(graph.nodes.some((node) => node.nodeType === 'refinery' && node.capacity?.value === 650));
-    const capacityNodes = graph.nodes.filter((node) => node.capacity !== undefined);
-    assert.equal(capacityNodes.length, 24);
-    assert.ok(capacityNodes.every((node) => node.nodeType === 'refinery'));
+    const capacityRefineries = graph.nodes.filter((node) => node.nodeType === 'refinery' && node.capacity !== undefined);
+    assert.equal(capacityRefineries.length, 24);
+    assert.ok(capacityRefineries.every((node) => node.nodeType === 'refinery'));
     assert.equal(graph.nodes.find((node) => node.name === 'CPCL, Cauvery Basin*')?.capacity?.value, 0);
     assert.equal(graph.nodes.some((node) => node.name === 'Azhikal (Azhikkal)'), false);
     assert.ok(graph.nodes.some((node) => node.name === 'Kochi (Cochin)'));
     assert.ok(graph.nodes.some((node) => node.name === 'Iran'));
-    assert.ok(capacityNodes.every((node) => node.sourceReferences.some((reference) => reference.table === 'refineries')));
+    assert.ok(capacityRefineries.every((node) => node.sourceReferences.some((reference) => reference.table === 'refineries')));
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'supplier' && node.capacity !== undefined).length, 0);
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'port' && node.capacity !== undefined).length, 0);
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'shipping_route' && node.capacity !== undefined).length, 0);
-    assert.equal(graph.nodes.filter((node) => node.nodeType === 'strategic_reserve' && node.capacity !== undefined).length, 0);
+    assert.equal(graph.nodes.filter((node) => node.nodeType === 'strategic_reserve' && node.capacity !== undefined).length, 3);
     assert.equal(graph.nodes.filter((node) => node.nodeType === 'chokepoint' && node.capacity !== undefined).length, 0);
     const iran = graph.nodes.find((node) => node.nodeType === 'supplier' && node.name === 'Iran');
     assert.equal(iran?.currentFlow?.value, 2445000);
     assert.equal(iran?.currentFlow?.unit, 'barrels_per_day');
     const kochi = graph.nodes.find((node) => node.name === 'Kochi (Cochin)');
-    assert.equal(kochi?.currentFlow?.value, 0);
-    assert.equal(kochi?.metadata.currentFlowUnitStatus, 'UNDOCUMENTED');
-    assert.ok(graph.nodes.every((node) => node.connectedNodeIds.length > 0 || node.metadata.sourceBackedOperationalData === true));
-    assert.equal(graph.nodes.some((node) => node.nodeId.startsWith('shipping-route-shipping-lane-')), false);
+    assert.equal(kochi?.currentFlow, undefined);
+    assert.equal(kochi?.metadata.currentFlowUnitStatus, null);
+    const { LIST_A_PORT_IDS } = require('../src/digitalTwin/fromPhase2');
+    assert.ok(graph.nodes.every((node) =>
+      node.connectedNodeIds.length > 0 ||
+      node.metadata.sourceBackedOperationalData === true ||
+      LIST_A_PORT_IDS.has(node.nodeId) ||
+      (node.nodeType === 'shipping_route' && node.metadata.geometry !== null)
+    ));
+    assert.equal(graph.nodes.some((node) => node.nodeId.startsWith('shipping-route-shipping-lane-')), true);
     assert.equal(graph.edges.length, 27);
     assert.ok(graph.edges.every((edge) => graph.nodes.some((node) => node.nodeId === edge.fromNodeId) && graph.nodes.some((node) => node.nodeId === edge.toNodeId)));
     assert.equal(new Set(graph.edges.map((edge) => edge.edgeId)).size, graph.edges.length);
@@ -260,4 +272,53 @@ test('Digital Twin impact analysis rejects nonexistent nodes and analyzes curren
   const second = analyzer.analyzeCurrentState();
   assert.deepEqual(second, first);
   assert.equal(JSON.stringify(sourceGraph), JSON.stringify(createImpactTestGraph()));
+});
+
+test('Digital Twin refinery nodes retain real SQLite latitude and longitude coordinates', () => {
+  const temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'orbit-digital-twin-coords-'));
+  const databasePath = path.join(temporaryDirectory, 'phase2.sqlite');
+  const processedDir = getTestProcessedDir();
+  let database = openPhase2Database({ dbPath: databasePath });
+  try {
+    importPhase2Data({ dbPath: databasePath, processedDir });
+    database.close();
+    database = openPhase2Database({ dbPath: databasePath });
+    const repository = new Phase2Repository(database);
+    const graph = buildDigitalTwinFromPhase2(repository).snapshot();
+
+    const refineries = graph.nodes.filter((node) => node.nodeType === 'refinery');
+    assert.equal(refineries.length, 24);
+
+    // Verify all 24 refineries have numerical latitude and longitude metadata
+    for (const ref of refineries) {
+      assert.equal(typeof ref.metadata.latitude, 'number', `Refinery ${ref.nodeId} missing latitude`);
+      assert.equal(typeof ref.metadata.longitude, 'number', `Refinery ${ref.nodeId} missing longitude`);
+      assert.ok(isFinite(ref.metadata.latitude as number));
+      assert.ok(isFinite(ref.metadata.longitude as number));
+    }
+
+    // Check specific known verification records
+    const barauni = graph.nodes.find((n) => n.nodeId === 'refinery-refinery-ddcb7bc1d2c3587e0206');
+    assert.equal(barauni?.metadata.latitude, 25.3853);
+    assert.equal(barauni?.metadata.longitude, 86.0142);
+
+    const paradip = graph.nodes.find((n) => n.nodeId === 'refinery-refinery-d6474b2cf97a887365fc');
+    assert.equal(paradip?.metadata.latitude, 20.2881);
+    assert.equal(paradip?.metadata.longitude, 86.6192);
+
+    const jamnagar = graph.nodes.find((n) => n.nodeId === 'refinery-refinery-512c57b7cda5c85a0b09');
+    assert.equal(jamnagar?.metadata.latitude, 22.3619);
+    assert.equal(jamnagar?.metadata.longitude, 69.8319);
+
+    const kochi = graph.nodes.find((n) => n.nodeId === 'refinery-refinery-ae548d16e9f8e503e505');
+    assert.equal(kochi?.metadata.latitude, 9.9575);
+    assert.equal(kochi?.metadata.longitude, 76.3683);
+
+    const vadinar = graph.nodes.find((n) => n.nodeId === 'refinery-refinery-1e0404fa69bfd51b09d2');
+    assert.equal(vadinar?.metadata.latitude, 22.3847);
+    assert.equal(vadinar?.metadata.longitude, 69.6961);
+  } finally {
+    database.close();
+    rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
 });

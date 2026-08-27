@@ -152,7 +152,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {[
             ['Network', corridor.message, '/app/network'],
             ['Risk Intelligence', risk.message, '/app/risk'],
-            ['Strategic Reserves', reserve.message, '/app/reserves'],
+            ['Reserve Management', reserve.message, '/app/reserves'],
             ['Geopolitical Risk Agent', assistant.message, '/app/assistant']
           ].map(([label, message, path]) => (
             <button

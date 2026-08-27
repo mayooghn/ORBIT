@@ -15,7 +15,10 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
-  X
+  X,
+  Compass,
+  MapPin,
+  Check
 } from 'lucide-react';
 import { EmptyState } from '../components/common/EmptyState';
 import { ErrorState } from '../components/common/ErrorState';
@@ -154,34 +157,37 @@ const resolveCoord = (node: DigitalTwinNode): ResolvedCoord => {
     };
   }
 
-  if (node.nodeType === 'supplier') {
-    const byName = COUNTRY_CENTROIDS[node.name.toLowerCase()];
-    if (byName) {
-      return {
-        coords: byName,
-        type: 'COUNTRY',
-        label: 'Country-level visualization position'
-      };
+  // Handle shipping routes with GeoJSON geometry
+  const geom = node.metadata.geometry as any;
+  if (node.nodeType === 'shipping_route' && geom && Array.isArray(geom.coordinates)) {
+    let sumLat = 0, sumLng = 0, count = 0;
+    if (geom.type === 'MultiLineString') {
+      geom.coordinates.forEach((line: any[]) => {
+        if (Array.isArray(line)) {
+          line.forEach((pt: number[]) => {
+            if (Array.isArray(pt) && pt.length >= 2 && typeof pt[0] === 'number' && typeof pt[1] === 'number') {
+              sumLng += pt[0];
+              sumLat += pt[1];
+              count++;
+            }
+          });
+        }
+      });
+    } else if (geom.type === 'LineString') {
+      geom.coordinates.forEach((pt: number[]) => {
+        if (Array.isArray(pt) && pt.length >= 2 && typeof pt[0] === 'number' && typeof pt[1] === 'number') {
+          sumLng += pt[0];
+          sumLat += pt[1];
+          count++;
+        }
+      });
     }
-    const sourceName = String(node.metadata.sourceCountryName || '').toLowerCase();
-    const bySource = sourceName ? COUNTRY_CENTROIDS[sourceName] : null;
-    if (bySource) {
-      return {
-        coords: bySource,
-        type: 'COUNTRY',
-        label: 'Country-level visualization position'
-      };
-    }
-  }
 
-  if (node.nodeType === 'refinery') {
-    const state = String(node.metadata.state || '').toLowerCase();
-    const byState = state ? INDIA_STATE_CENTROIDS[state] : null;
-    if (byState) {
+    if (count > 0) {
       return {
-        coords: byState,
-        type: 'STATE_APPROX',
-        label: 'State-level approximate position'
+        coords: [sumLat / count, sumLng / count],
+        type: 'SOURCE',
+        label: 'Verified GeoJSON shipping lane geometry'
       };
     }
   }
@@ -295,6 +301,7 @@ interface WorldMapProps {
   showConnections: boolean;
   onSelectNode: (nodeId: string) => void;
   mapRef: React.Ref<LeafletMap | null>;
+  statusFilter?: 'all' | 'operational' | 'reduced' | 'disrupted_or_blocked' | null;
 }
 
 const WorldMap: React.FC<WorldMapProps> = (props) => {
@@ -319,11 +326,19 @@ const WorldMap: React.FC<WorldMapProps> = (props) => {
     );
   }
 
-  const { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip } = LeafletComponents;
-  const { graph, coordMap, selectedNodeId, impact, visibleTypes, showConnections, onSelectNode, mapRef } = props;
+  const { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, GeoJSON } = LeafletComponents;
+  const { graph, coordMap, selectedNodeId, impact, visibleTypes, showConnections, onSelectNode, mapRef, statusFilter } = props;
 
   const affectedNodeIds = new Set(impact?.affectedNodeIds ?? []);
   const affectedEdgeIds = new Set(impact?.affectedEdgeIds ?? []);
+
+  const isNodeMatchingFilter = (node: DigitalTwinNode): boolean => {
+    if (!statusFilter || statusFilter === 'all') return true;
+    if (statusFilter === 'operational') return node.operationalState === 'operational';
+    if (statusFilter === 'reduced') return node.operationalState === 'reduced';
+    if (statusFilter === 'disrupted_or_blocked') return node.operationalState === 'disrupted' || node.operationalState === 'blocked';
+    return true;
+  };
 
   return (
     <MapContainer
@@ -345,6 +360,11 @@ const WorldMap: React.FC<WorldMapProps> = (props) => {
           const fromRes = coordMap.get(edge.fromNodeId);
           const toRes = coordMap.get(edge.toNodeId);
           if (!fromRes?.coords || !toRes?.coords) return null;
+
+          const fromNode = graph.nodes.find((n) => n.nodeId === edge.fromNodeId);
+          const toNode = graph.nodes.find((n) => n.nodeId === edge.toNodeId);
+          const isEdgeMatching = (!fromNode || isNodeMatchingFilter(fromNode)) && (!toNode || isNodeMatchingFilter(toNode));
+
           const isAffected = affectedEdgeIds.has(edge.edgeId);
           return (
             <Polyline
@@ -353,7 +373,7 @@ const WorldMap: React.FC<WorldMapProps> = (props) => {
               pathOptions={{
                 color: isAffected ? '#ef4444' : '#555555',
                 weight: isAffected ? 2.5 : 1.5,
-                opacity: isAffected ? 0.95 : 0.6,
+                opacity: isEdgeMatching ? (isAffected ? 0.95 : 0.6) : 0.08,
                 dashArray: isAffected ? undefined : '5 4',
               }}
             >
@@ -362,7 +382,71 @@ const WorldMap: React.FC<WorldMapProps> = (props) => {
                   <div style={{ color: '#888', marginBottom: '2px' }}>
                     {edge.edgeType.replaceAll('_', ' ')}
                   </div>
-                  <div>Confidence: {Math.round(edge.confidence * 100)}%</div>
+                  {isValueAvailable(edge.confidence) && (
+                    <div>Confidence: {Math.round(edge.confidence * 100)}%</div>
+                  )}
+                  {isValueAvailable(edge.capacity) && (
+                    <div>Capacity: {formatValueOrMeasurement(edge.capacity)}</div>
+                  )}
+                  {isValueAvailable(edge.currentFlow) && (
+                    <div>Current Flow: {formatValueOrMeasurement(edge.currentFlow)}</div>
+                  )}
+                  {(() => {
+                    const extraItems: Array<{ label: string; value: string }> = [];
+                    const throughputVal = edge.metadata?.throughput || (edge as any).throughput;
+                    if (isValueAvailable(throughputVal)) {
+                      extraItems.push({ label: 'Throughput', value: formatValueOrMeasurement(throughputVal) });
+                    }
+
+                    const supplyVolumeVal = edge.metadata?.supplyVolume || edge.metadata?.supply_volume || edge.metadata?.supply || (edge as any).supplyVolume;
+                    if (isValueAvailable(supplyVolumeVal)) {
+                      extraItems.push({ label: 'Supply Volume', value: formatValueOrMeasurement(supplyVolumeVal) });
+                    }
+
+                    const demandVal = edge.metadata?.demand || (edge as any).demand;
+                    if (isValueAvailable(demandVal)) {
+                      extraItems.push({ label: 'Demand', value: formatValueOrMeasurement(demandVal) });
+                    }
+
+                    const riskVal = edge.metadata?.risk || edge.metadata?.riskLevel || edge.metadata?.riskScore || edge.metadata?.risk_score || edge.metadata?.risk_level || edge.metadata?.geopoliticalRisk;
+                    if (isValueAvailable(riskVal)) {
+                      extraItems.push({ label: 'Risk', value: formatValueOrMeasurement(riskVal) });
+                    }
+
+                    const reliabilityVal = edge.metadata?.reliability || edge.metadata?.reliabilityScore || edge.metadata?.reliability_score || (edge as any).reliability;
+                    if (isValueAvailable(reliabilityVal)) {
+                      extraItems.push({ label: 'Reliability', value: formatValueOrMeasurement(reliabilityVal) });
+                    }
+
+                    const transitTimeVal = edge.metadata?.transitTime || edge.metadata?.transit_time || edge.metadata?.transit || (edge as any).transitTime;
+                    if (isValueAvailable(transitTimeVal)) {
+                      extraItems.push({ label: 'Transit Time', value: formatValueOrMeasurement(transitTimeVal) });
+                    }
+
+                    const costVal = edge.metadata?.cost || edge.metadata?.commercialCost || edge.metadata?.freightCost || (edge as any).cost;
+                    if (isValueAvailable(costVal)) {
+                      extraItems.push({ label: 'Cost', value: formatValueOrMeasurement(costVal) });
+                    }
+
+                    const distanceVal = edge.metadata?.distance || (edge as any).distance;
+                    if (isValueAvailable(distanceVal)) {
+                      extraItems.push({ label: 'Distance', value: formatValueOrMeasurement(distanceVal) });
+                    }
+
+                    const utilizationVal = edge.metadata?.utilization || (edge as any).utilization;
+                    if (isValueAvailable(utilizationVal)) {
+                      extraItems.push({ label: 'Utilization', value: formatValueOrMeasurement(utilizationVal) });
+                    }
+
+                    const recoveryVal = edge.metadata?.recovery || edge.metadata?.recoveryTime || (edge as any).recovery;
+                    if (isValueAvailable(recoveryVal)) {
+                      extraItems.push({ label: 'Recovery', value: formatValueOrMeasurement(recoveryVal) });
+                    }
+
+                    return extraItems.map((item) => (
+                      <div key={item.label}>{item.label}: {item.value}</div>
+                    ));
+                  })()}
                   {isAffected && <div style={{ color: '#ef4444', marginTop: '2px' }}>⚠ Impact affected</div>}
                 </div>
               </Tooltip>
@@ -380,40 +464,67 @@ const WorldMap: React.FC<WorldMapProps> = (props) => {
         const typeColor = NODE_TYPE_COLORS[node.nodeType];
         const stateColor = STATE_COLORS[node.operationalState];
 
-        const radius = isSelected ? 14 : node.nodeType === 'chokepoint' ? 10 : 7.5;
+        const isNodeMatching = isNodeMatchingFilter(node);
+        const radius = isSelected ? 14 : node.nodeType === 'chokepoint' ? 10 : node.nodeType === 'shipping_route' ? 6 : 7.5;
+        const finalRadius = isNodeMatching ? radius : radius * 0.75;
+
         const strokeColor = isSelected ? '#f97316' : isAffected ? '#ef4444' : typeColor;
-        const strokeOpacity = res.type === 'SOURCE' ? 1 : 0.7;
-        const fillOpacity = res.type === 'SOURCE' ? 0.9 : res.type === 'COUNTRY' ? 0.65 : 0.75;
+        const hasGeoJson = node.nodeType === 'shipping_route' && node.metadata.geometry;
 
         return (
-          <CircleMarker
-            key={node.nodeId}
-            center={res.coords}
-            radius={radius}
-            pathOptions={{
-              color: strokeColor,
-              weight: isSelected ? 3.5 : isAffected ? 2.5 : res.type === 'STATE_APPROX' ? 1.5 : 1.5,
-              fillColor: stateColor,
-              fillOpacity,
-              opacity: strokeOpacity,
-              dashArray: res.type === 'STATE_APPROX' ? '3 3' : undefined,
-            }}
-            eventHandlers={{ click: () => onSelectNode(node.nodeId) }}
-          >
-            <Tooltip direction="top" offset={[0, -(radius + 3)]}>
-              <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px', minWidth: '140px' }}>
-                <div style={{ color: '#fff', fontWeight: 600, marginBottom: '2px' }}>{node.name}</div>
-                <div style={{ color: '#aaa', marginBottom: '2px' }}>{NODE_TYPE_LABELS[node.nodeType]}</div>
-                <div style={{ color: stateColor, fontSize: '10px', textTransform: 'uppercase', marginBottom: '3px' }}>
-                  ● {node.operationalState}
+          <React.Fragment key={node.nodeId}>
+            {hasGeoJson && GeoJSON && (
+              <GeoJSON
+                key={`geojson-${node.nodeId}-${isSelected ? 'sel' : 'norm'}`}
+                data={{
+                  type: 'Feature',
+                  geometry: node.metadata.geometry,
+                  properties: { name: node.name }
+                }}
+                style={() => ({
+                  color: isSelected ? '#f97316' : typeColor,
+                  weight: isSelected ? 4 : 2,
+                  opacity: isNodeMatching ? (isSelected ? 0.95 : 0.65) : 0.1,
+                  dashArray: '6 4',
+                })}
+                eventHandlers={{ click: () => onSelectNode(node.nodeId) }}
+              >
+                <Tooltip sticky>
+                  <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px' }}>
+                    <div style={{ color: '#fff', fontWeight: 600 }}>{node.name}</div>
+                    <div style={{ color: '#aaa', fontSize: '10px' }}>Shipping Lane</div>
+                  </div>
+                </Tooltip>
+              </GeoJSON>
+            )}
+
+            <CircleMarker
+              center={res.coords}
+              radius={finalRadius}
+              pathOptions={{
+                color: strokeColor,
+                weight: isSelected ? 3.5 : isAffected ? 2.5 : 1.5,
+                fillColor: stateColor,
+                fillOpacity: isNodeMatching ? 0.9 : 0.15,
+                opacity: isNodeMatching ? 1 : 0.15,
+              }}
+              eventHandlers={{ click: () => onSelectNode(node.nodeId) }}
+            >
+              <Tooltip direction="top" offset={[0, -(finalRadius + 3)]}>
+                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: '11px', minWidth: '140px' }}>
+                  <div style={{ color: '#fff', fontWeight: 600, marginBottom: '2px' }}>{node.name}</div>
+                  <div style={{ color: '#aaa', marginBottom: '2px' }}>{NODE_TYPE_LABELS[node.nodeType]}</div>
+                  <div style={{ color: stateColor, fontSize: '10px', textTransform: 'uppercase', marginBottom: '3px' }}>
+                    ● {node.operationalState}
+                  </div>
+                  <div style={{ color: '#888', fontSize: '9px', borderTop: '1px solid #333', paddingTop: '3px' }}>
+                    [{res.type}] {res.label}
+                  </div>
+                  {isAffected && <div style={{ color: '#ef4444', fontSize: '10px', marginTop: '2px' }}>⚠ Impact affected</div>}
                 </div>
-                <div style={{ color: '#888', fontSize: '9px', borderTop: '1px solid #333', paddingTop: '3px' }}>
-                  [{res.type}] {res.label}
-                </div>
-                {isAffected && <div style={{ color: '#ef4444', fontSize: '10px', marginTop: '2px' }}>⚠ Impact affected</div>}
-              </div>
-            </Tooltip>
-          </CircleMarker>
+              </Tooltip>
+            </CircleMarker>
+          </React.Fragment>
         );
       })}
     </MapContainer>
@@ -438,6 +549,7 @@ export const NetworkPage: React.FC<NetworkPageProps> = () => {
   );
   const [showConnections, setShowConnections] = useState(true);
   const [showLogicalPanel, setShowLogicalPanel] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'operational' | 'reduced' | 'disrupted_or_blocked' | null>(null);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -655,11 +767,41 @@ export const NetworkPage: React.FC<NetworkPageProps> = () => {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <SummaryCard label="Supply Chain Assets" value={`${mappableCount} / ${graph.nodes.length}`} icon={CircleDot} />
-        <SummaryCard label="Connections" value={graph.edges.length} icon={Network} />
-        <SummaryCard label="Operational" value={stateCounts.operational} color="text-emerald-400" />
-        <SummaryCard label="Reduced" value={stateCounts.reduced} color="text-amber-400" />
-        <SummaryCard label="Disrupted / Blocked" value={stateCounts.disrupted + stateCounts.blocked} color="text-red-400" />
+        <SummaryCard
+          label="Supply Chain Assets"
+          value={`${mappableCount} / ${graph.nodes.length}`}
+          icon={CircleDot}
+          active={statusFilter === null}
+          onClick={() => setStatusFilter(null)}
+        />
+        <SummaryCard
+          label="Connections"
+          value={graph.edges.length}
+          icon={Network}
+          active={showConnections}
+          onClick={() => setShowConnections((prev) => !prev)}
+        />
+        <SummaryCard
+          label="Operational"
+          value={stateCounts.operational}
+          color="text-emerald-400"
+          active={statusFilter === 'operational'}
+          onClick={() => setStatusFilter((curr) => (curr === 'operational' ? null : 'operational'))}
+        />
+        <SummaryCard
+          label="Reduced"
+          value={stateCounts.reduced}
+          color="text-amber-400"
+          active={statusFilter === 'reduced'}
+          onClick={() => setStatusFilter((curr) => (curr === 'reduced' ? null : 'reduced'))}
+        />
+        <SummaryCard
+          label="Disrupted / Blocked"
+          value={stateCounts.disrupted + stateCounts.blocked}
+          color="text-red-400"
+          active={statusFilter === 'disrupted_or_blocked'}
+          onClick={() => setStatusFilter((curr) => (curr === 'disrupted_or_blocked' ? null : 'disrupted_or_blocked'))}
+        />
       </div>
 
       {actionError && (
@@ -727,7 +869,7 @@ export const NetworkPage: React.FC<NetworkPageProps> = () => {
                         >
                           <div className="min-w-0 flex-1">
                             <div className="text-xs font-semibold font-mono text-[#EDEDED] truncate">
-                              {node.name}
+                                {node.name}
                             </div>
                             <div className="text-[10px] font-mono text-[#777777] flex items-center gap-1.5 mt-0.5">
                               <span
@@ -751,6 +893,58 @@ export const NetworkPage: React.FC<NetworkPageProps> = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Explore Hubs suggestions */}
+          <div className="flex flex-wrap items-center gap-1.5 px-4 py-2 border-b border-[#222222]/50 bg-[#121212]/30">
+            <span className="text-[9px] font-mono text-[#555555] uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+              <Compass className="w-3 h-3 text-orange-400" />
+              Quick Explore:
+            </span>
+            {[
+              { name: 'Strait of Hormuz', label: 'Strait of Hormuz' },
+              { name: 'Strait of Malacca', label: 'Strait of Malacca' },
+              { name: 'ISPRL Mangalore', label: 'ISPRL Mangalore' },
+              { name: 'Saudi Arabia', label: 'Saudi Arabia' },
+              { name: 'Iraq', label: 'Iraq' },
+            ].map((item) => {
+              const active = selectedNode?.name.toLowerCase().includes(item.name.toLowerCase());
+              return (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => {
+                    const found = graph.nodes.find((n) => n.name.toLowerCase().includes(item.name.toLowerCase()));
+                    if (found) {
+                      handleSelectNode(found);
+                    }
+                  }}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono border transition-all duration-200 cursor-pointer ${
+                    active
+                      ? 'border-orange-500/80 bg-orange-500/10 text-orange-200'
+                      : 'border-[#222222] bg-[#0A0A0A] text-[#777777] hover:border-[#444444] hover:text-[#EDEDED]'
+                  }`}
+                >
+                  <span className={`w-1 h-1 rounded-full ${active ? 'bg-orange-500 animate-pulse' : 'bg-[#555]'}`} />
+                  {item.label}
+                </button>
+              );
+            })}
+            
+            {statusFilter && (
+              <span className="ml-auto inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-orange-500/20 bg-orange-500/5 text-[9px] font-mono text-orange-300 animate-fade-in">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-ping inline-block" />
+                Filter Active: {statusFilter.replaceAll('_', ' ')}
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter(null)}
+                  className="hover:text-white ml-1 font-bold cursor-pointer"
+                  title="Clear filter"
+                >
+                  ✕
+                </button>
+              </span>
+            )}
           </div>
 
           {/* Controls Toolbar */}
@@ -813,6 +1007,7 @@ export const NetworkPage: React.FC<NetworkPageProps> = () => {
               showConnections={showConnections}
               onSelectNode={setSelectedNodeId}
               mapRef={mapRef}
+              statusFilter={statusFilter}
             />
           </div>
 
@@ -914,20 +1109,72 @@ export const NetworkPage: React.FC<NetworkPageProps> = () => {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-const SummaryCard: React.FC<{ label: string; value: string | number; icon?: React.ElementType; color?: string }> = ({
+const SummaryCard: React.FC<{
+  label: string;
+  value: string | number;
+  icon?: React.ElementType;
+  color?: string;
+  active?: boolean;
+  onClick?: () => void;
+}> = ({
   label,
   value,
   icon: Icon,
   color = 'text-[#EDEDED]',
+  active = false,
+  onClick,
 }) => (
-  <div className="rounded-lg border border-[#222222] bg-[#121212] p-3.5">
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={!onClick}
+    className={`w-full text-left rounded-lg border p-3.5 transition-all duration-300 ${
+      onClick
+        ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-orange-500/5'
+        : 'cursor-default'
+    } ${
+      active
+        ? 'border-orange-500/80 bg-[#1e130d] ring-1 ring-orange-500/30'
+        : 'border-[#222222] bg-[#121212] hover:border-[#444444]'
+    }`}
+  >
     <div className="flex items-center justify-between gap-2">
       <span className="text-[10px] uppercase tracking-widest text-[#666666] font-mono">{label}</span>
-      {Icon && <Icon className="w-3.5 h-3.5 text-orange-400" />}
+      {Icon && <Icon className={`w-3.5 h-3.5 ${active ? 'text-orange-500' : 'text-orange-400'}`} />}
     </div>
-    <div className={`mt-2 text-xl font-semibold font-mono ${color}`}>{value.toString()}</div>
-  </div>
+    <div className={`mt-2 text-xl font-semibold font-mono flex items-baseline gap-1.5 ${color}`}>
+      {value.toString()}
+      {active && <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse inline-block" />}
+    </div>
+  </button>
 );
+
+const isValueAvailable = (val: any): boolean => {
+  if (val === null || val === undefined) return false;
+  if (typeof val === 'number') {
+    return !isNaN(val);
+  }
+  if (typeof val === 'string') {
+    const s = val.trim().toLowerCase();
+    return s !== '' && s !== 'n/a' && s !== 'not available' && s !== 'unknown' && s !== '--' && s !== 'no data' && s !== 'not supplied';
+  }
+  if (typeof val === 'object') {
+    if ('value' in val) {
+      return isValueAvailable(val.value);
+    }
+    return Object.keys(val).length > 0;
+  }
+  return true;
+};
+
+const formatValueOrMeasurement = (val: any): string => {
+  if (typeof val === 'object' && val !== null) {
+    if ('value' in val && 'unit' in val) {
+      return formatMeasurement(val.value, val.unit);
+    }
+  }
+  return String(val);
+};
 
 interface NodeDetailsProps {
   node: DigitalTwinNode;
@@ -940,7 +1187,7 @@ interface NodeDetailsProps {
   onImpact: () => void;
 }
 
-const NodeDetails: React.FC<NodeDetailsProps> = ({
+export const NodeDetails: React.FC<NodeDetailsProps> = ({
   node,
   draftState,
   action,
@@ -949,75 +1196,160 @@ const NodeDetails: React.FC<NodeDetailsProps> = ({
   onDraftState,
   onUpdate,
   onImpact,
-}) => (
-  <div className="space-y-5">
-    <div className="pb-4 border-b border-[#222222]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-widest text-[#666666] font-mono">Selected Asset</p>
-          <h2 className="text-base font-semibold text-[#EDEDED] mt-1 truncate">{node.name}</h2>
+}) => {
+  const items: Array<{ label: string; value: string }> = [];
+
+  // 1. Asset Type
+  if (isValueAvailable(NODE_TYPE_LABELS[node.nodeType])) {
+    items.push({ label: 'Asset Type', value: NODE_TYPE_LABELS[node.nodeType] });
+  }
+
+  // 2. Status Source
+  if (isValueAvailable(node.stateSource)) {
+    items.push({ label: 'Status Source', value: node.stateSource });
+  }
+
+  // 3. Country
+  const countryVal = node.metadata?.country || node.metadata?.sourceCountryName || node.metadata?.countryName;
+  if (isValueAvailable(countryVal)) {
+    items.push({ label: 'Country', value: String(countryVal) });
+  }
+
+  // 4. Capacity
+  if (isValueAvailable(node.capacity)) {
+    items.push({ label: 'Capacity', value: formatNodeMeasurement(node.capacity) });
+  }
+
+  // 5. Current Flow
+  if (isValueAvailable(node.currentFlow)) {
+    items.push({ label: 'Current Flow', value: formatNodeMeasurement(node.currentFlow, node.metadata?.currentFlowUnitStatus) });
+  }
+
+  // 6. Connections
+  if (node.connectedNodeIds && node.connectedNodeIds.length > 0) {
+    items.push({ label: 'Connections', value: node.connectedNodeIds.length.toLocaleString() });
+  }
+
+  // 7. Geographic Status
+  if (coordRes && isValueAvailable(coordRes.label) && coordRes.label.trim().toLowerCase() !== 'unknown') {
+    items.push({ label: 'Geographic Status', value: `[${coordRes.type}] ${coordRes.label}` });
+  }
+
+  // 8. Other optional metrics: Throughput, Supply Volume, Demand, Risk, Reliability, Transit Time, Cost, Distance, Utilization, Recovery
+  const throughputVal = node.metadata?.throughput || (node as any).throughput;
+  if (isValueAvailable(throughputVal)) {
+    items.push({ label: 'Throughput', value: formatValueOrMeasurement(throughputVal) });
+  }
+
+  const supplyVolumeVal = node.metadata?.supplyVolume || node.metadata?.supply_volume || node.metadata?.supply || (node as any).supplyVolume;
+  if (isValueAvailable(supplyVolumeVal)) {
+    items.push({ label: 'Supply Volume', value: formatValueOrMeasurement(supplyVolumeVal) });
+  }
+
+  const demandVal = node.metadata?.demand || (node as any).demand;
+  if (isValueAvailable(demandVal)) {
+    items.push({ label: 'Demand', value: formatValueOrMeasurement(demandVal) });
+  }
+
+  const riskVal = node.metadata?.risk || node.metadata?.riskLevel || node.metadata?.riskScore || node.metadata?.risk_score || node.metadata?.risk_level || node.metadata?.geopoliticalRisk;
+  if (isValueAvailable(riskVal)) {
+    items.push({ label: 'Risk', value: formatValueOrMeasurement(riskVal) });
+  }
+
+  const reliabilityVal = node.metadata?.reliability || node.metadata?.reliabilityScore || node.metadata?.reliability_score || (node as any).reliability;
+  if (isValueAvailable(reliabilityVal)) {
+    items.push({ label: 'Reliability', value: formatValueOrMeasurement(reliabilityVal) });
+  }
+
+  const transitTimeVal = node.metadata?.transitTime || node.metadata?.transit_time || node.metadata?.transit || (node as any).transitTime;
+  if (isValueAvailable(transitTimeVal)) {
+    items.push({ label: 'Transit Time', value: formatValueOrMeasurement(transitTimeVal) });
+  }
+
+  const costVal = node.metadata?.cost || node.metadata?.commercialCost || node.metadata?.freightCost || (node as any).cost;
+  if (isValueAvailable(costVal)) {
+    items.push({ label: 'Cost', value: formatValueOrMeasurement(costVal) });
+  }
+
+  const distanceVal = node.metadata?.distance || (node as any).distance;
+  if (isValueAvailable(distanceVal)) {
+    items.push({ label: 'Distance', value: formatValueOrMeasurement(distanceVal) });
+  }
+
+  const utilizationVal = node.metadata?.utilization || (node as any).utilization;
+  if (isValueAvailable(utilizationVal)) {
+    items.push({ label: 'Utilization', value: formatValueOrMeasurement(utilizationVal) });
+  }
+
+  const recoveryVal = node.metadata?.recovery || node.metadata?.recoveryTime || (node as any).recovery;
+  if (isValueAvailable(recoveryVal)) {
+    items.push({ label: 'Recovery', value: formatValueOrMeasurement(recoveryVal) });
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="pb-4 border-b border-[#222222]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-[#666666] font-mono">Selected Asset</p>
+            <h2 className="text-base font-semibold text-[#EDEDED] mt-1 truncate">{node.name}</h2>
+          </div>
+          <StatusBadge level={stateBadgeLevel(node.operationalState)} label={node.operationalState} size="sm" />
         </div>
-        <StatusBadge level={stateBadgeLevel(node.operationalState)} label={node.operationalState} size="sm" />
+        <p className="text-[10px] text-[#666666] font-mono mt-2 break-all">
+          <span className="text-[#555555]">Technical asset ID: </span>{node.nodeId}
+        </p>
       </div>
-      <p className="text-[10px] text-[#666666] font-mono mt-2 break-all">
-        <span className="text-[#555555]">Technical asset ID: </span>{node.nodeId}
-      </p>
-    </div>
 
-    <dl className="grid grid-cols-2 gap-3 text-xs">
-      <DetailItem label="Asset Type" value={NODE_TYPE_LABELS[node.nodeType]} />
-      <DetailItem label="Status Source" value={node.stateSource} />
-      <DetailItem label="Capacity" value={formatNodeMeasurement(node.capacity)} />
-      <DetailItem label="Current Flow" value={formatNodeMeasurement(node.currentFlow, node.metadata.currentFlowUnitStatus)} />
-      <DetailItem label="Connections" value={node.connectedNodeIds.length.toLocaleString()} />
-      <DetailItem
-        label="Geographic Status"
-        value={coordRes ? `[${coordRes.type}] ${coordRes.label}` : 'Unknown'}
-      />
-    </dl>
+      <dl className="grid grid-cols-2 gap-3 text-xs">
+        {items.map((item) => (
+          <DetailItem key={item.label} label={item.label} value={item.value} />
+        ))}
+      </dl>
 
-    <div className="space-y-2.5 pt-4 border-t border-[#222222]">
-      <label htmlFor="digital-twin-state" className="block text-[10px] uppercase tracking-widest text-[#666666] font-mono">
-        Update Operating State
-      </label>
-      <div className="flex gap-2">
-        <select
-          id="digital-twin-state"
-          value={draftState}
-          onChange={(event) => onDraftState(event.target.value as OperationalState)}
-          className="flex-1 min-w-0 px-2.5 py-2 rounded-md border border-[#333333] bg-[#0D0D0D] text-xs font-mono text-[#EDEDED] focus:outline-none focus:border-orange-500"
-        >
-          {OPERATIONAL_STATES.map((state) => (
-            <option key={state} value={state}>
-              {state}
-            </option>
-          ))}
-        </select>
+      <div className="space-y-2.5 pt-4 border-t border-[#222222]">
+        <label htmlFor="digital-twin-state" className="block text-[10px] uppercase tracking-widest text-[#666666] font-mono">
+          Update Operating State
+        </label>
+        <div className="flex gap-2">
+          <select
+            id="digital-twin-state"
+            value={draftState}
+            onChange={(event) => onDraftState(event.target.value as OperationalState)}
+            className="flex-1 min-w-0 px-2.5 py-2 rounded-md border border-[#333333] bg-[#0D0D0D] text-xs font-mono text-[#EDEDED] focus:outline-none focus:border-orange-500"
+          >
+            {OPERATIONAL_STATES.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={onUpdate}
+            disabled={action !== null || draftState === node.operationalState}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {action === 'state' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Activity className="w-3.5 h-3.5" />}
+            Apply
+          </button>
+        </div>
         <button
           type="button"
-          onClick={onUpdate}
-          disabled={action !== null || draftState === node.operationalState}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          onClick={onImpact}
+          disabled={action !== null || (node.operationalState !== 'disrupted' && node.operationalState !== 'blocked')}
+          className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-[#333333] bg-[#0D0D0D] text-xs font-mono text-[#EDEDED] hover:border-orange-500/60 hover:text-orange-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
-          {action === 'state' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Activity className="w-3.5 h-3.5" />}
-          Apply
+          {action === 'impact' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+          Analyze Impact
         </button>
+        <p className="text-[10px] text-[#666666]">Impact analysis is available only for disrupted or blocked assets.</p>
       </div>
-      <button
-        type="button"
-        onClick={onImpact}
-        disabled={action !== null || (node.operationalState !== 'disrupted' && node.operationalState !== 'blocked')}
-        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-[#333333] bg-[#0D0D0D] text-xs font-mono text-[#EDEDED] hover:border-orange-500/60 hover:text-orange-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-      >
-        {action === 'impact' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5" />}
-        Analyze Impact
-      </button>
-      <p className="text-[10px] text-[#666666]">Impact analysis is available only for disrupted or blocked assets.</p>
-    </div>
 
-    {impact && <ImpactDetails impact={impact} />}
-  </div>
-);
+      {impact && <ImpactDetails impact={impact} />}
+    </div>
+  );
+};
 
 const DetailItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div>

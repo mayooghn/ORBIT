@@ -120,7 +120,14 @@ export class GeopoliticalRiskIntelligenceAgent implements GeopoliticalRiskAgent 
     const normalizedRequest = typeof request === 'string' ? request.trim() : '';
     if (!normalizedRequest) throw new Error('request is required.');
 
-    const extractedEvent = await this.llm.extractEvent(normalizedRequest);
+    let extractedEvent: unknown = undefined;
+    try {
+      extractedEvent = await this.llm.extractEvent(normalizedRequest);
+    } catch (extractError) {
+      console.warn('[ORBIT Agent] LLM event extraction failed or timed out, falling back to deterministic extraction:', extractError);
+      return analyzeGeopoliticalEventDeterministically(normalizedRequest, undefined, this.runtime);
+    }
+
     const analysis = analyzeEventDeterministically(extractedEvent, this.runtime);
     const { event, classification, relevance, risk, digitalTwinImpact } = analysis;
 
@@ -132,12 +139,24 @@ export class GeopoliticalRiskIntelligenceAgent implements GeopoliticalRiskAgent 
       risk: clone(risk),
       digitalTwinImpact: clone(digitalTwinImpact),
     };
-    const explanation = !isEnergySupplyChainRelevant(classification, relevance, risk)
-      ? deterministicExplanation(classification, relevance, risk)
-      : options.explanation === 'deterministic'
-        ? deterministicRelevantExplanation(risk, digitalTwinImpact)
-        : await this.llm.explain(clone(deterministicResults));
-    if (typeof explanation !== 'string' || !explanation.trim()) throw new Error('Groq returned an empty explanation.');
+
+    let explanation: string;
+    if (!isEnergySupplyChainRelevant(classification, relevance, risk)) {
+      explanation = deterministicExplanation(classification, relevance, risk);
+    } else if (options.explanation === 'deterministic') {
+      explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
+    } else {
+      try {
+        explanation = await this.llm.explain(clone(deterministicResults));
+      } catch (explainError) {
+        console.warn('[ORBIT Agent] LLM explanation failed, using deterministic explanation fallback:', explainError);
+        explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
+      }
+    }
+
+    if (typeof explanation !== 'string' || !explanation.trim()) {
+      explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
+    }
 
     return {
       request: normalizedRequest,

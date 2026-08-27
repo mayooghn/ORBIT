@@ -39,39 +39,39 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   return (
     <div
-      className="relative p-5 rounded-lg border border-[#222222] bg-[#121212] hover:border-[#333333] transition-colors"
+      className="relative p-4 rounded-lg border border-[#222222] bg-[#121212] hover:border-[#333333] transition-colors min-w-0 overflow-hidden"
     >
-      <div className="flex items-start justify-between">
-        <span className="text-xs uppercase tracking-widest text-[#666666] font-semibold">
+      <div className="flex items-center justify-between gap-1.5 min-w-0">
+        <span className="text-[10px] sm:text-xs uppercase tracking-wider text-[#666666] font-semibold truncate">
           {title}
         </span>
         {Icon && (
-          <div className={`p-2 rounded ${iconBg}`}>
-            <Icon className="w-4 h-4" />
+          <div className={`p-1.5 rounded shrink-0 ${iconBg}`}>
+            <Icon className="w-3.5 h-3.5" />
           </div>
         )}
       </div>
 
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-3xl font-bold tracking-tight text-[#EDEDED] font-mono">
+      <div className="mt-2 flex items-baseline gap-1.5 min-w-0 overflow-hidden">
+        <span className="text-xl sm:text-2xl font-bold tracking-tight text-[#EDEDED] font-mono truncate">
           {value}
         </span>
         {unit && (
-          <span className="text-xs font-medium text-[#777777] font-mono">
+          <span className="text-xs font-medium text-[#777777] font-mono shrink-0">
             {unit}
           </span>
         )}
       </div>
 
       {(change || subtext) && (
-        <div className="mt-3 flex items-center justify-between text-xs pt-2.5 border-t border-[#1C1C1C]">
+        <div className="mt-2.5 flex items-center justify-between text-xs pt-2 border-t border-[#1C1C1C] min-w-0">
           {change && (
-            <span className={`font-mono font-medium ${changeColor}`}>
+            <span className={`font-mono font-medium ${changeColor} truncate`}>
               {change}
             </span>
           )}
           {subtext && (
-            <span className="text-[#666666] text-xs truncate">
+            <span className="text-[#666666] text-[11px] truncate">
               {subtext}
             </span>
           )}

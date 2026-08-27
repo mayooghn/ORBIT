@@ -10,7 +10,7 @@ import type {
 const INPUT_FIELDS: Array<keyof StrategicReserveOptimizationInput> = [
   'currentReserve',
   'demand',
-  'supplyGap',
+  'availableSupply',
   'disruptionDuration',
   'alternativeProcurement',
   'replenishmentRate',
@@ -27,7 +27,13 @@ export const validateStrategicReserveInput = (
     };
   }
 
-  const candidate = value as Partial<StrategicReserveOptimizationInput>;
+  const candidate = { ...(value as Record<string, unknown>) } as Partial<StrategicReserveOptimizationInput>;
+
+  // Backwards compatibility: if availableSupply is missing but supplyGap is provided, derive availableSupply
+  if (typeof candidate.availableSupply !== 'number' && typeof candidate.supplyGap === 'number') {
+    candidate.availableSupply = Math.max(0, (candidate.demand ?? 0) - candidate.supplyGap);
+  }
+
   const issues = INPUT_FIELDS.flatMap((field) => {
     const fieldValue = candidate[field];
     if (typeof fieldValue !== 'number' || !Number.isFinite(fieldValue)) {
@@ -40,6 +46,9 @@ export const validateStrategicReserveInput = (
   });
 
   if (issues.length > 0) return { valid: false, issues };
+
+  // Guarantee calculated supply gap is stored
+  candidate.supplyGap = Math.max(0, (candidate.demand ?? 0) - (candidate.availableSupply ?? 0));
 
   return {
     valid: true,
@@ -70,49 +79,59 @@ export const optimizeStrategicReserve = (
 
   const normalized = validation.input;
 
-  // 1. Gross Supply Gap
-  const grossSupplyGap = normalized.supplyGap;
+  // 1. Fundamental relationship: Supply Gap = max(0, Daily Demand - Available Supply)
+  const demand = Math.max(0, normalized.demand);
+  const availableSupply = Math.max(0, normalized.availableSupply);
+  const calculatedSupplyGap = Math.max(0, demand - availableSupply);
+  const grossSupplyGap = calculatedSupplyGap;
 
-  // 2. Procurement Coverage (volume covered by procurement alternatives)
+  // 2. Backup Supply (alternativeProcurement) & Procurement Coverage
+  const backupSupply = Math.max(0, normalized.alternativeProcurement);
   const procurementCoverage = Math.min(
     grossSupplyGap,
-    Math.max(0, normalized.alternativeProcurement),
+    backupSupply,
   );
 
-  // 3. Residual Supply Gap (Gross supply gap minus alternative procurement)
+  // 3. Effective Supply Gap = max(0, Supply Gap - Backup Supply)
   const residualSupplyGap = Math.max(
     0,
-    grossSupplyGap - normalized.alternativeProcurement,
+    grossSupplyGap - backupSupply,
   );
   const effectiveGap = residualSupplyGap; // legacy alias
 
-  // 4. Required Reserve Drawdown (Residual gap across disruption duration)
-  const requiredReserveDrawdown = residualSupplyGap * normalized.disruptionDuration;
+  // 4. Total Crisis Requirement = Effective Supply Gap * Crisis Duration
+  const disruptionDuration = Math.max(0, normalized.disruptionDuration);
+  const requiredReserveDrawdown = residualSupplyGap * disruptionDuration;
   const totalNeed = requiredReserveDrawdown; // legacy alias
 
-  // 5. Maximum Safe Reserve Drawdown
-  // Safety constraint: Current reserve minus minimum reserve threshold (capped at 0)
-  const maximumSafeReserveDrawdown = Math.max(
-    0,
-    normalized.currentReserve - normalized.minimumReserveThreshold,
-  );
+  // 5. Maximum Safe Reserve Drawdown = max(0, Current Reserve - Safety Reserve)
+  // Below-safety-threshold case: If Current Reserve < Safety Reserve, max safe drawdown = 0, recommended = 0
+  const isBelowSafety = normalized.currentReserve < normalized.minimumReserveThreshold;
+  const maximumSafeReserveDrawdown = isBelowSafety
+    ? 0
+    : Math.max(
+        0,
+        normalized.currentReserve - normalized.minimumReserveThreshold,
+      );
   const safeAvailableReserve = maximumSafeReserveDrawdown; // legacy alias
 
-  // 6. Recommended Reserve Drawdown
+  // 6. Recommended Reserve Drawdown = min(Total Crisis Requirement, Maximum Safe Drawdown)
   // MUST NEVER exceed safe available reserve, ensuring remainingReserve >= minimumReserveThreshold
-  const recommendedReserveDrawdown = Math.min(
-    requiredReserveDrawdown,
-    maximumSafeReserveDrawdown,
-  );
+  const recommendedReserveDrawdown = isBelowSafety
+    ? 0
+    : Math.min(
+        requiredReserveDrawdown,
+        maximumSafeReserveDrawdown,
+      );
   const drawdownAmount = recommendedReserveDrawdown; // legacy alias
 
   // 7. Remaining Reserve after Drawdown
   const remainingReserve = normalized.currentReserve - recommendedReserveDrawdown;
 
   // 8. Reserve Drawdown Rate (per day)
-  const reserveDrawdownRate = normalized.disruptionDuration === 0
+  const reserveDrawdownRate = disruptionDuration === 0
     ? 0
-    : recommendedReserveDrawdown / normalized.disruptionDuration;
+    : recommendedReserveDrawdown / disruptionDuration;
   const drawdownRate = reserveDrawdownRate; // legacy alias
 
   // 9. Replenishment Requirement & Duration
@@ -134,7 +153,7 @@ export const optimizeStrategicReserve = (
     constraintStatus = 'SATISFIED';
     feasibility = 'FEASIBLE';
     coverageStatus = 'NO_EFFECTIVE_GAP';
-  } else if (normalized.currentReserve < normalized.minimumReserveThreshold) {
+  } else if (isBelowSafety) {
     constraintStatus = 'BELOW_THRESHOLD';
     feasibility = 'INFEASIBLE';
     coverageStatus = 'RESERVE_BELOW_THRESHOLD';
@@ -161,6 +180,8 @@ export const optimizeStrategicReserve = (
   return {
     // Phase 8 Core Calculations
     grossSupplyGap,
+    calculatedSupplyGap,
+    availableSupply,
     procurementCoverage,
     residualSupplyGap,
     requiredReserveDrawdown,
@@ -184,7 +205,7 @@ export const optimizeStrategicReserve = (
     safeAvailableReserve,
     drawdownAmount,
     drawdownRate,
-    duration: normalized.disruptionDuration,
+    duration: disruptionDuration,
     durationUnit: 'days',
     shortfall,
     fullyCovered,

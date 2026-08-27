@@ -4,7 +4,7 @@ import path from 'node:path';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import test from 'node:test';
-import { MeasurementGroup, searchDigitalTwinNodes } from '../src/pages/NetworkPage';
+import { MeasurementGroup, searchDigitalTwinNodes, NodeDetails } from '../src/pages/NetworkPage';
 import type { DigitalTwinNode } from '../src/digitalTwin/model';
 
 const networkSource = readFileSync(path.join(process.cwd(), 'src/pages/NetworkPage.tsx'), 'utf8');
@@ -121,4 +121,102 @@ test('Digital Twin search filters nodes by canonical name, alias, and asset type
   // Blank query returns empty list
   const blankMatches = searchDigitalTwinNodes(mockNodes, '   ');
   assert.equal(blankMatches.length, 0);
+});
+
+test('No verification coordinate values are hardcoded in NetworkPage component source', () => {
+  assert.doesNotMatch(networkSource, /25\.3853/);
+  assert.doesNotMatch(networkSource, /86\.0142/);
+  assert.doesNotMatch(networkSource, /20\.2881/);
+  assert.doesNotMatch(networkSource, /86\.6192/);
+  assert.doesNotMatch(networkSource, /22\.3619/);
+  assert.doesNotMatch(networkSource, /69\.8319/);
+  assert.doesNotMatch(networkSource, /9\.9575/);
+  assert.doesNotMatch(networkSource, /76\.3683/);
+  assert.doesNotMatch(networkSource, /22\.3847/);
+  assert.doesNotMatch(networkSource, /69\.6961/);
+});
+
+test('Digital Twin UI omits missing metrics and reflows gracefully', () => {
+  const nodeWithCapacity: DigitalTwinNode = {
+    nodeId: 'test-node-1',
+    name: 'Test Supplier Alpha',
+    nodeType: 'supplier',
+    operationalState: 'operational',
+    stateSource: 'BASELINE',
+    connectedNodeIds: [],
+    sourceReferences: [],
+    capacity: { value: 5000000, unit: 'tonnes_per_year' },
+    metadata: { country: 'Saudi Arabia', risk: 'Low' },
+  };
+
+  const nodeWithoutCapacity: DigitalTwinNode = {
+    nodeId: 'test-node-2',
+    name: 'Test Supplier Beta',
+    nodeType: 'supplier',
+    operationalState: 'operational',
+    stateSource: 'BASELINE',
+    connectedNodeIds: [],
+    sourceReferences: [],
+    metadata: {},
+  };
+
+  const nodeWithZeroCapacity: DigitalTwinNode = {
+    nodeId: 'test-node-3',
+    name: 'Test Supplier Gamma',
+    nodeType: 'supplier',
+    operationalState: 'operational',
+    stateSource: 'BASELINE',
+    connectedNodeIds: [],
+    sourceReferences: [],
+    capacity: { value: 0, unit: 'tonnes_per_year' },
+    metadata: {},
+  };
+
+  // 1. A node with capacity renders a capacity metric.
+  const htmlWithCapacity = renderToStaticMarkup(React.createElement(NodeDetails, {
+    node: nodeWithCapacity,
+    draftState: 'operational',
+    action: null,
+    impact: null,
+    onDraftState: () => {},
+    onUpdate: () => {},
+    onImpact: () => {},
+  }));
+  assert.match(htmlWithCapacity, /Capacity/);
+  assert.match(htmlWithCapacity, /5,000,000 tonnes per year/);
+  assert.match(htmlWithCapacity, /Country/);
+  assert.match(htmlWithCapacity, /Saudi Arabia/);
+  assert.match(htmlWithCapacity, /Risk/);
+  assert.match(htmlWithCapacity, /Low/);
+
+  // 2. A node without capacity does NOT render a capacity metric.
+  // 8. No "N/A", "Not Available", "--", or placeholder metric is rendered for missing optional values.
+  const htmlWithoutCapacity = renderToStaticMarkup(React.createElement(NodeDetails, {
+    node: nodeWithoutCapacity,
+    draftState: 'operational',
+    action: null,
+    impact: null,
+    onDraftState: () => {},
+    onUpdate: () => {},
+    onImpact: () => {},
+  }));
+  assert.ok(!htmlWithoutCapacity.includes('Capacity'));
+  assert.ok(!htmlWithoutCapacity.includes('Current Flow'));
+  assert.ok(!htmlWithoutCapacity.includes('N/A'));
+  assert.ok(!htmlWithoutCapacity.includes('Not Available'));
+  assert.ok(!htmlWithoutCapacity.includes('Unknown'));
+  assert.ok(!htmlWithoutCapacity.includes('--'));
+
+  // 5. A valid numeric value of 0 is still rendered.
+  const htmlWithZero = renderToStaticMarkup(React.createElement(NodeDetails, {
+    node: nodeWithZeroCapacity,
+    draftState: 'operational',
+    action: null,
+    impact: null,
+    onDraftState: () => {},
+    onUpdate: () => {},
+    onImpact: () => {},
+  }));
+  assert.match(htmlWithZero, /Capacity/);
+  assert.match(htmlWithZero, /0 tonnes per year/);
 });

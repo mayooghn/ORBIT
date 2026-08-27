@@ -58,7 +58,7 @@ export const NAVIGATION_ROUTES: NavigationRoute[] = [
   {
     id: 'reserves',
     path: '/app/reserves',
-    title: 'Strategic Reserves',
+    title: 'Reserve Management',
     shortDescription: 'Review strategic reserve coverage and planning',
     iconName: 'Database',
     phaseNumber: 7,

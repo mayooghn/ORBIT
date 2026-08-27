@@ -19,6 +19,7 @@ export interface GeopoliticalRiskDigitalTwinIntegration {
   riskScore: number;
   matchedNodeIds: string[];
   affectedNodeIds: string[];
+  affectedNodeNames?: string[];
   affectedEdgeIds: string[];
   affectedNodeTypes: DigitalTwinNodeType[];
   affectedCapacity: DigitalTwinImpactMeasurementSummary;
@@ -129,6 +130,7 @@ const irrelevantResult = (
     riskScore: risk.riskScore,
     matchedNodeIds: [...risk.matchedNodeIds],
     affectedNodeIds: [],
+    affectedNodeNames: [],
     affectedEdgeIds: [],
     affectedNodeTypes: [],
     affectedCapacity: emptyMeasurementSummary(),
@@ -204,8 +206,9 @@ export const integrateGeopoliticalRiskWithDigitalTwin = (
     .map((edgeId) => finalEdgeById.get(edgeId))
     .filter((edge): edge is DigitalTwinEdge => Boolean(edge));
   const finalAffectedNodeIds = affectedNodes.map((node) => node.nodeId);
+  const finalAffectedNodeNames = affectedNodes.map((node) => node.name);
   const finalAffectedEdgeIds = affectedEdges.map((edge) => edge.edgeId);
-  const finalAffectedNodeTypes = [...new Set(affectedNodes.map((node) => node.nodeType))].sort();
+  const finalAffectedNodeTypes = affectedNodes.map((node) => node.nodeType);
   const flowNodesById = new Map(
     [...matchedNodeIds, ...finalAffectedNodeIds]
       .map((nodeId) => finalNodeById.get(nodeId))
@@ -224,6 +227,7 @@ export const integrateGeopoliticalRiskWithDigitalTwin = (
     riskScore: risk.riskScore,
     matchedNodeIds,
     affectedNodeIds: finalAffectedNodeIds,
+    affectedNodeNames: finalAffectedNodeNames,
     affectedEdgeIds: finalAffectedEdgeIds,
     affectedNodeTypes: finalAffectedNodeTypes,
     affectedCapacity: measurementSummary(affectedNodes, affectedEdges, 'capacity'),

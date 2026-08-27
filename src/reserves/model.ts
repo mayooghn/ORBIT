@@ -1,7 +1,8 @@
 export interface StrategicReserveOptimizationInput {
   currentReserve: number;
   demand: number;
-  supplyGap: number;
+  availableSupply?: number;
+  supplyGap?: number;
   disruptionDuration: number;
   alternativeProcurement: number;
   replenishmentRate: number;
@@ -30,6 +31,8 @@ export type StrategicReserveConstraintStatus =
 export interface StrategicReserveOptimizationResult {
   // Phase 8 Core Calculations
   grossSupplyGap: number;
+  calculatedSupplyGap: number;
+  availableSupply: number;
   procurementCoverage: number;
   residualSupplyGap: number;
   requiredReserveDrawdown: number;

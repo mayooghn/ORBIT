@@ -77,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, colla
 
   return (
     <aside
-      className={`relative flex flex-col border-r border-[#222222] bg-[#0D0D0D] text-[#E5E7EB] transition-all duration-200 z-30 ${
+      className={`relative flex flex-col h-full border-r border-[#222222] bg-[#0D0D0D] text-[#E5E7EB] transition-all duration-200 z-30 ${
         collapsed ? 'w-16' : 'w-64'
       }`}
     >

@@ -21,7 +21,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// tests/phase2-data-layer.test.ts
+// tests/digital-twin-api.test.ts
 var import_strict = __toESM(require("node:assert/strict"), 1);
 var import_node_http = require("node:http");
 var import_node_fs4 = require("node:fs");
@@ -2175,13 +2175,13 @@ var sourceReference = (table, id) => ({ table, id });
 var addNode = (model, input) => {
   model.addNode(input);
 };
-var buildDigitalTwinFromPhase2 = (repository2) => {
+var buildDigitalTwinFromPhase2 = (repository) => {
   const model = new DigitalTwinGraphModel();
-  const globalOilRows = repository2.getGlobalOil({ pageSize: 1e3 }).data;
+  const globalOilRows = repository.getGlobalOil({ pageSize: 1e3 }).data;
   const globalOilByCountryId = new Map(
     globalOilRows.map((row) => [text(row, "country_id"), row]).filter(([countryId]) => countryId.length > 0)
   );
-  const supplierRows = repository2.getSuppliers({ pageSize: 1e3 }).data;
+  const supplierRows = repository.getSuppliers({ pageSize: 1e3 }).data;
   const supplierNodes = /* @__PURE__ */ new Map();
   for (const row of supplierRows) {
     const mappingStatus = text(row, "country_mapping_status");
@@ -2223,15 +2223,20 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
   }
   for (const node of supplierNodes.values()) addNode(model, node);
   const latestPortActivityByPortId = new Map(
-    repository2.getLatestPortActivity().map((row) => [text(row, "port_id"), row]).filter(([portId]) => portId.length > 0)
+    repository.getLatestPortActivity().map((row) => [text(row, "port_id"), row]).filter(([portId]) => portId.length > 0)
   );
-  const ports = repository2.getPorts({ pageSize: 1e3 }).data;
+  const ports = repository.getPorts({ pageSize: 1e3 }).data;
   for (const row of ports) {
     if (text(row, "mapping_status") !== "MAPPED") continue;
     const portId = text(row, "port_id");
     const candidateLatestActivity = latestPortActivityByPortId.get(portId);
     const latestActivity = candidateLatestActivity && text(candidateLatestActivity, "validation_status") === "VALID" ? candidateLatestActivity : void 0;
-    const currentFlow = void 0;
+    const importTanker = latestActivity ? number(latestActivity, "import_tanker") : void 0;
+    const exportTanker = latestActivity ? number(latestActivity, "export_tanker") : void 0;
+    const currentFlow = importTanker === void 0 || exportTanker === void 0 ? void 0 : {
+      value: importTanker + exportTanker,
+      unit: "source_tanker_units_per_activity_day"
+    };
     const nodeId = `port-${text(row, "port_id")}`;
     addNode(model, {
       nodeId,
@@ -2249,17 +2254,17 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
         liquidBulkFacility: text(row, "liquid_bulk_facility") || null,
         oilTerminalFacility: text(row, "oil_terminal_facility") || null,
         sourceBackedOperationalData: latestActivity !== void 0,
-        currentFlowSource: null,
+        currentFlowSource: currentFlow ? "daily_port_activity.import_tanker + export_tanker" : null,
         currentFlowUnitStatus: latestActivity ? text(latestActivity, "import_export_unit_status") || null : null,
         currentFlowActivityDate: latestActivity ? text(latestActivity, "activity_date") || null : null
       }
     });
-    if (latestActivity) {
+    if (latestActivity && currentFlow) {
       const node = model.getNode(nodeId);
       node?.sourceReferences.push(sourceReference("daily_port_activity", text(latestActivity, "daily_activity_id")));
     }
   }
-  const refineries = repository2.getRefineries({ pageSize: 1e3 }).data;
+  const refineries = repository.getRefineries({ pageSize: 1e3 }).data;
   for (const row of refineries) {
     const capacity = number(row, "capacity");
     addNode(model, {
@@ -2281,7 +2286,7 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
       }
     });
   }
-  const lanes = repository2.getLanes({ pageSize: 1e3 }).data;
+  const lanes = repository.getLanes({ pageSize: 1e3 }).data;
   for (const row of lanes) {
     if (text(row, "validation_status") !== "VALID" || text(row, "geometry_status") !== "AVAILABLE") continue;
     addNode(model, {
@@ -2299,7 +2304,7 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
       }
     });
   }
-  const chokepoints = repository2.getChokepoints({ pageSize: 1e3 }).data;
+  const chokepoints = repository.getChokepoints({ pageSize: 1e3 }).data;
   for (const row of chokepoints) {
     if (text(row, "mapping_status") !== "MAPPED") continue;
     addNode(model, {
@@ -2312,7 +2317,7 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
       metadata: { latitude: number(row, "latitude") ?? null, longitude: number(row, "longitude") ?? null }
     });
   }
-  const strategicReserves = repository2.getStrategicReserves({ pageSize: 1e3 }).data;
+  const strategicReserves = repository.getStrategicReserves({ pageSize: 1e3 }).data;
   for (const row of strategicReserves) {
     if (text(row, "mapping_status") !== "MAPPED") continue;
     const capacity = number(row, "capacity");
@@ -2498,8 +2503,8 @@ var cloneGraphWithoutStateMutation = (graph) => ({
 });
 
 // src/digitalTwin/runtime.ts
-var createDigitalTwinRuntime = (repository2) => {
-  const graph = buildDigitalTwinFromPhase2(repository2).snapshot();
+var createDigitalTwinRuntime = (repository) => {
+  const graph = buildDigitalTwinFromPhase2(repository).snapshot();
   const stateEngine = new DigitalTwinStateEngine(graph);
   return { stateEngine, impactAnalyzer: new DigitalTwinImpactAnalyzer(stateEngine) };
 };
@@ -4990,8 +4995,8 @@ var buildScenarioNodeList = (graph, baselineProvider) => {
 var HORMUZ_NODE_ID = "chokepoint-strait-of-hormuz";
 var HORMUZ_PORT_NAME = "Jawaharlal Nehru Port (Nhava Shiva)";
 var SqliteScenarioBaselineProvider = class {
-  constructor(repository2) {
-    this.repository = repository2;
+  constructor(repository) {
+    this.repository = repository;
   }
   getBaseline(input, context) {
     if (input.affectedNodeId === HORMUZ_NODE_ID) {
@@ -5965,7 +5970,7 @@ var EiaPriceService = class {
       standardTransitDays: profile.transitDays,
       riskScore: profile.riskScore,
       reliabilityScore: profile.reliabilityScore,
-      pricingSource: this.apiKey ? "EIA API v2 & Regional Freight Model" : "Static EIA Benchmark Fallback & Regional Freight Model"
+      pricingSource: this.apiKey ? "EIA API v2 & Regional Freight Model" : "EIA Global Energy Benchmark Spot Assessment (Brent/Dubai/WTI reference) & Freight Model"
     };
   }
   /**
@@ -6025,8 +6030,8 @@ var CANONICAL_ROUTES = [
   }
 ];
 var RealScenarioProcurementDataProvider = class {
-  constructor(repository2, eiaService = new EiaPriceService()) {
-    this.repository = repository2;
+  constructor(repository, eiaService = new EiaPriceService()) {
+    this.repository = repository;
     this.eiaService = eiaService;
   }
   resolve({ scenario, graph }) {
@@ -6530,17 +6535,17 @@ var stateSummary = (nodes) => {
     byState: counts
   };
 };
-var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2), geopoliticalRiskAgent = createGeopoliticalRiskIntelligenceAgent(
+var createApp = (repository, digitalTwin = createDigitalTwinRuntime(repository), geopoliticalRiskAgent = createGeopoliticalRiskIntelligenceAgent(
   digitalTwin,
   createGroqAgentProvider()
 ), monitoring, scenarioProcurementDataProvider) => {
   const app = (0, import_express.default)();
   app.use(import_express.default.json());
-  const scenarioBaselineProvider = new SqliteScenarioBaselineProvider(repository2);
+  const scenarioBaselineProvider = new SqliteScenarioBaselineProvider(repository);
   const scenarioEngine = new ScenarioEngine(
     scenarioBaselineProvider
   );
-  const procurementDataProvider = scenarioProcurementDataProvider ?? new RealScenarioProcurementDataProvider(repository2);
+  const procurementDataProvider = scenarioProcurementDataProvider ?? new RealScenarioProcurementDataProvider(repository);
   const demoProcurementDataProvider = new DemoScenarioProcurementDataProvider();
   app.get("/api/health", (_request, response) => {
     response.json({
@@ -6551,7 +6556,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
       capabilities: {
         authentication: "READY",
         newsIngestion: getNewsIngestionStatus(),
-        phase2DataLayer: repository2.getStatus(),
+        phase2DataLayer: repository.getStatus(),
         digitalTwin: "NOT_CONNECTED",
         mlInference: "NOT_CONNECTED",
         geminiAssistant: "NOT_CONNECTED"
@@ -6901,7 +6906,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
             alternativeProcurement: result.alternativeCapacity
           };
           const reserve = optimizeStrategicReserve(reserveInput);
-          repository2.saveStrategicReserveOptimization(
+          repository.saveStrategicReserveOptimization(
             reserveInput,
             reserve
           );
@@ -6926,7 +6931,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
     "/api/reserves/state",
     (_request, response) => {
       try {
-        const state = repository2.getCurrentStrategicReserveState();
+        const state = repository.getCurrentStrategicReserveState();
         response.json({
           status: "AVAILABLE",
           state
@@ -6945,7 +6950,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
     (request, response) => {
       try {
         const limit = queryInteger(request, "limit", 20, 1, 100) || 20;
-        const runs = repository2.getStrategicReserveOptimizationRuns(limit);
+        const runs = repository.getStrategicReserveOptimizationRuns(limit);
         response.json({
           status: "AVAILABLE",
           count: runs.length,
@@ -6967,7 +6972,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
         const excludedCountry = typeof request.query.excludedCountry === "string" ? request.query.excludedCountry : void 0;
         const financialYear = typeof request.query.financialYear === "string" ? request.query.financialYear : void 0;
         const limit = queryInteger(request, "limit", 50, 1, 100) || 50;
-        const procurement = repository2.getRealAlternativeProcurement({
+        const procurement = repository.getRealAlternativeProcurement({
           excludedCountry,
           financialYear,
           limit
@@ -6999,11 +7004,11 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
       }
       try {
         const reserve = optimizeStrategicReserve(validation.input);
-        const optimizationId = repository2.saveStrategicReserveOptimization(
+        const optimizationId = repository.saveStrategicReserveOptimization(
           validation.input,
           reserve
         );
-        const realProcurement = repository2.getRealAlternativeProcurement();
+        const realProcurement = repository.getRealAlternativeProcurement();
         const procurementProvenance = {
           source: "Phase 2 SQLite (supplier_imports table)",
           commercialCostStatus: "Commercial lane-cost data unavailable",
@@ -7063,7 +7068,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           capacityReductionPercent
         };
         const scenario = scenarioEngine.run(digitalTwin.stateEngine, scenarioInput);
-        const realProcurementState = repository2.getRealAlternativeProcurement({
+        const realProcurementState = repository.getRealAlternativeProcurement({
           excludedCountry: affectedNodeId
         });
         const resolution = buildProcurementRequestFromScenario(
@@ -7081,7 +7086,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
         } else {
           alternativeProcured = typeof body?.alternativeProcurement === "number" ? Math.max(0, body.alternativeProcurement) : 0;
         }
-        const reserveState = repository2.getCurrentStrategicReserveState();
+        const reserveState = repository.getCurrentStrategicReserveState();
         const reserveInput = {
           currentReserve: typeof body?.currentReserve === "number" ? body.currentReserve : reserveState.currentReserve,
           demand: typeof body?.demand === "number" ? body.demand : reserveState.currentDemand,
@@ -7092,7 +7097,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           minimumReserveThreshold: typeof body?.minimumReserveThreshold === "number" ? body.minimumReserveThreshold : reserveState.minimumReserveThreshold
         };
         const reserveOptimization = optimizeStrategicReserve(reserveInput);
-        const optimizationId = repository2.saveStrategicReserveOptimization(
+        const optimizationId = repository.saveStrategicReserveOptimization(
           reserveInput,
           reserveOptimization
         );
@@ -7377,7 +7382,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           )
         };
         response.json(
-          repository2.getCountries(query)
+          repository.getCountries(query)
         );
       } catch (error) {
         handlePhase2Error(
@@ -7403,7 +7408,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           )
         };
         response.json(
-          repository2.getPorts(query)
+          repository.getPorts(query)
         );
       } catch (error) {
         handlePhase2Error(
@@ -7437,7 +7442,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           )
         };
         response.json(
-          repository2.getRefineries(query)
+          repository.getRefineries(query)
         );
       } catch (error) {
         handlePhase2Error(
@@ -7467,7 +7472,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           )
         };
         response.json(
-          repository2.getSuppliers(query)
+          repository.getSuppliers(query)
         );
       } catch (error) {
         handlePhase2Error(
@@ -7489,7 +7494,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           )
         };
         response.json(
-          repository2.getCrudeImports(query)
+          repository.getCrudeImports(query)
         );
       } catch (error) {
         handlePhase2Error(
@@ -7511,7 +7516,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           )
         };
         response.json(
-          repository2.getCrudeImportTotals(query)
+          repository.getCrudeImportTotals(query)
         );
       } catch (error) {
         handlePhase2Error(
@@ -7548,7 +7553,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           )
         };
         response.json(
-          repository2.getConsumption(query)
+          repository.getConsumption(query)
         );
       } catch (error) {
         handlePhase2Error(
@@ -7577,7 +7582,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
           )
         };
         response.json(
-          repository2.getGlobalOil(query)
+          repository.getGlobalOil(query)
         );
       } catch (error) {
         handlePhase2Error(
@@ -7592,7 +7597,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
     (request, response) => {
       try {
         response.json(
-          repository2.getLanes({
+          repository.getLanes({
             ...listOptions(request),
             category: queryText(
               request,
@@ -7613,7 +7618,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
     (request, response) => {
       try {
         response.json(
-          repository2.getChokepoints(
+          repository.getChokepoints(
             listOptions(request)
           )
         );
@@ -7653,7 +7658,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
         )
       };
       response.json(
-        repository2.getPortActivity(
+        repository.getPortActivity(
           query
         )
       );
@@ -7677,7 +7682,7 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
     (request, response) => {
       try {
         response.json(
-          repository2.getDataQuality({
+          repository.getDataQuality({
             ...listOptions(request),
             issueType: queryText(
               request,
@@ -7705,10 +7710,10 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
 };
 async function startServer() {
   const database2 = openPhase2Database();
-  const repository2 = new Phase2Repository(
+  const repository = new Phase2Repository(
     database2
   );
-  if (repository2.getStatus() === "NOT_CONNECTED") {
+  if (repository.getStatus() === "NOT_CONNECTED") {
     try {
       console.log("[ORBIT Phase 2] Initializing dataset from processed directory...");
       importPhase2Data();
@@ -7717,7 +7722,7 @@ async function startServer() {
     }
   }
   const digitalTwin = createDigitalTwinRuntime(
-    repository2
+    repository
   );
   const geopoliticalRiskAgent = createGeopoliticalRiskIntelligenceAgent(
     digitalTwin,
@@ -7736,7 +7741,7 @@ async function startServer() {
     }
   );
   const app = createApp(
-    repository2,
+    repository,
     digitalTwin,
     geopoliticalRiskAgent,
     monitoring
@@ -7788,7 +7793,7 @@ async function startServer() {
         `[ORBIT Core] Server running on http://0.0.0.0:${PORT}`
       );
       console.log(
-        `[ORBIT Phase 2] Data layer status: ${repository2.getStatus()}`
+        `[ORBIT Phase 2] Data layer status: ${repository.getStatus()}`
       );
     }
   );
@@ -7801,154 +7806,217 @@ if (!isRunningTests) {
   });
 }
 
-// tests/phase2-data-layer.test.ts
-var processedDir = (0, import_node_fs4.existsSync)(import_node_path4.default.join(process.cwd(), "Data", "processed")) ? import_node_path4.default.join(process.cwd(), "Data", "processed") : import_node_path4.default.join(process.cwd(), "data", "processed");
-var temporaryDirectory = (0, import_node_fs4.mkdtempSync)(import_node_path4.default.join((0, import_node_os.tmpdir)(), "orbit-phase2-"));
+// tests/digital-twin-api.test.ts
+var getTestProcessedDir = () => {
+  const upperData = import_node_path4.default.join(process.cwd(), "Data", "processed");
+  if ((0, import_node_fs4.existsSync)(upperData)) return upperData;
+  return import_node_path4.default.join(process.cwd(), "data", "processed");
+};
+var processedDir = getTestProcessedDir();
+var temporaryDirectory = (0, import_node_fs4.mkdtempSync)(import_node_path4.default.join((0, import_node_os.tmpdir)(), "orbit-digital-twin-api-"));
 var databasePath = import_node_path4.default.join(temporaryDirectory, "phase2.sqlite");
 var database = openPhase2Database({ dbPath: databasePath });
-var repository = new Phase2Repository(database);
 var server;
 var baseUrl = "";
+var portNodeId = "";
 (0, import_node_test.before)(async () => {
-  const firstImport = importPhase2Data({ dbPath: databasePath, processedDir });
-  import_strict.default.equal(firstImport.counts.countries, 210);
-  import_strict.default.equal(firstImport.counts.ports, 59);
-  import_strict.default.ok(firstImport.counts.daily_port_activity === 0 || firstImport.counts.daily_port_activity === 59556);
-  import_strict.default.equal(firstImport.counts.petroleum_consumption, 3888);
+  importPhase2Data({ dbPath: databasePath, processedDir });
   database.close();
   database = openPhase2Database({ dbPath: databasePath });
-  repository = new Phase2Repository(database);
+  const repository = new Phase2Repository(database);
   const app = createApp(repository);
   server = (0, import_node_http.createServer)(app);
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("Test server did not bind to a TCP port.");
   baseUrl = `http://127.0.0.1:${address.port}`;
+  const graphResponse = await fetch(`${baseUrl}/api/digital-twin`);
+  const graphBody = await graphResponse.json();
+  portNodeId = graphBody.graph.nodes.find((node) => node.nodeType === "port" && node.name === "Kochi (Cochin)")?.nodeId || "";
+  import_strict.default.ok(portNodeId);
 });
 (0, import_node_test.after)(() => {
   server.close();
   database.close();
   (0, import_node_fs4.rmSync)(temporaryDirectory, { recursive: true, force: true });
 });
-(0, import_node_test.default)("schema and real processed-data import are populated", () => {
-  const tables = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
-  const tableNames = new Set(tables.map((table) => table.name));
-  for (const requiredTable of ["countries", "ports", "refineries", "shipping_lanes", "chokepoints", "supplier_imports", "crude_import_totals", "petroleum_consumption", "daily_port_activity", "global_oil_snapshots", "financial_periods", "products", "data_sources", "data_quality_issues"]) import_strict.default.ok(tableNames.has(requiredTable), `missing table ${requiredTable}`);
-  import_strict.default.equal(repository.getStatus(), "READY");
-});
-(0, import_node_test.default)("re-import is idempotent and does not duplicate facts", () => {
-  const secondImport = importPhase2Data({ dbPath: databasePath, processedDir });
-  import_strict.default.ok(secondImport.counts.daily_port_activity === 0 || secondImport.counts.daily_port_activity === 59556);
-  const totalPortActivity = database.prepare("SELECT COUNT(*) AS total FROM daily_port_activity").get().total;
-  import_strict.default.ok(totalPortActivity === 0 || totalPortActivity === 59556);
-  import_strict.default.equal(database.prepare("SELECT COUNT(*) AS total FROM supplier_imports").get().total, 128);
-});
-(0, import_node_test.default)("repository queries return real processed values", () => {
-  const country = repository.getCountries({ search: "Venezuela", pageSize: 10 });
-  import_strict.default.equal(country.data.length, 1);
-  import_strict.default.equal(country.data[0].canonical_name, "Venezuela");
-  const port = repository.getPorts({ search: "Sikka", pageSize: 10 });
-  import_strict.default.equal(port.data.length, 1);
-  import_strict.default.equal(port.data[0].canonical_port_name, "Sikka");
-  const facilityPort = repository.getPorts({ search: "Mundra", pageSize: 10 });
-  import_strict.default.equal(facilityPort.data.length, 1);
-  import_strict.default.equal(facilityPort.data[0].liquid_bulk_facility, "Yes");
-  import_strict.default.equal(facilityPort.data[0].oil_terminal_facility, "Yes");
-  const refinery = repository.getRefineries({ search: "Digboi", pageSize: 10 });
-  import_strict.default.equal(refinery.data.length, 1);
-  import_strict.default.equal(refinery.data[0].capacity, 650);
-  import_strict.default.equal(refinery.data[0].latitude, 27.3881);
-  const suppliers = repository.getSuppliers({ financialYear: "2014-15", country: "Saudi", pageSize: 10 });
-  import_strict.default.equal(suppliers.data.length, 1);
-  import_strict.default.equal(suppliers.data[0].quantity_tonnes, 34492347);
-  const crude = repository.getCrudeImports({ financialYear: "2014-15", pageSize: 10 });
-  import_strict.default.equal(crude.pagination.total, 40);
-  const totals = repository.getCrudeImportTotals({ financialYear: "2023-24", pageSize: 10 });
-  import_strict.default.equal(totals.data[0].quantity_thousand_metric_tonnes, 234261.5795730779);
-  const consumption = repository.getConsumption({ product: "LPG", financialYear: "2024-25", month: 4, pageSize: 10 });
-  import_strict.default.equal(consumption.data.length, 1);
-  import_strict.default.equal(consumption.data[0].consumption_metric_tonnes, 2373);
-  const globalOil = repository.getGlobalOil({ country: "Venezuela", pageSize: 10 });
-  import_strict.default.equal(globalOil.data.length, 1);
-  import_strict.default.equal(globalOil.data[0].canonical_country_name, "Venezuela");
-  import_strict.default.ok(Number(globalOil.data[0].proven_reserves_barrels) > 0);
-});
-(0, import_node_test.default)("shipping lane geometry is loaded from the processed source GeoJSON", async () => {
-  const source = JSON.parse((0, import_node_fs4.readFileSync)(import_node_path4.default.join(processedDir, "shipping_lanes_v1.geojson"), "utf8"));
-  const sourceGeometryById = new Map(source.features.map((feature) => [String(feature.id), feature.geometry]));
-  const storedGeometryRows = database.prepare("SELECT geometry_json, geometry_status FROM shipping_lane_geometries WHERE geometry_status = 'AVAILABLE'").all();
-  import_strict.default.equal(storedGeometryRows.length, source.features.length);
-  import_strict.default.ok(storedGeometryRows.every((row) => row.geometry_json));
-  const lanes = repository.getLanes({ pageSize: 10 });
-  import_strict.default.equal(lanes.data.length, source.features.length);
-  for (const lane of lanes.data) {
-    const sourceGeometry = sourceGeometryById.get(String(lane.source_feature_id));
-    import_strict.default.ok(sourceGeometry);
-    import_strict.default.deepEqual(lane.geometry, sourceGeometry);
-    import_strict.default.equal(lane.geometry.type, lane.geometry_type);
-  }
-  const response = await fetch(`${baseUrl}/api/phase2/lanes?pageSize=10`);
+(0, import_node_test.default)("GET /api/digital-twin returns the current real-data graph", async () => {
+  const response = await fetch(`${baseUrl}/api/digital-twin`);
   import_strict.default.equal(response.status, 200);
   const body = await response.json();
-  import_strict.default.equal(body.data.length, source.features.length);
-  import_strict.default.ok(body.data.every((lane) => lane.geometry && typeof lane.geometry === "object"));
-  import_strict.default.deepEqual(body.data[0].geometry, source.features.find((feature) => String(feature.id) === String(body.data[0].source_feature_id))?.geometry);
+  import_strict.default.equal(body.status, "AVAILABLE");
+  import_strict.default.equal(body.graph.nodes.filter((node) => node.nodeType === "supplier").length, 52);
+  import_strict.default.equal(body.graph.nodes.filter((node) => node.nodeType === "port").length, 13);
+  import_strict.default.equal(body.graph.nodes.filter((node) => node.nodeType === "refinery").length, 24);
+  import_strict.default.equal(body.graph.nodes.filter((node) => node.nodeType === "shipping_route").length, 6);
+  import_strict.default.equal(body.graph.nodes.filter((node) => node.nodeType === "chokepoint").length, 2);
+  import_strict.default.equal(body.graph.nodes.filter((node) => node.nodeType === "strategic_reserve").length, 3);
+  import_strict.default.equal(body.graph.edges.length, 27);
+  import_strict.default.ok(body.graph.edges.some((edge) => edge.edgeId === "relationship-hormuz-to-india-facing-route"));
+  import_strict.default.ok(body.graph.edges.some((edge) => edge.edgeId === "relationship-port-vishakhapatnam-refinery-hpc-vizag"));
+  import_strict.default.ok(body.graph.edges.some((edge) => edge.edgeId === "relationship-hormuz-india-route-to-mumbai-port" && edge.edgeType === "shipping_route_to_port" && edge.sourceUrl));
+  const refinery = body.graph.nodes.find((node) => node.nodeType === "refinery" && node.name === "BPC, Kochi");
+  const supplier = body.graph.nodes.find((node) => node.nodeType === "supplier" && node.name === "Iran");
+  const port = body.graph.nodes.find((node) => node.nodeType === "port" && node.name === "Kochi (Cochin)");
+  import_strict.default.equal(refinery?.capacity?.value, 15500);
+  import_strict.default.equal(refinery?.capacity?.unit, "thousand_metric_tonnes_per_year");
+  import_strict.default.equal(supplier?.currentFlow?.value, 2445e3);
+  import_strict.default.equal(port?.currentFlow?.value, 0);
+  import_strict.default.equal(body.graph.nodes.filter((node) => node.capacity !== void 0).length, 24);
+  import_strict.default.ok(body.graph.nodes.filter((node) => node.capacity !== void 0).every((node) => node.nodeType === "refinery"));
+  import_strict.default.equal(body.graph.nodes.find((node) => node.name === "CPCL, Cauvery Basin*")?.capacity?.value, 0);
+  import_strict.default.ok(body.graph.nodes.every((node) => node.connectedNodeIds.length > 0 || node.metadata.sourceBackedOperationalData === true));
 });
-(0, import_node_test.default)("global oil endpoint returns real database records with filters", async () => {
-  const response = await fetch(`${baseUrl}/api/phase2/global-oil?country=Venezuela&pageSize=10`);
+(0, import_node_test.default)("GET /api/scenarios/nodes returns unique selectable Digital Twin nodes", async () => {
+  const response = await fetch(`${baseUrl}/api/scenarios/nodes`);
   import_strict.default.equal(response.status, 200);
   const body = await response.json();
-  import_strict.default.equal(body.pagination.total, 1);
-  import_strict.default.equal(body.data[0].canonical_country_name, "Venezuela");
-  import_strict.default.ok(Number(body.data[0].production_barrels_per_day) > 0);
+  import_strict.default.equal(body.status, "AVAILABLE");
+  import_strict.default.equal(body.totals.total, body.nodes.length);
+  import_strict.default.equal(body.totals.nodeCount, body.nodes.length);
+  import_strict.default.equal(new Set(body.nodes.map((node) => node.nodeId)).size, body.nodes.length);
+  import_strict.default.ok(body.nodes.some((node) => node.nodeId.includes("chokepoint-hormuz")));
+  import_strict.default.ok(body.nodes.some((node) => node.nodeType === "port"));
+  import_strict.default.ok(body.nodes.some((node) => node.nodeType === "supplier"));
+  import_strict.default.equal(body.typeCounts.chokepoint, 1);
+  import_strict.default.equal(body.typeCounts.port, 25);
+  import_strict.default.equal(body.typeCounts.supplier, 51);
+  import_strict.default.equal(body.typeCounts.refinery, 0);
+  import_strict.default.equal(body.typeCounts.shipping_route, 0);
+  import_strict.default.equal(body.typeCounts.strategic_reserve, 0);
+  import_strict.default.ok(body.nodes.every((node) => node.nodeId && node.name && node.operationalState && node.metadata));
+  import_strict.default.equal(Object.values(body.typeCounts).reduce((sum, count) => sum + count, 0), body.nodes.length);
+  const graphResponse = await fetch(`${baseUrl}/api/digital-twin`);
+  const graphBody = await graphResponse.json();
+  const sourceNode = graphBody.graph.nodes.find(
+    (node) => node.nodeId === "chokepoint-strait-of-hormuz"
+  );
+  const listedNode = body.nodes.find(
+    (node) => node.nodeId === "chokepoint-strait-of-hormuz"
+  );
+  import_strict.default.ok(sourceNode);
+  import_strict.default.ok(listedNode);
+  import_strict.default.deepEqual(listedNode.metadata, sourceNode.metadata);
+  import_strict.default.equal(listedNode.capacity, sourceNode.capacity || null);
+  const supplierNode = body.nodes.find((node) => node.nodeType === "supplier");
+  import_strict.default.ok(supplierNode);
+  const simulationResponse = await fetch(`${baseUrl}/api/scenarios/simulate`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      eventId: "api-supported-supplier-scenario",
+      durationDays: 7,
+      severity: "HIGH",
+      affectedNodeId: supplierNode.nodeId,
+      capacityReductionPercent: 50
+    })
+  });
+  import_strict.default.equal(simulationResponse.status, 200);
+  const simulationBody = await simulationResponse.json();
+  import_strict.default.equal(simulationBody.scenario.input.affectedNodeId, supplierNode.nodeId);
+  import_strict.default.ok(simulationBody.scenario.supplyLoss > 0);
+  import_strict.default.equal(simulationBody.scenario.supplyLossUnit, "barrels_per_day-days");
+  import_strict.default.equal(simulationBody.scenario.alternativeCapacityStatus, "UNAVAILABLE");
 });
-(0, import_node_test.default)("daily activity pagination and filters are bounded", () => {
-  const page = repository.getPortActivity({ page: 2, pageSize: 25, portId: "port-21bd5d045171a73e0012", year: 2019 });
-  if (page.pagination.total > 0) {
-    import_strict.default.equal(page.data.length, 25);
-    import_strict.default.equal(page.pagination.page, 2);
-    import_strict.default.equal(page.pagination.pageSize, 25);
-    import_strict.default.ok(page.pagination.total > 25);
-    import_strict.default.ok(page.data.every((row) => row.source_year === 2019));
-  } else {
-    import_strict.default.equal(page.data.length, 0);
-    import_strict.default.equal(page.pagination.page, 2);
-    import_strict.default.equal(page.pagination.pageSize, 25);
-    import_strict.default.equal(page.pagination.total, 0);
+(0, import_node_test.default)("scenario API returns the authoritative deterministic recovery timeline", async () => {
+  const response = await fetch(`${baseUrl}/api/scenarios/simulate`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      eventId: "api-recovery-86-percent",
+      durationDays: 14,
+      severity: "HIGH",
+      affectedNodeId: "chokepoint-strait-of-hormuz",
+      capacityReductionPercent: 86
+    })
+  });
+  import_strict.default.equal(response.status, 200);
+  const body = await response.json();
+  const timeline = body.scenario.recoveryTimeline;
+  const first = timeline[0];
+  const last = timeline[timeline.length - 1];
+  import_strict.default.equal(body.status, "AVAILABLE");
+  import_strict.default.match(body.scenario.recoveryAssumption, /No source-backed recovery rate/);
+  import_strict.default.equal(timeline.length, body.scenario.recoveryDays + 1);
+  import_strict.default.equal(first?.day, 0);
+  import_strict.default.equal(first?.remainingCapacityPercent, 14);
+  import_strict.default.equal(last?.day, body.scenario.recoveryDays);
+  import_strict.default.equal(last?.remainingCapacityPercent, 100);
+  for (let index = 1; index < timeline.length; index += 1) {
+    import_strict.default.ok(
+      timeline[index].remainingCapacityPercent >= timeline[index - 1].remainingCapacityPercent
+    );
   }
+  import_strict.default.ok(
+    timeline.some(
+      (point) => point.day > 14 && point.day < body.scenario.recoveryDays && point.remainingCapacityPercent > 14 && point.remainingCapacityPercent < 100
+    )
+  );
 });
-(0, import_node_test.default)("data-quality query exposes review states and unresolved relationships", () => {
-  const quality = repository.getDataQuality({ issueType: "unresolved_port_mapping", pageSize: 10 });
-  import_strict.default.equal(quality.issues.length, 3);
-  import_strict.default.equal(quality.unresolvedRelationships.length, 5);
-  import_strict.default.equal(quality.manualReview.pagination.total, 11);
-  import_strict.default.ok(quality.summary.some((row) => row.dataset === "daily_port_activity"));
+(0, import_node_test.default)("GET and POST node state use the existing Twin State Engine", async () => {
+  const initialResponse = await fetch(`${baseUrl}/api/digital-twin/state/${portNodeId}`);
+  import_strict.default.equal(initialResponse.status, 200);
+  import_strict.default.equal((await initialResponse.json()).state.operationalState, "operational");
+  const updateResponse = await fetch(`${baseUrl}/api/digital-twin/state`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nodeId: portNodeId, state: "reduced" }) });
+  import_strict.default.equal(updateResponse.status, 200);
+  const updateBody = await updateResponse.json();
+  import_strict.default.deepEqual(updateBody.state, { nodeId: portNodeId, operationalState: "reduced", stateSource: "OVERRIDE" });
 });
-(0, import_node_test.default)("all Phase 2 API endpoints respond with structured JSON", async () => {
-  const endpoints = [
-    "/api/phase2/countries?pageSize=2",
-    "/api/phase2/ports?pageSize=2",
-    "/api/phase2/refineries?pageSize=2",
-    "/api/phase2/suppliers?pageSize=2",
-    "/api/phase2/imports/crude?pageSize=2",
-    "/api/phase2/imports/crude/totals?pageSize=2",
-    "/api/phase2/consumption?pageSize=2",
-    "/api/phase2/global-oil?pageSize=2",
-    "/api/phase2/lanes?pageSize=2",
-    "/api/phase2/chokepoints?pageSize=2",
-    "/api/phase2/port-activity?pageSize=2",
-    "/api/phase2/data-quality?pageSize=2"
-  ];
-  for (const endpoint of endpoints) {
-    const response = await fetch(`${baseUrl}${endpoint}`);
-    import_strict.default.equal(response.status, 200, endpoint);
-    const body = await response.json();
-    if (endpoint.includes("data-quality")) {
-      import_strict.default.ok(Array.isArray(body.issues));
-      import_strict.default.ok(Array.isArray(body.summary));
-    } else {
-      import_strict.default.ok(Array.isArray(body.data), endpoint);
-      import_strict.default.ok(body.pagination);
-    }
+(0, import_node_test.default)("state API rejects invalid node IDs and states", async () => {
+  const unknownNode = await fetch(`${baseUrl}/api/digital-twin/state/missing-node`);
+  import_strict.default.equal(unknownNode.status, 404);
+  const unknownUpdate = await fetch(`${baseUrl}/api/digital-twin/state`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nodeId: "missing-node", state: "blocked" }) });
+  import_strict.default.equal(unknownUpdate.status, 404);
+  const invalidState = await fetch(`${baseUrl}/api/digital-twin/state`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nodeId: portNodeId, state: "invalid" }) });
+  import_strict.default.equal(invalidState.status, 400);
+});
+(0, import_node_test.default)("reset and impact APIs return state-engine and impact-engine results", async () => {
+  const disrupted = await fetch(`${baseUrl}/api/digital-twin/state`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nodeId: portNodeId, state: "disrupted" }) });
+  import_strict.default.equal(disrupted.status, 200);
+  const impact = await fetch(`${baseUrl}/api/digital-twin/impact`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nodeId: portNodeId }) });
+  import_strict.default.equal(impact.status, 200);
+  const impactBody = await impact.json();
+  import_strict.default.equal(impactBody.impact.sourceNode.nodeId, portNodeId);
+  import_strict.default.equal(impactBody.impact.sourceNode.operationalState, "disrupted");
+  import_strict.default.deepEqual(impactBody.impact.affectedNodeIds, ["refinery-refinery-ae548d16e9f8e503e505"]);
+  import_strict.default.deepEqual(impactBody.impact.affectedEdgeIds, ["relationship-port-kochi-refinery-bpc"]);
+  import_strict.default.deepEqual(impactBody.impact.affectedFlow.nodeTotals, []);
+  const reset = await fetch(`${baseUrl}/api/digital-twin/reset`, { method: "POST" });
+  import_strict.default.equal(reset.status, 200);
+  const resetBody = await reset.json();
+  import_strict.default.equal(resetBody.summary.nodeCount, resetBody.graph.nodes.length);
+  import_strict.default.equal(resetBody.summary.byState.operational, resetBody.summary.nodeCount);
+});
+(0, import_node_test.default)("existing Phase 2 API remains functional", async () => {
+  const response = await fetch(`${baseUrl}/api/phase2/ports?pageSize=1`);
+  import_strict.default.equal(response.status, 200);
+  const body = await response.json();
+  import_strict.default.equal(body.data.length, 1);
+  import_strict.default.equal(body.pagination.total, 59);
+});
+(0, import_node_test.default)("GET /api/digital-twin exposes real refinery latitude and longitude coordinates", async () => {
+  const response = await fetch(`${baseUrl}/api/digital-twin`);
+  import_strict.default.equal(response.status, 200);
+  const body = await response.json();
+  const refineries = body.graph.nodes.filter((n) => n.nodeType === "refinery");
+  import_strict.default.equal(refineries.length, 24);
+  for (const ref of refineries) {
+    import_strict.default.equal(typeof ref.metadata.latitude, "number");
+    import_strict.default.equal(typeof ref.metadata.longitude, "number");
   }
+  const barauni = refineries.find((n) => n.nodeId === "refinery-refinery-ddcb7bc1d2c3587e0206");
+  import_strict.default.equal(barauni?.metadata.latitude, 25.3853);
+  import_strict.default.equal(barauni?.metadata.longitude, 86.0142);
+  const paradip = refineries.find((n) => n.nodeId === "refinery-refinery-d6474b2cf97a887365fc");
+  import_strict.default.equal(paradip?.metadata.latitude, 20.2881);
+  import_strict.default.equal(paradip?.metadata.longitude, 86.6192);
+  const jamnagar = refineries.find((n) => n.nodeId === "refinery-refinery-512c57b7cda5c85a0b09");
+  import_strict.default.equal(jamnagar?.metadata.latitude, 22.3619);
+  import_strict.default.equal(jamnagar?.metadata.longitude, 69.8319);
+  const kochi = refineries.find((n) => n.nodeId === "refinery-refinery-ae548d16e9f8e503e505");
+  import_strict.default.equal(kochi?.metadata.latitude, 9.9575);
+  import_strict.default.equal(kochi?.metadata.longitude, 76.3683);
+  const vadinar = refineries.find((n) => n.nodeId === "refinery-refinery-1e0404fa69bfd51b09d2");
+  import_strict.default.equal(vadinar?.metadata.latitude, 22.3847);
+  import_strict.default.equal(vadinar?.metadata.longitude, 69.6961);
 });

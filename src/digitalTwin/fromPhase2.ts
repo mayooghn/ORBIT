@@ -7,6 +7,22 @@ type Phase2Row = Record<string, unknown>;
 
 const BASELINE_STATE = 'operational' as const;
 
+export const LIST_A_PORT_IDS = new Set([
+  'port-ad5b2e8e77d8e4fc7a4c', 'port-port-ad5b2e8e77d8e4fc7a4c', // Kochi (Cochin)
+  'port-faee4b72dfaea88f350c', 'port-port-faee4b72dfaea88f350c', // New Mangalore
+  'port-0d287d6b94ae0d13cfff', 'port-port-0d287d6b94ae0d13cfff', // Paradip
+  'port-42e3af128436239dad1c', 'port-port-42e3af128436239dad1c', // Vadinar Terminal
+  'port-cf886631046b9485fcf9', 'port-port-cf886631046b9485fcf9', // Mundra
+  'port-21bd5d045171a73e0012', 'port-port-21bd5d045171a73e0012', // Sikka
+  'port-4cbd3879645dac45799b', 'port-port-4cbd3879645dac45799b', // Haldia Port
+  'port-172252e2df5588dd95db', 'port-port-172252e2df5588dd95db', // Vishakhapatnam
+  'port-251a9f32cbcedd0b8e47', 'port-port-251a9f32cbcedd0b8e47', // Mumbai (Bombay)
+  'port-1c22246f55049f5ed930', 'port-port-1c22246f55049f5ed930', // Chennai (Madras)
+  'port-906d1268a74191acac1d', 'port-port-906d1268a74191acac1d', // Jawaharlal Nehru Port (Nhava Sheva)
+  'port-42fee4d8d7b7216bf0bc', 'port-port-42fee4d8d7b7216bf0bc', // Kolkata (Calcutta)
+  'port-4438193452fc81328c0d', 'port-port-4438193452fc81328c0d', // Tuticorin
+]);
+
 const text = (row: Phase2Row, field: string): string => {
   const value = row[field];
   return typeof value === 'string' ? value : value === null || value === undefined ? '' : String(value);
@@ -99,15 +115,7 @@ export const buildDigitalTwinFromPhase2 = (repository: Phase2Repository): Digita
     const latestActivity = candidateLatestActivity && text(candidateLatestActivity, 'validation_status') === 'VALID'
       ? candidateLatestActivity
       : undefined;
-    const importTanker = latestActivity ? number(latestActivity, 'import_tanker') : undefined;
-    const exportTanker = latestActivity ? number(latestActivity, 'export_tanker') : undefined;
-    const currentFlow =
-      importTanker === undefined || exportTanker === undefined
-        ? undefined
-        : {
-            value: importTanker + exportTanker,
-            unit: 'source_tanker_units_per_activity_day',
-          };
+    const currentFlow = undefined;
 
     const nodeId = `port-${text(row, 'port_id')}`;
     addNode(model, {
@@ -126,13 +134,13 @@ export const buildDigitalTwinFromPhase2 = (repository: Phase2Repository): Digita
         liquidBulkFacility: text(row, 'liquid_bulk_facility') || null,
         oilTerminalFacility: text(row, 'oil_terminal_facility') || null,
         sourceBackedOperationalData: latestActivity !== undefined,
-        currentFlowSource: currentFlow ? 'daily_port_activity.import_tanker + export_tanker' : null,
+        currentFlowSource: null,
         currentFlowUnitStatus: latestActivity ? text(latestActivity, 'import_export_unit_status') || null : null,
         currentFlowActivityDate: latestActivity ? text(latestActivity, 'activity_date') || null : null,
       },
     });
 
-    if (latestActivity && currentFlow) {
+    if (latestActivity) {
       const node = model.getNode(nodeId);
       node?.sourceReferences.push(sourceReference('daily_port_activity', text(latestActivity, 'daily_activity_id')));
     }
@@ -150,6 +158,8 @@ export const buildDigitalTwinFromPhase2 = (repository: Phase2Repository): Digita
       stateSource: 'BASELINE',
       sourceReferences: [sourceReference('refineries', text(row, 'refinery_id'))],
       metadata: {
+        latitude: number(row, 'latitude') ?? null,
+        longitude: number(row, 'longitude') ?? null,
         company: text(row, 'company'),
         state: text(row, 'state'),
         sourceBackedOperationalData: capacity !== undefined,
@@ -169,7 +179,7 @@ export const buildDigitalTwinFromPhase2 = (repository: Phase2Repository): Digita
     addNode(model, {
       nodeId: `shipping-route-${text(row, 'shipping_lane_id')}`,
       nodeType: 'shipping_route',
-      name: text(row, 'feature_name') || `${text(row, 'lane_category')} shipping route`,
+      name: text(row, 'feature_name') || `${text(row, 'lane_category')} Shipping Lane`,
       operationalState: BASELINE_STATE,
       stateSource: 'BASELINE',
       sourceReferences: [sourceReference('shipping_lanes', text(row, 'shipping_lane_id'))],
@@ -177,6 +187,7 @@ export const buildDigitalTwinFromPhase2 = (repository: Phase2Repository): Digita
         laneCategory: text(row, 'lane_category'),
         geometryType: text(row, 'geometry_type'),
         geometryStatus: text(row, 'geometry_status'),
+        geometry: row.geometry || null,
       },
     });
   }
@@ -230,12 +241,21 @@ export const buildDigitalTwinFromPhase2 = (repository: Phase2Repository): Digita
     const hasVerifiedMeasurement = node.capacity !== undefined || node.currentFlow !== undefined;
     const hasMeaningfulSourceBackedData = node.metadata.sourceBackedOperationalData === true;
     const requiredByAnotherModule = node.metadata.requiredByModule === true;
+    const isListAGeographicNode =
+      node.nodeType === 'chokepoint' ||
+      node.nodeType === 'strategic_reserve' ||
+      (node.nodeType === 'port' && LIST_A_PORT_IDS.has(node.nodeId)) ||
+      (node.nodeType === 'shipping_route' && node.metadata.geometry !== null);
 
-    // Keep only confirmed relationships, verified measurements, meaningful
-    // source-backed operational data, or explicitly required assets. This
-    // removes isolated placeholders and geometry-only records without using
-    // missing capacity or flow alone as a deletion rule.
-    return hasConfirmedConnection || hasVerifiedMeasurement || hasMeaningfulSourceBackedData || requiredByAnotherModule;
+    // Keep confirmed relationships, verified measurements, meaningful source-backed data,
+    // explicitly required assets, or verified List A geographic nodes.
+    return (
+      hasConfirmedConnection ||
+      hasVerifiedMeasurement ||
+      hasMeaningfulSourceBackedData ||
+      requiredByAnotherModule ||
+      isListAGeographicNode
+    );
   });
 
   return model;

@@ -6,15 +6,66 @@ import {
   optimizeStrategicReserveWithProcurement,
 } from '../src/reserves';
 
-const input = (overrides: Partial<Parameters<typeof optimizeStrategicReserve>[0]> = {}) => ({
-  currentReserve: 100,
-  demand: 80,
-  supplyGap: 10,
-  disruptionDuration: 5,
-  alternativeProcurement: 2,
-  replenishmentRate: 4,
-  minimumReserveThreshold: 20,
-  ...overrides,
+const input = (overrides: Partial<Parameters<typeof optimizeStrategicReserve>[0]> = {}) => {
+  const demand = overrides.demand ?? 80;
+  let availableSupply = overrides.availableSupply;
+  if (typeof availableSupply !== 'number') {
+    if (typeof overrides.supplyGap === 'number') {
+      availableSupply = Math.max(0, demand - overrides.supplyGap);
+    } else {
+      availableSupply = 70;
+    }
+  }
+  return {
+    currentReserve: 100,
+    demand,
+    availableSupply,
+    disruptionDuration: 5,
+    alternativeProcurement: 2,
+    replenishmentRate: 4,
+    minimumReserveThreshold: 20,
+    ...overrides,
+  };
+};
+
+test('calculates supply gap dynamically from daily demand and available supply', () => {
+  const result = optimizeStrategicReserve(input({
+    demand: 655_271,
+    availableSupply: 555_271,
+  }));
+
+  assert.equal(result.calculatedSupplyGap, 100_000);
+  assert.equal(result.grossSupplyGap, 100_000);
+  assert.equal(result.availableSupply, 555_271);
+});
+
+test('handles available supply exceeding daily demand with zero supply gap', () => {
+  const result = optimizeStrategicReserve(input({
+    demand: 500_000,
+    availableSupply: 600_000,
+  }));
+
+  assert.equal(result.calculatedSupplyGap, 0);
+  assert.equal(result.grossSupplyGap, 0);
+  assert.equal(result.effectiveGap, 0);
+  assert.equal(result.drawdownAmount, 0);
+  assert.equal(result.coverageStatus, 'NO_EFFECTIVE_GAP');
+});
+
+test('backward compatibility: derives available supply when only supply gap is provided', () => {
+  const legacyInput = {
+    currentReserve: 100,
+    demand: 80,
+    supplyGap: 10,
+    disruptionDuration: 5,
+    alternativeProcurement: 2,
+    replenishmentRate: 4,
+    minimumReserveThreshold: 20,
+  };
+
+  const result = optimizeStrategicReserve(legacyInput);
+  assert.equal(result.availableSupply, 70);
+  assert.equal(result.calculatedSupplyGap, 10);
 });
 
 test('fully covers the effective supply gap', () => {
@@ -227,6 +278,7 @@ test('scenario 9: single-day disruption computes accurate daily rate', () => {
 test('scenario 10: multi-month long disruption duration', () => {
   const result = optimizeStrategicReserve(input({
     currentReserve: 5_000_000,
+    demand: 655_271,
     minimumReserveThreshold: 1_500_000,
     supplyGap: 100_000,
     alternativeProcurement: 25_000,

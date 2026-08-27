@@ -229,7 +229,7 @@ export class EiaPriceService {
       reliabilityScore: profile.reliabilityScore,
       pricingSource: this.apiKey
         ? 'EIA API v2 & Regional Freight Model'
-        : 'EIA Global Energy Benchmark Spot Assessment (Brent/Dubai/WTI reference) & Freight Model',
+        : 'Static EIA Benchmark Fallback & Regional Freight Model',
     };
   }
 

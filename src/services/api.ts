@@ -93,6 +93,7 @@ export interface GeopoliticalRiskAgentResponse {
     riskScore?: number;
     matchedNodeIds?: string[];
     affectedNodeIds?: string[];
+    affectedNodeNames?: string[];
     affectedEdgeIds?: string[];
     affectedNodeTypes?: string[];
     affectedCapacity?: MeasurementSummary;
@@ -294,15 +295,25 @@ export interface PipelineExecutionResponse {
 
 const requestJson = async <T>(url: string, init: RequestInit): Promise<T> => {
   const response = await fetch(url, init);
-  let body: { error?: string } & Record<string, unknown>;
-  try {
-    body = (await response.json()) as { error?: string } & Record<string, unknown>;
-  } catch {
-    throw new Error(`Request returned an invalid JSON response (HTTP ${response.status}).`);
+  let body: ({ error?: string } & Record<string, unknown>) | null = null;
+  const rawText = await response.text();
+  if (rawText && rawText.trim()) {
+    try {
+      body = JSON.parse(rawText) as { error?: string } & Record<string, unknown>;
+    } catch {
+      body = null;
+    }
   }
+
   if (!response.ok) {
-    throw new Error(typeof body.error === 'string' ? body.error : `Request returned HTTP ${response.status}.`);
+    const errorMsg = typeof body?.error === 'string' ? body.error : `Request failed with HTTP status ${response.status}.`;
+    throw new Error(errorMsg);
   }
+
+  if (!body) {
+    throw new Error('Server returned an unexpected response format. Please try again.');
+  }
+
   return body as T;
 };
 

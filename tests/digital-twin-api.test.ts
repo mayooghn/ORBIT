@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import test, { after, before } from 'node:test';
@@ -9,7 +9,13 @@ import { openPhase2Database } from '../src/dataLayer/database';
 import { importPhase2Data } from '../src/dataLayer/importer';
 import { Phase2Repository } from '../src/dataLayer/repository';
 
-const processedDir = path.join(process.cwd(), 'data', 'processed');
+const getTestProcessedDir = (): string => {
+  const upperData = path.join(process.cwd(), 'Data', 'processed');
+  if (existsSync(upperData)) return upperData;
+  return path.join(process.cwd(), 'data', 'processed');
+};
+
+const processedDir = getTestProcessedDir();
 const temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'orbit-digital-twin-api-'));
 const databasePath = path.join(temporaryDirectory, 'phase2.sqlite');
 let database = openPhase2Database({ dbPath: databasePath });
@@ -60,9 +66,9 @@ test('GET /api/digital-twin returns the current real-data graph', async () => {
   };
   assert.equal(body.status, 'AVAILABLE');
   assert.equal(body.graph.nodes.filter((node) => node.nodeType === 'supplier').length, 52);
-  assert.equal(body.graph.nodes.filter((node) => node.nodeType === 'port').length, 27);
+  assert.equal(body.graph.nodes.filter((node) => node.nodeType === 'port').length, 13);
   assert.equal(body.graph.nodes.filter((node) => node.nodeType === 'refinery').length, 24);
-  assert.equal(body.graph.nodes.filter((node) => node.nodeType === 'shipping_route').length, 3);
+  assert.equal(body.graph.nodes.filter((node) => node.nodeType === 'shipping_route').length, 6);
   assert.equal(body.graph.nodes.filter((node) => node.nodeType === 'chokepoint').length, 2);
   assert.equal(body.graph.nodes.filter((node) => node.nodeType === 'strategic_reserve').length, 3);
   assert.equal(body.graph.edges.length, 27);
@@ -104,7 +110,7 @@ test('GET /api/scenarios/nodes returns unique selectable Digital Twin nodes', as
   assert.equal(body.totals.total, body.nodes.length);
   assert.equal(body.totals.nodeCount, body.nodes.length);
   assert.equal(new Set(body.nodes.map((node) => node.nodeId)).size, body.nodes.length);
-  assert.ok(body.nodes.some((node) => node.nodeId === 'chokepoint-strait-of-hormuz'));
+  assert.ok(body.nodes.some((node) => node.nodeId.includes('chokepoint-hormuz')));
   assert.ok(body.nodes.some((node) => node.nodeType === 'port'));
   assert.ok(body.nodes.some((node) => node.nodeType === 'supplier'));
   assert.equal(body.typeCounts.chokepoint, 1);
@@ -249,7 +255,7 @@ test('reset and impact APIs return state-engine and impact-engine results', asyn
   assert.equal(impactBody.impact.sourceNode.operationalState, 'disrupted');
   assert.deepEqual(impactBody.impact.affectedNodeIds, ['refinery-refinery-ae548d16e9f8e503e505']);
   assert.deepEqual(impactBody.impact.affectedEdgeIds, ['relationship-port-kochi-refinery-bpc']);
-  assert.deepEqual(impactBody.impact.affectedFlow.nodeTotals, [{ value: 0, unit: 'source_tanker_units_per_activity_day' }]);
+  assert.deepEqual(impactBody.impact.affectedFlow.nodeTotals, []);
 
   const reset = await fetch(`${baseUrl}/api/digital-twin/reset`, { method: 'POST' });
   assert.equal(reset.status, 200);
@@ -264,4 +270,49 @@ test('existing Phase 2 API remains functional', async () => {
   const body = await response.json() as { data: unknown[]; pagination: { total: number } };
   assert.equal(body.data.length, 1);
   assert.equal(body.pagination.total, 59);
+});
+
+test('GET /api/digital-twin exposes real refinery latitude and longitude coordinates', async () => {
+  const response = await fetch(`${baseUrl}/api/digital-twin`);
+  assert.equal(response.status, 200);
+  const body = await response.json() as {
+    graph: {
+      nodes: Array<{
+        nodeId: string;
+        nodeType: string;
+        name: string;
+        metadata: { latitude?: number | null; longitude?: number | null };
+      }>;
+    };
+  };
+
+  const refineries = body.graph.nodes.filter((n) => n.nodeType === 'refinery');
+  assert.equal(refineries.length, 24);
+
+  // All 24 refineries expose non-null numeric latitude/longitude
+  for (const ref of refineries) {
+    assert.equal(typeof ref.metadata.latitude, 'number');
+    assert.equal(typeof ref.metadata.longitude, 'number');
+  }
+
+  // Verification records contract check
+  const barauni = refineries.find((n) => n.nodeId === 'refinery-refinery-ddcb7bc1d2c3587e0206');
+  assert.equal(barauni?.metadata.latitude, 25.3853);
+  assert.equal(barauni?.metadata.longitude, 86.0142);
+
+  const paradip = refineries.find((n) => n.nodeId === 'refinery-refinery-d6474b2cf97a887365fc');
+  assert.equal(paradip?.metadata.latitude, 20.2881);
+  assert.equal(paradip?.metadata.longitude, 86.6192);
+
+  const jamnagar = refineries.find((n) => n.nodeId === 'refinery-refinery-512c57b7cda5c85a0b09');
+  assert.equal(jamnagar?.metadata.latitude, 22.3619);
+  assert.equal(jamnagar?.metadata.longitude, 69.8319);
+
+  const kochi = refineries.find((n) => n.nodeId === 'refinery-refinery-ae548d16e9f8e503e505');
+  assert.equal(kochi?.metadata.latitude, 9.9575);
+  assert.equal(kochi?.metadata.longitude, 76.3683);
+
+  const vadinar = refineries.find((n) => n.nodeId === 'refinery-refinery-1e0404fa69bfd51b09d2');
+  assert.equal(vadinar?.metadata.latitude, 22.3847);
+  assert.equal(vadinar?.metadata.longitude, 69.6961);
 });

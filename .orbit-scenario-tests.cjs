@@ -430,6 +430,13 @@ CREATE TABLE IF NOT EXISTS relationship_statuses (
   notes TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS strategic_reserve_optimization_runs (
+  optimization_id TEXT PRIMARY KEY,
+  requested_at TEXT NOT NULL,
+  request_json TEXT NOT NULL,
+  result_json TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_country_aliases_status ON country_aliases(mapping_status);
 CREATE INDEX IF NOT EXISTS idx_ports_name ON ports(canonical_port_name);
 CREATE INDEX IF NOT EXISTS idx_ports_status ON ports(mapping_status);
@@ -460,6 +467,7 @@ var openPhase2Database = (options = {}) => {
 };
 
 // src/dataLayer/repository.ts
+var import_node_crypto = require("node:crypto");
 var pageValues = (options = {}) => ({
   page: Math.max(1, Math.floor(options.page || 1)),
   pageSize: Math.min(1e3, Math.max(1, Math.floor(options.pageSize || 50)))
@@ -593,6 +601,16 @@ var Phase2Repository = class {
     }
     return pagedQuery(this.database, "SELECT a.*, p.canonical_port_name, d.source_dataset FROM daily_port_activity a LEFT JOIN ports p ON p.port_id = a.port_id JOIN data_sources d ON d.data_source_id = a.data_source_id ORDER BY a.activity_date, a.port_id, a.daily_activity_id", "SELECT COUNT(*) AS total FROM daily_port_activity a", where(clauses), parameters, options);
   }
+  getLatestPortActivity() {
+    return this.database.prepare(`
+      SELECT a.*, p.canonical_port_name, d.source_dataset
+      FROM daily_port_activity a
+      LEFT JOIN ports p ON p.port_id = a.port_id
+      JOIN data_sources d ON d.data_source_id = a.data_source_id
+      WHERE a.activity_date = (SELECT MAX(activity_date) FROM daily_port_activity)
+      ORDER BY a.port_id, a.daily_activity_id
+    `).all();
+  }
   getLanes(options = {}) {
     const clauses = [];
     const parameters = [];
@@ -613,6 +631,172 @@ var Phase2Repository = class {
   getStrategicReserves(options = {}) {
     return pagedQuery(this.database, "SELECT r.*, d.source_dataset FROM strategic_reserves r LEFT JOIN data_sources d ON d.data_source_id = r.data_source_id ORDER BY r.facility_name, r.strategic_reserve_id", "SELECT COUNT(*) AS total FROM strategic_reserves", "", [], options);
   }
+  getCurrentStrategicReserveState() {
+    const facilities = this.database.prepare(
+      "SELECT * FROM strategic_reserves ORDER BY facility_name"
+    ).all();
+    const hasDatabaseFacilities = facilities.length > 0;
+    const totalCapacity = hasDatabaseFacilities ? facilities.reduce((sum, f) => sum + (Number(f.capacity) || 0), 0) : 533e4;
+    const currentReserve = 5e6;
+    const currentReserveStatus = "POLICY_ESTIMATE_UNAVAILABLE_TELEMETRY";
+    const currentReserveSource = "Policy operational baseline estimate (5.0 MMT); real-time cavern inventory telemetry is not published in open MoPNG datasets";
+    let currentDemand = 0;
+    let demandBasis = "";
+    let demandFinancialYear = null;
+    let isDemandFromDatabase = false;
+    const latestConsumptionRow = this.database.prepare(`
+      SELECT c.financial_period_id, f.financial_year, SUM(c.consumption_metric_tonnes) AS annual_consumption_tmt, COUNT(*) AS record_count
+      FROM petroleum_consumption c
+      JOIN financial_periods f ON f.financial_period_id = c.financial_period_id
+      GROUP BY c.financial_period_id, f.financial_year, f.financial_year_start
+      ORDER BY f.financial_year_start DESC
+      LIMIT 1
+    `).get();
+    if (latestConsumptionRow && Number(latestConsumptionRow.annual_consumption_tmt) > 0) {
+      const annualTmt = Number(latestConsumptionRow.annual_consumption_tmt);
+      const annualMetricTonnes = annualTmt * 1e3;
+      currentDemand = Math.round(annualMetricTonnes / 365 * 100) / 100;
+      demandFinancialYear = latestConsumptionRow.financial_year || null;
+      demandBasis = `Derived from ${latestConsumptionRow.record_count} consumption records for FY ${latestConsumptionRow.financial_year} in petroleum_consumption (${annualTmt.toLocaleString()} TMT/yr = ${annualMetricTonnes.toLocaleString()} tonnes/yr \xF7 365 days = ${currentDemand.toLocaleString()} tonnes/day)`;
+      isDemandFromDatabase = true;
+    } else {
+      currentDemand = 655271.23;
+      demandBasis = "Historical PPAC FY24-25 baseline fallback (655,271.23 tonnes/day)";
+      isDemandFromDatabase = false;
+    }
+    const minimumReserveThreshold = 15e5;
+    const minimumReservePolicyBasis = "Statutory 30-day emergency safety buffer (1.50 MMT policy threshold)";
+    const defaultReplenishmentRate = 2e4;
+    const replenishmentPolicyBasis = "Operational maximum ISPRL cavern pipeline injection capacity (20,000 tonnes/day)";
+    const formattedFacilities = facilities.map((f) => ({
+      strategicReserveId: String(f.strategic_reserve_id || ""),
+      facilityName: String(f.facility_name || ""),
+      capacity: Number(f.capacity) || 0,
+      capacityUnit: String(f.capacity_unit || "metric_tonnes"),
+      latitude: typeof f.latitude === "number" ? f.latitude : null,
+      longitude: typeof f.longitude === "number" ? f.longitude : null,
+      mappingStatus: String(f.mapping_status || "MAPPED"),
+      notes: typeof f.notes === "string" ? f.notes : null
+    }));
+    const alternativeProcurement = this.getRealAlternativeProcurement();
+    return {
+      facilityName: "India Strategic Petroleum Reserve (ISPRL)",
+      country: "India",
+      totalCapacity,
+      capacityUnit: "metric_tonnes",
+      capacitySource: hasDatabaseFacilities ? "strategic_reserves table (ISPRL Phase 1 facilities: Visakhapatnam 1.33 MMT, Mangalore 1.50 MMT, Padur 2.50 MMT)" : "ISPRL Phase 1 default capacity (5.33 MMT)",
+      isCapacityFromDatabase: hasDatabaseFacilities,
+      currentReserve,
+      currentReserveStatus,
+      currentReserveSource,
+      minimumReserveThreshold,
+      minimumReservePolicyBasis,
+      currentDemand,
+      demandBasis,
+      demandFinancialYear,
+      isDemandFromDatabase,
+      defaultReplenishmentRate,
+      replenishmentPolicyBasis,
+      unit: "tonnes",
+      facilities: formattedFacilities,
+      alternativeProcurement,
+      lastUpdated: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  getRealAlternativeProcurement(options = {}) {
+    const specifiedYear = options.financialYear?.trim();
+    let targetYear = specifiedYear;
+    if (!targetYear) {
+      const latestPeriod = this.database.prepare(`
+        SELECT f.financial_year
+        FROM supplier_imports s
+        JOIN financial_periods f ON f.financial_period_id = s.financial_period_id
+        ORDER BY f.financial_year_start DESC
+        LIMIT 1
+      `).get();
+      targetYear = latestPeriod?.financial_year || "2016-17";
+    }
+    const excluded = options.excludedCountry?.trim().toLowerCase();
+    const rows = this.database.prepare(`
+      SELECT 
+        s.country_id,
+        s.source_country_name,
+        COALESCE(c.canonical_name, s.source_country_normalized_name, s.source_country_name) AS canonical_name,
+        f.financial_year,
+        s.quantity_tonnes,
+        p.canonical_name AS product_name
+      FROM supplier_imports s
+      JOIN financial_periods f ON f.financial_period_id = s.financial_period_id
+      LEFT JOIN countries c ON c.country_id = s.country_id
+      JOIN products p ON p.product_id = s.product_id
+      WHERE f.financial_year = ?
+      ORDER BY s.quantity_tonnes DESC
+    `).all(targetYear);
+    const totalAnnualAllSuppliers = rows.reduce((sum, r) => sum + (Number(r.quantity_tonnes) || 0), 0);
+    const filteredRows = rows.filter((r) => {
+      if (!excluded) return true;
+      const srcName = (r.source_country_name || "").toLowerCase();
+      const canName = (r.canonical_name || "").toLowerCase();
+      return !srcName.includes(excluded) && !canName.includes(excluded);
+    });
+    const totalAnnualImportTonnes = filteredRows.reduce((sum, r) => sum + (Number(r.quantity_tonnes) || 0), 0);
+    const availableAlternativeDailyTonnes = Math.round(totalAnnualImportTonnes / 365 * 100) / 100;
+    const limit = typeof options.limit === "number" && options.limit > 0 ? options.limit : 50;
+    const suppliers = filteredRows.slice(0, limit).map((r) => {
+      const annualQty = Number(r.quantity_tonnes) || 0;
+      const dailyCap = Math.round(annualQty / 365 * 100) / 100;
+      const share = totalAnnualAllSuppliers > 0 ? Math.round(annualQty / totalAnnualAllSuppliers * 1e4) / 100 : 0;
+      return {
+        countryId: String(r.country_id || ""),
+        sourceCountryName: String(r.source_country_name || ""),
+        canonicalName: String(r.canonical_name || r.source_country_name || ""),
+        financialYear: String(r.financial_year || targetYear),
+        annualQuantityTonnes: annualQty,
+        dailyCapacityTonnes: dailyCap,
+        shareOfTotalImportsPercent: share,
+        productName: String(r.product_name || "Crude Oil")
+      };
+    });
+    return {
+      availableAlternativeDailyTonnes,
+      totalAnnualImportTonnes,
+      financialYear: targetYear,
+      supplierCount: filteredRows.length,
+      suppliers,
+      commercialCostStatus: "Commercial lane-cost data unavailable",
+      isCommercialCostAvailable: false,
+      dataSource: "Phase 2 SQLite supplier_imports table (real import records)",
+      provenance: `Derived from ${filteredRows.length} real supplier import records for FY ${targetYear} in supplier_imports (${totalAnnualImportTonnes.toLocaleString()} tonnes/yr \xF7 365 days = ${availableAlternativeDailyTonnes.toLocaleString()} tonnes/day). Commercial lane-cost data unavailable.`
+    };
+  }
+  saveStrategicReserveOptimization(input, result) {
+    const optimizationId = `reserve-optimization-${(0, import_node_crypto.randomUUID)()}`;
+    this.database.prepare(`
+      INSERT INTO strategic_reserve_optimization_runs
+        (optimization_id, requested_at, request_json, result_json)
+      VALUES (?, ?, ?, ?)
+    `).run(
+      optimizationId,
+      (/* @__PURE__ */ new Date()).toISOString(),
+      JSON.stringify(input),
+      JSON.stringify(result)
+    );
+    return optimizationId;
+  }
+  getStrategicReserveOptimizationRuns(limit = 20) {
+    const rows = this.database.prepare(`
+      SELECT optimization_id, requested_at, request_json, result_json
+      FROM strategic_reserve_optimization_runs
+      ORDER BY requested_at DESC
+      LIMIT ?
+    `).all(limit);
+    return rows.map((row) => ({
+      optimizationId: row.optimization_id,
+      requestedAt: row.requested_at,
+      input: JSON.parse(row.request_json),
+      result: JSON.parse(row.result_json)
+    }));
+  }
   getDataQuality(options = {}) {
     const clauses = [];
     const parameters = [];
@@ -628,7 +812,7 @@ var Phase2Repository = class {
 };
 
 // src/digitalTwin/fromPhase2.ts
-var import_node_crypto = require("node:crypto");
+var import_node_crypto2 = require("node:crypto");
 
 // src/digitalTwin/model.ts
 var OPERATIONAL_STATES = ["operational", "reduced", "disrupted", "blocked"];
@@ -684,6 +868,19 @@ var DigitalTwinGraphModel = class {
   }
   getEdges() {
     return [...this.edges.values()];
+  }
+  retainNodes(shouldRetain) {
+    for (const node of this.nodes.values()) {
+      if (!shouldRetain(node)) this.nodes.delete(node.nodeId);
+    }
+    for (const [edgeId, edge] of this.edges) {
+      if (!this.nodes.has(edge.fromNodeId) || !this.nodes.has(edge.toNodeId)) {
+        this.edges.delete(edgeId);
+      }
+    }
+    for (const node of this.nodes.values()) {
+      node.connectedNodeIds = node.connectedNodeIds.filter((nodeId) => this.nodes.has(nodeId));
+    }
   }
   snapshot() {
     return {
@@ -833,7 +1030,11 @@ var PHASE_37_NODES = [
     operationalState: "operational",
     stateSource: "BASELINE",
     sourceReferences: [externalReference(EIA_HORMUZ_URL)],
-    metadata: { documentedRole: "major oil chokepoint" }
+    metadata: {
+      latitude: 26.5667,
+      longitude: 56.25,
+      documentedRole: "major oil chokepoint"
+    }
   },
   {
     nodeId: "chokepoint-strait-of-malacca",
@@ -846,7 +1047,11 @@ var PHASE_37_NODES = [
     operationalState: "operational",
     stateSource: "BASELINE",
     sourceReferences: [externalReference(EIA_HORMUZ_URL)],
-    metadata: { documentedRole: "major Asian oil chokepoint" }
+    metadata: {
+      latitude: 1.43,
+      longitude: 103,
+      documentedRole: "major Asian oil chokepoint"
+    }
   },
   {
     nodeId: "shipping-route-persian-gulf-hormuz-arabian-sea",
@@ -1214,6 +1419,47 @@ var enrichDigitalTwinRelationships = (model) => {
 
 // src/digitalTwin/fromPhase2.ts
 var BASELINE_STATE = "operational";
+var LIST_A_PORT_IDS = /* @__PURE__ */ new Set([
+  "port-ad5b2e8e77d8e4fc7a4c",
+  "port-port-ad5b2e8e77d8e4fc7a4c",
+  // Kochi (Cochin)
+  "port-faee4b72dfaea88f350c",
+  "port-port-faee4b72dfaea88f350c",
+  // New Mangalore
+  "port-0d287d6b94ae0d13cfff",
+  "port-port-0d287d6b94ae0d13cfff",
+  // Paradip
+  "port-42e3af128436239dad1c",
+  "port-port-42e3af128436239dad1c",
+  // Vadinar Terminal
+  "port-cf886631046b9485fcf9",
+  "port-port-cf886631046b9485fcf9",
+  // Mundra
+  "port-21bd5d045171a73e0012",
+  "port-port-21bd5d045171a73e0012",
+  // Sikka
+  "port-4cbd3879645dac45799b",
+  "port-port-4cbd3879645dac45799b",
+  // Haldia Port
+  "port-172252e2df5588dd95db",
+  "port-port-172252e2df5588dd95db",
+  // Vishakhapatnam
+  "port-251a9f32cbcedd0b8e47",
+  "port-port-251a9f32cbcedd0b8e47",
+  // Mumbai (Bombay)
+  "port-1c22246f55049f5ed930",
+  "port-port-1c22246f55049f5ed930",
+  // Chennai (Madras)
+  "port-906d1268a74191acac1d",
+  "port-port-906d1268a74191acac1d",
+  // Jawaharlal Nehru Port (Nhava Sheva)
+  "port-42fee4d8d7b7216bf0bc",
+  "port-port-42fee4d8d7b7216bf0bc",
+  // Kolkata (Calcutta)
+  "port-4438193452fc81328c0d",
+  "port-port-4438193452fc81328c0d"
+  // Tuticorin
+]);
 var text = (row, field) => {
   const value = row[field];
   return typeof value === "string" ? value : value === null || value === void 0 ? "" : String(value);
@@ -1222,20 +1468,30 @@ var number = (row, field) => {
   const value = row[field];
   return typeof value === "number" && Number.isFinite(value) ? value : void 0;
 };
-var stableIdentity = (value) => (0, import_node_crypto.createHash)("sha256").update(value, "utf8").digest("hex").slice(0, 20);
+var stableIdentity = (value) => (0, import_node_crypto2.createHash)("sha256").update(value, "utf8").digest("hex").slice(0, 20);
 var sourceReference = (table, id) => ({ table, id });
 var addNode = (model, input) => {
   model.addNode(input);
 };
 var buildDigitalTwinFromPhase2 = (repository) => {
   const model = new DigitalTwinGraphModel();
+  const globalOilRows = repository.getGlobalOil({ pageSize: 1e3 }).data;
+  const globalOilByCountryId = new Map(
+    globalOilRows.map((row) => [text(row, "country_id"), row]).filter(([countryId]) => countryId.length > 0)
+  );
   const supplierRows = repository.getSuppliers({ pageSize: 1e3 }).data;
   const supplierNodes = /* @__PURE__ */ new Map();
   for (const row of supplierRows) {
+    const mappingStatus = text(row, "country_mapping_status");
+    const quantityTonnes = number(row, "quantity_tonnes");
+    if (mappingStatus !== "MAPPED" || text(row, "validation_status") !== "VALID" || quantityTonnes === void 0 || quantityTonnes <= 0) continue;
     const countryId = text(row, "country_id");
     const sourceCountryName = text(row, "source_country_name");
     const identity = countryId ? `country:${countryId}` : `source:${sourceCountryName.toLowerCase()}`;
     const nodeId = `supplier-${stableIdentity(identity)}`;
+    const candidateGlobalOil = globalOilByCountryId.get(countryId);
+    const globalOil = candidateGlobalOil && text(candidateGlobalOil, "validation_status") === "VALID" ? candidateGlobalOil : void 0;
+    const exportsPerDay = globalOil ? number(globalOil, "exports_barrels_per_day") : void 0;
     const existing = supplierNodes.get(nodeId);
     if (existing) {
       existing.sourceReferences.push(sourceReference("supplier_imports", text(row, "supplier_import_id")));
@@ -1245,24 +1501,46 @@ var buildDigitalTwinFromPhase2 = (repository) => {
       nodeId,
       nodeType: "supplier",
       name: text(row, "country_name") || sourceCountryName,
+      currentFlow: exportsPerDay === void 0 ? void 0 : { value: exportsPerDay, unit: "barrels_per_day" },
       operationalState: BASELINE_STATE,
       stateSource: "BASELINE",
-      sourceReferences: [sourceReference("supplier_imports", text(row, "supplier_import_id"))],
+      sourceReferences: [
+        sourceReference("supplier_imports", text(row, "supplier_import_id")),
+        ...globalOil ? [sourceReference("global_oil_snapshots", text(globalOil, "global_oil_snapshot_id"))] : []
+      ],
       metadata: {
         countryId: countryId || null,
         sourceCountryName,
-        mappingStatus: text(row, "country_mapping_status")
+        mappingStatus,
+        sourceBackedOperationalData: true,
+        currentFlowSource: exportsPerDay === void 0 ? null : "global_oil_snapshots.exports_barrels_per_day",
+        currentFlowAsOfDate: globalOil ? text(globalOil, "as_of_date") || null : null,
+        historicalImportSource: "supplier_imports.quantity_tonnes"
       }
     });
   }
   for (const node of supplierNodes.values()) addNode(model, node);
+  const latestPortActivityByPortId = new Map(
+    repository.getLatestPortActivity().map((row) => [text(row, "port_id"), row]).filter(([portId]) => portId.length > 0)
+  );
   const ports = repository.getPorts({ pageSize: 1e3 }).data;
   for (const row of ports) {
+    if (text(row, "mapping_status") !== "MAPPED") continue;
+    const portId = text(row, "port_id");
+    const candidateLatestActivity = latestPortActivityByPortId.get(portId);
+    const latestActivity = candidateLatestActivity && text(candidateLatestActivity, "validation_status") === "VALID" ? candidateLatestActivity : void 0;
+    const importTanker = latestActivity ? number(latestActivity, "import_tanker") : void 0;
+    const exportTanker = latestActivity ? number(latestActivity, "export_tanker") : void 0;
+    const currentFlow = importTanker === void 0 || exportTanker === void 0 ? void 0 : {
+      value: importTanker + exportTanker,
+      unit: "source_tanker_units_per_activity_day"
+    };
     const nodeId = `port-${text(row, "port_id")}`;
     addNode(model, {
       nodeId,
       nodeType: "port",
       name: text(row, "canonical_port_name"),
+      currentFlow,
       operationalState: BASELINE_STATE,
       stateSource: "BASELINE",
       sourceReferences: [sourceReference("ports", text(row, "port_id"))],
@@ -1272,9 +1550,17 @@ var buildDigitalTwinFromPhase2 = (repository) => {
         country: text(row, "country") || null,
         unLocode: text(row, "un_locode") || null,
         liquidBulkFacility: text(row, "liquid_bulk_facility") || null,
-        oilTerminalFacility: text(row, "oil_terminal_facility") || null
+        oilTerminalFacility: text(row, "oil_terminal_facility") || null,
+        sourceBackedOperationalData: latestActivity !== void 0,
+        currentFlowSource: currentFlow ? "daily_port_activity.import_tanker + export_tanker" : null,
+        currentFlowUnitStatus: latestActivity ? text(latestActivity, "import_export_unit_status") || null : null,
+        currentFlowActivityDate: latestActivity ? text(latestActivity, "activity_date") || null : null
       }
     });
+    if (latestActivity && currentFlow) {
+      const node = model.getNode(nodeId);
+      node?.sourceReferences.push(sourceReference("daily_port_activity", text(latestActivity, "daily_activity_id")));
+    }
   }
   const refineries = repository.getRefineries({ pageSize: 1e3 }).data;
   for (const row of refineries) {
@@ -1287,27 +1573,38 @@ var buildDigitalTwinFromPhase2 = (repository) => {
       operationalState: BASELINE_STATE,
       stateSource: "BASELINE",
       sourceReferences: [sourceReference("refineries", text(row, "refinery_id"))],
-      metadata: { company: text(row, "company"), state: text(row, "state") }
+      metadata: {
+        latitude: number(row, "latitude") ?? null,
+        longitude: number(row, "longitude") ?? null,
+        company: text(row, "company"),
+        state: text(row, "state"),
+        sourceBackedOperationalData: capacity !== void 0,
+        capacitySource: capacity === void 0 ? null : "refineries.capacity",
+        capacityStatus: text(row, "capacity_status") || null
+      }
     });
   }
   const lanes = repository.getLanes({ pageSize: 1e3 }).data;
   for (const row of lanes) {
+    if (text(row, "validation_status") !== "VALID" || text(row, "geometry_status") !== "AVAILABLE") continue;
     addNode(model, {
       nodeId: `shipping-route-${text(row, "shipping_lane_id")}`,
       nodeType: "shipping_route",
-      name: text(row, "feature_name") || `${text(row, "lane_category")} shipping route`,
+      name: text(row, "feature_name") || `${text(row, "lane_category")} Shipping Lane`,
       operationalState: BASELINE_STATE,
       stateSource: "BASELINE",
       sourceReferences: [sourceReference("shipping_lanes", text(row, "shipping_lane_id"))],
       metadata: {
         laneCategory: text(row, "lane_category"),
         geometryType: text(row, "geometry_type"),
-        geometryStatus: text(row, "geometry_status")
+        geometryStatus: text(row, "geometry_status"),
+        geometry: row.geometry || null
       }
     });
   }
   const chokepoints = repository.getChokepoints({ pageSize: 1e3 }).data;
   for (const row of chokepoints) {
+    if (text(row, "mapping_status") !== "MAPPED") continue;
     addNode(model, {
       nodeId: `chokepoint-${text(row, "chokepoint_id")}`,
       nodeType: "chokepoint",
@@ -1320,6 +1617,7 @@ var buildDigitalTwinFromPhase2 = (repository) => {
   }
   const strategicReserves = repository.getStrategicReserves({ pageSize: 1e3 }).data;
   for (const row of strategicReserves) {
+    if (text(row, "mapping_status") !== "MAPPED") continue;
     const capacity = number(row, "capacity");
     addNode(model, {
       nodeId: `strategic-reserve-${text(row, "strategic_reserve_id")}`,
@@ -1329,10 +1627,26 @@ var buildDigitalTwinFromPhase2 = (repository) => {
       operationalState: BASELINE_STATE,
       stateSource: "BASELINE",
       sourceReferences: [sourceReference("strategic_reserves", text(row, "strategic_reserve_id"))],
-      metadata: { latitude: number(row, "latitude") ?? null, longitude: number(row, "longitude") ?? null }
+      metadata: {
+        latitude: number(row, "latitude") ?? null,
+        longitude: number(row, "longitude") ?? null,
+        capacitySource: capacity === void 0 ? null : "strategic_reserves.capacity",
+        capacityStatus: capacity === void 0 ? null : "SOURCE_REPORTED"
+      }
     });
   }
   enrichDigitalTwinRelationships(model);
+  const connectedNodeIds = new Set(
+    model.getEdges().flatMap((edge) => [edge.fromNodeId, edge.toNodeId])
+  );
+  model.retainNodes((node) => {
+    const hasConfirmedConnection = connectedNodeIds.has(node.nodeId);
+    const hasVerifiedMeasurement = node.capacity !== void 0 || node.currentFlow !== void 0;
+    const hasMeaningfulSourceBackedData = node.metadata.sourceBackedOperationalData === true;
+    const requiredByAnotherModule = node.metadata.requiredByModule === true;
+    const isListAGeographicNode = node.nodeType === "chokepoint" || node.nodeType === "strategic_reserve" || node.nodeType === "port" && LIST_A_PORT_IDS.has(node.nodeId) || node.nodeType === "shipping_route" && node.metadata.geometry !== null;
+    return hasConfirmedConnection || hasVerifiedMeasurement || hasMeaningfulSourceBackedData || requiredByAnotherModule || isListAGeographicNode;
+  });
   return model;
 };
 
@@ -1396,7 +1710,10 @@ var DigitalTwinImpactAnalyzer = class {
       affectedNodes,
       affectedEdges,
       affectedCapacity: measurementSummary(affectedNodes, affectedEdges, "capacity"),
-      affectedFlow: measurementSummary(affectedNodes, affectedEdges, "currentFlow")
+      // The disrupted source asset is directly affected too. Include its
+      // source-backed flow in the flow summary while leaving affected IDs and
+      // downstream relationship traversal unchanged.
+      affectedFlow: measurementSummary([sourceNode, ...affectedNodes], affectedEdges, "currentFlow")
     };
   }
   analyzeCurrentState() {
@@ -1491,6 +1808,8 @@ var createDigitalTwinRuntime = (repository) => {
 };
 
 // src/scenarios/scenario-engine.ts
+var RECOVERY_MODEL_DESCRIPTION = "No source-backed recovery rate is available. Recovery is modeled as a deterministic linear return from the disrupted capacity level to 100% over a severity-scaled recovery window.";
+var ALTERNATIVE_CAPACITY_UNAVAILABLE_SOURCE = "unavailable: no verified, unit-compatible spare capacity is available in the existing Phase 2/Digital Twin data.";
 var clampPercent = (value) => Math.max(0, Math.min(100, value));
 var calculateSupplyLoss = (baseline, durationDays, capacityReductionPercent) => {
   if (!baseline) return null;
@@ -1501,17 +1820,18 @@ var calculateSupplyLoss = (baseline, durationDays, capacityReductionPercent) => 
     source: baseline.source
   };
 };
+var RECOVERY_WINDOW_MULTIPLIERS = {
+  LOW: 0.5,
+  MEDIUM: 0.75,
+  HIGH: 1,
+  CRITICAL: 1.5
+};
 var calculateRecoveryDays = (durationDays, severity) => {
-  const recoveryMultiplier = {
-    LOW: 0.5,
-    MEDIUM: 0.75,
-    HIGH: 1,
-    CRITICAL: 1.5
-  };
-  return Math.max(
-    durationDays + 1,
-    Math.ceil(durationDays * recoveryMultiplier[severity])
+  const recoveryWindowDays = Math.max(
+    1,
+    Math.ceil(durationDays * RECOVERY_WINDOW_MULTIPLIERS[severity])
   );
+  return durationDays + recoveryWindowDays;
 };
 var buildRecoveryTimeline = (durationDays, recoveryDays, capacityReductionPercent) => {
   const timeline = [];
@@ -1573,6 +1893,25 @@ var toScenarioImpacts = (impactResult) => {
 var getIdsByType = (graph, nodeIds, type) => graph.nodes.filter(
   (node) => node.nodeType === type && nodeIds.includes(node.nodeId)
 ).map((node) => node.nodeId).sort();
+var resolveAlternativeCapacity = (assessment, grossSupplyLossUnit) => {
+  if (!assessment || assessment.status !== "VERIFIED") {
+    return {
+      value: 0,
+      unit: "unavailable",
+      source: assessment?.source || ALTERNATIVE_CAPACITY_UNAVAILABLE_SOURCE,
+      status: "UNAVAILABLE"
+    };
+  }
+  if (!Number.isFinite(assessment.value) || assessment.value < 0 || !assessment.unit.trim() || assessment.unit !== grossSupplyLossUnit) {
+    return {
+      value: 0,
+      unit: "unavailable",
+      source: "unavailable: verified alternative capacity was not unit-compatible with the gross supply loss.",
+      status: "UNAVAILABLE"
+    };
+  }
+  return assessment;
+};
 var ScenarioEngine = class {
   constructor(baselineProvider) {
     this.baselineProvider = baselineProvider;
@@ -1588,7 +1927,9 @@ var ScenarioEngine = class {
         input.affectedNodeId,
         ...impactResult.affectedNodeIds
       ];
-      const baseline = this.baselineProvider.getBaseline(input);
+      const baseline = this.baselineProvider.getBaseline(input, {
+        graph: simulatedGraph
+      });
       const supplyLoss = calculateSupplyLoss(
         baseline,
         input.durationDays,
@@ -1609,6 +1950,17 @@ var ScenarioEngine = class {
         affectedNodeIds,
         "refinery"
       );
+      const grossSupplyLoss = supplyLoss?.dailySupply ?? 0;
+      const grossSupplyLossUnit = supplyLoss?.unit ?? "unavailable";
+      const alternativeCapacity = resolveAlternativeCapacity(
+        this.baselineProvider.getAlternativeCapacity?.(input, {
+          baseline,
+          grossSupplyLoss: supplyLoss,
+          graph: simulatedGraph,
+          affectedNodeIds
+        }) ?? null,
+        grossSupplyLossUnit
+      );
       const recoveryDays = calculateRecoveryDays(
         input.durationDays,
         input.severity
@@ -1621,17 +1973,23 @@ var ScenarioEngine = class {
       return {
         scenarioId: `${input.affectedNodeId}-${input.durationDays}d-${Date.now()}`,
         input,
-        supplyLoss: supplyLoss?.dailySupply ?? 0,
-        supplyLossUnit: supplyLoss?.unit ?? "unavailable",
+        supplyLoss: grossSupplyLoss,
+        supplyLossUnit: grossSupplyLossUnit,
         affectedRoutes,
         affectedPorts,
         affectedRefineries,
-        alternativeCapacity: 0,
-        alternativeCapacityUnit: "not-yet-modelled",
-        shortage: supplyLoss?.dailySupply ?? 0,
-        shortageUnit: supplyLoss?.unit ?? "unavailable",
+        alternativeCapacity: alternativeCapacity.value,
+        alternativeCapacityUnit: alternativeCapacity.unit,
+        alternativeCapacitySource: alternativeCapacity.source,
+        alternativeCapacityStatus: alternativeCapacity.status,
+        shortage: Math.max(
+          0,
+          grossSupplyLoss - alternativeCapacity.value
+        ),
+        shortageUnit: grossSupplyLossUnit,
         recoveryDays,
         recoveryTimeline,
+        recoveryAssumption: RECOVERY_MODEL_DESCRIPTION,
         impacts: toScenarioImpacts(impactResult),
         calculatedAt: (/* @__PURE__ */ new Date()).toISOString()
       };
@@ -1657,6 +2015,64 @@ var ScenarioEngine = class {
   }
 };
 
+// src/scenarios/scenario-comparison.ts
+var stableInputKey = (input) => JSON.stringify([
+  input.eventId,
+  input.durationDays,
+  input.severity,
+  input.affectedNodeId,
+  input.capacityReductionPercent
+]);
+var copyInput = (input) => ({ ...input });
+var buildComparisonId = (inputs) => `comparison-${inputs.map(stableInputKey).join("|")}`;
+var buildSummary = (scenarios) => {
+  const highestSupplyLossScenario = scenarios.reduce(
+    (highest, scenario) => scenario.supplyLoss > highest.supplyLoss ? scenario : highest
+  );
+  const highestShortageScenario = scenarios.reduce(
+    (highest, scenario) => scenario.shortage > highest.shortage ? scenario : highest
+  );
+  const longestRecoveryScenario = scenarios.reduce(
+    (longest, scenario) => scenario.recoveryDays > longest.recoveryDays ? scenario : longest
+  );
+  return {
+    highestSupplyLoss: highestSupplyLossScenario.supplyLoss,
+    highestShortage: highestShortageScenario.shortage,
+    longestRecovery: longestRecoveryScenario.recoveryDays,
+    scenarioWithHighestSupplyLoss: copyInput(
+      highestSupplyLossScenario.input
+    ),
+    scenarioWithHighestShortage: copyInput(
+      highestShortageScenario.input
+    ),
+    scenarioWithLongestRecovery: copyInput(
+      longestRecoveryScenario.input
+    )
+  };
+};
+var ScenarioComparisonService = class {
+  constructor(scenarioEngine, clock = () => (/* @__PURE__ */ new Date()).toISOString()) {
+    this.scenarioEngine = scenarioEngine;
+    this.clock = clock;
+  }
+  compare(stateEngine, inputs) {
+    if (inputs.length === 0) {
+      throw new Error(
+        "Scenario comparison requires at least one scenario."
+      );
+    }
+    const scenarios = inputs.map(
+      (input) => this.scenarioEngine.run(stateEngine, input)
+    );
+    return {
+      comparisonId: buildComparisonId(inputs),
+      scenarios,
+      summary: buildSummary(scenarios),
+      calculatedAt: this.clock()
+    };
+  }
+};
+
 // src/scenarios/sqlite-baseline-provider.ts
 var HORMUZ_NODE_ID = "chokepoint-strait-of-hormuz";
 var HORMUZ_PORT_NAME = "Jawaharlal Nehru Port (Nhava Shiva)";
@@ -1664,10 +2080,28 @@ var SqliteScenarioBaselineProvider = class {
   constructor(repository) {
     this.repository = repository;
   }
-  getBaseline(input) {
-    if (input.affectedNodeId !== HORMUZ_NODE_ID) {
+  getBaseline(input, context) {
+    if (input.affectedNodeId === HORMUZ_NODE_ID) {
+      return this.getHormuzBaseline();
+    }
+    const node = context?.graph.nodes.find(
+      (candidate) => candidate.nodeId === input.affectedNodeId
+    );
+    if (!node || !node.currentFlow || !Number.isFinite(node.currentFlow.value) || !node.currentFlow.unit.trim()) {
       return null;
     }
+    if (node.metadata.sourceBackedOperationalData !== true || !node.metadata.currentFlowSource) {
+      return null;
+    }
+    const sourceReferences = node.sourceReferences.filter((reference) => reference.table === "global_oil_snapshots" || reference.table === "daily_port_activity").map((reference) => `${reference.table}:${reference.id}`);
+    if (sourceReferences.length === 0) return null;
+    return {
+      dailySupply: node.currentFlow.value,
+      unit: node.currentFlow.unit,
+      source: `${node.metadata.currentFlowSource} (${sourceReferences.join(", ")})`
+    };
+  }
+  getHormuzBaseline() {
     const port = this.findHormuzPort();
     if (!port || typeof port.port_id !== "string") {
       return null;
@@ -1688,6 +2122,23 @@ var SqliteScenarioBaselineProvider = class {
       dailySupply,
       unit: "source-dataset-import-tanker-units",
       source: `daily_port_activity:${HORMUZ_PORT_NAME}`
+    };
+  }
+  getAlternativeCapacity(input, context) {
+    if (input.affectedNodeId !== HORMUZ_NODE_ID) {
+      return null;
+    }
+    const candidateNames = context.graph.nodes.filter(
+      (node) => node.nodeType === "refinery" && !context.affectedNodeIds.includes(node.nodeId) && Number.isFinite(node.capacity?.value) && context.graph.edges.some(
+        (edge) => edge.edgeType === "port_to_refinery" && edge.toNodeId === node.nodeId && !context.affectedNodeIds.includes(edge.fromNodeId)
+      )
+    ).sort((left, right) => left.name.localeCompare(right.name)).slice(0, 5).map((node) => node.name);
+    const candidateSummary = candidateNames.length > 0 ? ` Candidate downstream infrastructure represented in the Digital Twin includes: ${candidateNames.join(", ")}.` : "";
+    return {
+      value: 0,
+      unit: "unavailable",
+      status: "UNAVAILABLE",
+      source: `unavailable: the existing Phase 2/Digital Twin data does not verify spare capacity for alternative infrastructure; refinery capacities are annual nameplate values, port activity units are undocumented, and relationship edges have no capacity or current-flow values.${candidateSummary}`
     };
   }
   findHormuzPort() {
@@ -1731,14 +2182,16 @@ try {
   const runtime = createDigitalTwinRuntime(repository);
   const baselineProvider = new SqliteScenarioBaselineProvider(repository);
   const scenarioEngine = new ScenarioEngine(baselineProvider);
+  const runtimeNodes = runtime.stateEngine.getCurrentTwin().nodes;
+  const createScenarioInput = (durationDays) => ({
+    eventId: `hormuz-${durationDays}-days`,
+    durationDays,
+    severity: "HIGH",
+    affectedNodeId: "chokepoint-strait-of-hormuz",
+    capacityReductionPercent: 50
+  });
   const runScenario = (durationDays) => {
-    const input = {
-      eventId: `hormuz-${durationDays}-days`,
-      durationDays,
-      severity: "HIGH",
-      affectedNodeId: "chokepoint-strait-of-hormuz",
-      capacityReductionPercent: 50
-    };
+    const input = createScenarioInput(durationDays);
     return scenarioEngine.run(runtime.stateEngine, input);
   };
   console.log("");
@@ -1750,13 +2203,17 @@ try {
   for (const result of results) {
     console.log(`Scenario: Hormuz ${result.input.durationDays} days`);
     console.log(`Capacity reduction: ${result.input.capacityReductionPercent}%`);
-    console.log(`Supply loss: ${result.supplyLoss.toFixed(2)}`);
-    console.log(`Supply loss unit: ${result.supplyLossUnit}`);
+    console.log(`Gross supply loss: ${result.supplyLoss.toFixed(2)}`);
+    console.log(`Gross supply loss unit: ${result.supplyLossUnit}`);
     console.log(`Affected routes: ${result.affectedRoutes.length}`);
     console.log(`Affected ports: ${result.affectedPorts.length}`);
     console.log(`Affected refineries: ${result.affectedRefineries.length}`);
     console.log(`Alternative capacity: ${result.alternativeCapacity}`);
-    console.log(`Shortage: ${result.shortage.toFixed(2)}`);
+    console.log(`Alternative capacity unit: ${result.alternativeCapacityUnit}`);
+    console.log(`Alternative capacity status: ${result.alternativeCapacityStatus}`);
+    console.log(`Alternative capacity source: ${result.alternativeCapacitySource}`);
+    console.log(`Residual shortage: ${result.shortage.toFixed(2)}`);
+    console.log(`Residual shortage unit: ${result.shortageUnit}`);
     console.log(`Recovery days: ${result.recoveryDays}`);
     console.log(`Recovery timeline points: ${result.recoveryTimeline.length}`);
     console.log("");
@@ -1765,6 +2222,226 @@ try {
   const sevenDay = results[0];
   const fourteenDay = results[1];
   const thirtyDay = results[2];
+  const supportedPortNode = runtimeNodes.find(
+    (node) => node.nodeType === "port" && node.nodeId !== "chokepoint-strait-of-hormuz" && (node.currentFlow?.value || 0) > 0
+  );
+  if (!supportedPortNode) {
+    throw new Error("FAIL: Expected a source-backed port for coverage.");
+  }
+  const supportedPortResult = scenarioEngine.run(runtime.stateEngine, {
+    eventId: `supported-port-${supportedPortNode.nodeId}`,
+    durationDays: 7,
+    severity: "HIGH",
+    affectedNodeId: supportedPortNode.nodeId,
+    capacityReductionPercent: 50
+  });
+  if (!(supportedPortResult.supplyLoss > 0) || supportedPortResult.supplyLossUnit !== "source_tanker_units_per_activity_day-days") {
+    throw new Error(
+      "FAIL: Source-backed port baseline must produce a unit-preserving scenario result."
+    );
+  }
+  const supportedSupplierNode = runtimeNodes.find(
+    (node) => node.nodeType === "supplier" && node.currentFlow?.unit === "barrels_per_day"
+  );
+  if (!supportedSupplierNode) {
+    throw new Error("FAIL: Expected a source-backed supplier for coverage.");
+  }
+  const supportedSupplierResult = scenarioEngine.run(runtime.stateEngine, {
+    eventId: `supported-supplier-${supportedSupplierNode.nodeId}`,
+    durationDays: 7,
+    severity: "HIGH",
+    affectedNodeId: supportedSupplierNode.nodeId,
+    capacityReductionPercent: 50
+  });
+  if (!(supportedSupplierResult.supplyLoss > 0) || supportedSupplierResult.supplyLossUnit !== "barrels_per_day-days") {
+    throw new Error(
+      "FAIL: Source-backed supplier baseline must produce a unit-preserving scenario result."
+    );
+  }
+  const unsupportedNode = runtimeNodes.find((node) => node.nodeType === "refinery");
+  if (!unsupportedNode) {
+    throw new Error("FAIL: Expected a refinery without a unit-safe daily baseline.");
+  }
+  const unsupportedResult = scenarioEngine.run(runtime.stateEngine, {
+    eventId: `unsupported-${unsupportedNode.nodeId}`,
+    durationDays: 7,
+    severity: "HIGH",
+    affectedNodeId: unsupportedNode.nodeId,
+    capacityReductionPercent: 50
+  });
+  if (unsupportedResult.supplyLoss !== 0 || unsupportedResult.supplyLossUnit !== "unavailable" || unsupportedResult.shortage !== 0 || unsupportedResult.shortageUnit !== "unavailable") {
+    throw new Error(
+      "FAIL: Unsupported assets must remain explicitly unavailable without fabricated results."
+    );
+  }
+  const comparisonInputs = [7, 14, 30].map(createScenarioInput);
+  const comparisonService = new ScenarioComparisonService(
+    scenarioEngine,
+    () => "2026-08-23T12:00:00.000Z"
+  );
+  const comparison = comparisonService.compare(
+    runtime.stateEngine,
+    comparisonInputs
+  );
+  console.log("");
+  console.log("SCENARIO COMPARISON");
+  console.log("Scenario | Supply Loss | Alternative Capacity | Shortage | Recovery");
+  for (const result of comparison.scenarios) {
+    console.log(
+      `${result.input.durationDays} days | ${result.supplyLoss.toFixed(2)} | ${result.alternativeCapacity.toFixed(2)} (${result.alternativeCapacityUnit}) | ${result.shortage.toFixed(2)} | ${result.recoveryDays} days`
+    );
+  }
+  console.log(
+    `Highest supply loss: ${comparison.summary.highestSupplyLoss.toFixed(2)} (${comparison.summary.scenarioWithHighestSupplyLoss.durationDays} days)`
+  );
+  console.log(
+    `Highest shortage: ${comparison.summary.highestShortage.toFixed(2)} (${comparison.summary.scenarioWithHighestShortage.durationDays} days)`
+  );
+  console.log(
+    `Longest recovery: ${comparison.summary.longestRecovery} days (${comparison.summary.scenarioWithLongestRecovery.durationDays}-day scenario)`
+  );
+  console.log("");
+  const repeatedComparison = comparisonService.compare(
+    runtime.stateEngine,
+    comparisonInputs
+  );
+  if (comparison.comparisonId !== repeatedComparison.comparisonId) {
+    throw new Error("FAIL: Scenario comparison ID must be deterministic.");
+  }
+  if (comparison.calculatedAt !== repeatedComparison.calculatedAt) {
+    throw new Error("FAIL: Scenario comparison timestamp must use the supplied clock.");
+  }
+  if (JSON.stringify(comparison.summary) !== JSON.stringify(repeatedComparison.summary)) {
+    throw new Error("FAIL: Scenario comparison summary must be deterministic.");
+  }
+  if (comparison.scenarios.length !== 3) {
+    throw new Error("FAIL: Scenario comparison must contain all three scenarios.");
+  }
+  if (comparison.scenarios.map((scenario) => scenario.input.durationDays).join(",") !== "7,14,30") {
+    throw new Error("FAIL: Scenario comparison must preserve input order.");
+  }
+  if (!(comparison.scenarios[0].supplyLoss < comparison.scenarios[1].supplyLoss) || !(comparison.scenarios[1].supplyLoss < comparison.scenarios[2].supplyLoss)) {
+    throw new Error("FAIL: Comparison supply loss ordering is incorrect.");
+  }
+  if (!(comparison.scenarios[0].shortage < comparison.scenarios[1].shortage) || !(comparison.scenarios[1].shortage < comparison.scenarios[2].shortage)) {
+    throw new Error("FAIL: Comparison shortage ordering is incorrect.");
+  }
+  if (!(comparison.scenarios[0].recoveryDays < comparison.scenarios[1].recoveryDays) || !(comparison.scenarios[1].recoveryDays < comparison.scenarios[2].recoveryDays)) {
+    throw new Error("FAIL: Comparison recovery ordering is incorrect.");
+  }
+  if (comparison.scenarios.some(
+    (scenario) => scenario.affectedRoutes.length === 0 || scenario.affectedPorts.length === 0 || scenario.affectedRefineries.length === 0
+  )) {
+    throw new Error(
+      "FAIL: Comparison scenarios must preserve affected infrastructure results."
+    );
+  }
+  if (comparison.summary.highestSupplyLoss !== thirtyDay.supplyLoss || comparison.summary.scenarioWithHighestSupplyLoss.durationDays !== 30) {
+    throw new Error("FAIL: Highest supply loss scenario was identified incorrectly.");
+  }
+  if (comparison.summary.highestShortage !== thirtyDay.shortage || comparison.summary.scenarioWithHighestShortage.durationDays !== 30) {
+    throw new Error("FAIL: Highest shortage scenario was identified incorrectly.");
+  }
+  if (comparison.summary.longestRecovery !== thirtyDay.recoveryDays || comparison.summary.scenarioWithLongestRecovery.durationDays !== 30) {
+    throw new Error("FAIL: Longest recovery scenario was identified incorrectly.");
+  }
+  for (const scenario of comparison.scenarios) {
+    if (scenario.alternativeCapacityStatus !== "UNAVAILABLE") {
+      throw new Error(
+        "FAIL: Comparison must preserve unavailable alternative-capacity status."
+      );
+    }
+  }
+  let emptyComparisonRejected = false;
+  try {
+    comparisonService.compare(runtime.stateEngine, []);
+  } catch (error) {
+    emptyComparisonRejected = error instanceof Error && error.message === "Scenario comparison requires at least one scenario.";
+  }
+  if (!emptyComparisonRejected) {
+    throw new Error("FAIL: Empty scenario comparison must be rejected.");
+  }
+  let invalidInputError = "";
+  try {
+    comparisonService.compare(runtime.stateEngine, [
+      createScenarioInput(7),
+      {
+        ...createScenarioInput(14),
+        durationDays: 0
+      }
+    ]);
+  } catch (error) {
+    invalidInputError = error instanceof Error ? error.message : String(error);
+  }
+  if (invalidInputError !== "Scenario durationDays must be greater than zero.") {
+    throw new Error(
+      "FAIL: Invalid scenario input must propagate the existing ScenarioEngine validation error."
+    );
+  }
+  const verifiedAlternativeScenarioEngine = new ScenarioEngine({
+    getBaseline: (input) => baselineProvider.getBaseline(input),
+    getAlternativeCapacity: (_input, context) => {
+      if (!context.grossSupplyLoss) {
+        return null;
+      }
+      return {
+        value: context.grossSupplyLoss.dailySupply / 4,
+        unit: context.grossSupplyLoss.unit,
+        source: "test: verified unit-compatible alternative capacity",
+        status: "VERIFIED"
+      };
+    }
+  });
+  const verifiedAlternativeResult = verifiedAlternativeScenarioEngine.run(
+    runtime.stateEngine,
+    {
+      eventId: "hormuz-14-days-verified-alternative",
+      durationDays: 14,
+      severity: "HIGH",
+      affectedNodeId: "chokepoint-strait-of-hormuz",
+      capacityReductionPercent: 50
+    }
+  );
+  const expectedAlternativeCapacity = fourteenDay.supplyLoss / 4;
+  if (verifiedAlternativeResult.alternativeCapacity !== expectedAlternativeCapacity) {
+    throw new Error(
+      "FAIL: Verified alternative capacity must be exposed in the scenario result."
+    );
+  }
+  if (verifiedAlternativeResult.shortage !== fourteenDay.supplyLoss - expectedAlternativeCapacity) {
+    throw new Error(
+      "FAIL: Residual shortage must subtract verified alternative capacity from gross supply loss."
+    );
+  }
+  for (const result of results) {
+    if (!(result.supplyLoss > 0)) {
+      throw new Error("FAIL: Hormuz scenario gross supply loss must be positive.");
+    }
+    if (result.alternativeCapacity < 0) {
+      throw new Error("FAIL: Alternative capacity must never be negative.");
+    }
+    if (result.shortage < 0) {
+      throw new Error("FAIL: Residual shortage must never be negative.");
+    }
+    if (result.shortage > result.supplyLoss) {
+      throw new Error("FAIL: Residual shortage cannot exceed gross supply loss.");
+    }
+    if (result.alternativeCapacityStatus !== "UNAVAILABLE") {
+      throw new Error(
+        "FAIL: Hormuz alternative capacity must be explicitly unavailable when no verified value exists."
+      );
+    }
+    if (result.alternativeCapacityUnit !== "unavailable") {
+      throw new Error(
+        "FAIL: Unavailable alternative capacity must use the unavailable unit marker."
+      );
+    }
+    if (!result.alternativeCapacitySource.includes("unavailable")) {
+      throw new Error(
+        "FAIL: Alternative capacity provenance must explain that the value is unavailable."
+      );
+    }
+  }
   if (!(sevenDay.supplyLoss < fourteenDay.supplyLoss)) {
     throw new Error(
       "FAIL: 14-day supply loss must be greater than 7-day supply loss."
@@ -1773,6 +2450,16 @@ try {
   if (!(fourteenDay.supplyLoss < thirtyDay.supplyLoss)) {
     throw new Error(
       "FAIL: 30-day supply loss must be greater than 14-day supply loss."
+    );
+  }
+  if (!(sevenDay.shortage < fourteenDay.shortage)) {
+    throw new Error(
+      "FAIL: 14-day residual shortage must be greater than 7-day residual shortage."
+    );
+  }
+  if (!(fourteenDay.shortage < thirtyDay.shortage)) {
+    throw new Error(
+      "FAIL: 30-day residual shortage must be greater than 14-day residual shortage."
     );
   }
   if (sevenDay.affectedRoutes.length === 0) {
@@ -1790,34 +2477,41 @@ try {
       "FAIL: Hormuz scenario affected zero refineries."
     );
   }
-  if (sevenDay.recoveryDays !== 8) {
+  if (sevenDay.recoveryDays !== 14) {
     throw new Error(
-      `FAIL: Expected 7-day HIGH scenario recovery to be 8 days, got ${sevenDay.recoveryDays}.`
+      `FAIL: Expected 7-day HIGH scenario recovery horizon to be 14 days, got ${sevenDay.recoveryDays}.`
     );
   }
-  if (fourteenDay.recoveryDays !== 15) {
+  if (fourteenDay.recoveryDays !== 28) {
     throw new Error(
-      `FAIL: Expected 14-day HIGH scenario recovery to be 15 days, got ${fourteenDay.recoveryDays}.`
+      `FAIL: Expected 14-day HIGH scenario recovery horizon to be 28 days, got ${fourteenDay.recoveryDays}.`
     );
   }
-  if (thirtyDay.recoveryDays !== 31) {
+  if (thirtyDay.recoveryDays !== 60) {
     throw new Error(
-      `FAIL: Expected 30-day HIGH scenario recovery to be 31 days, got ${thirtyDay.recoveryDays}.`
+      `FAIL: Expected 30-day HIGH scenario recovery horizon to be 60 days, got ${thirtyDay.recoveryDays}.`
     );
   }
-  if (sevenDay.recoveryTimeline.length !== 9) {
+  if (sevenDay.recoveryTimeline.length !== 15) {
     throw new Error(
-      `FAIL: Expected 7-day scenario to have 9 recovery timeline points, got ${sevenDay.recoveryTimeline.length}.`
+      `FAIL: Expected 7-day scenario to have 15 recovery timeline points, got ${sevenDay.recoveryTimeline.length}.`
     );
   }
-  if (fourteenDay.recoveryTimeline.length !== 16) {
+  if (fourteenDay.recoveryTimeline.length !== 29) {
     throw new Error(
-      `FAIL: Expected 14-day scenario to have 16 recovery timeline points, got ${fourteenDay.recoveryTimeline.length}.`
+      `FAIL: Expected 14-day scenario to have 29 recovery timeline points, got ${fourteenDay.recoveryTimeline.length}.`
     );
   }
-  if (thirtyDay.recoveryTimeline.length !== 32) {
+  if (thirtyDay.recoveryTimeline.length !== 61) {
     throw new Error(
-      `FAIL: Expected 30-day scenario to have 32 recovery timeline points, got ${thirtyDay.recoveryTimeline.length}.`
+      `FAIL: Expected 30-day scenario to have 61 recovery timeline points, got ${thirtyDay.recoveryTimeline.length}.`
+    );
+  }
+  if (!fourteenDay.recoveryTimeline.some(
+    (point) => point.day > fourteenDay.input.durationDays && point.day < fourteenDay.recoveryDays && point.remainingCapacityPercent > 50 && point.remainingCapacityPercent < 100
+  )) {
+    throw new Error(
+      "FAIL: 14-day scenario must include an intermediate recovery value."
     );
   }
   console.log("");

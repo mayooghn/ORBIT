@@ -20,10 +20,9 @@ const apiSource = readFileSync(
 test('Strategic Reserves page starts in a clean loading state waiting for real database data (no fake numbers)', () => {
   const markup = renderToStaticMarkup(React.createElement(ReservesPage));
 
-  assert.match(markup, /Strategic Reserves/);
-  assert.match(markup, /LOADING REAL DATA/);
-  assert.match(markup, /Loading real strategic reserve and procurement data\.\.\./);
-  assert.match(markup, /Querying SQLite database/);
+  assert.match(markup, /Reserve Management/);
+  assert.match(markup, /Loading strategic reserve and procurement data\.\.\./);
+  assert.match(markup, /Querying database/);
 
   // Must not render demo/mock badges or fake numbers on initial mount
   assert.doesNotMatch(markup, /DEMO \/ MOCK DATA/);
@@ -85,12 +84,13 @@ test('Strategic Reserves page automatically builds real database-backed baseline
 
   assert.equal(autoInput.currentReserve, 5_000_000);
   assert.equal(autoInput.demand, 655_271);
+  assert.equal(autoInput.availableSupply, 555_271);
+  assert.equal(autoInput.supplyGap, 100_000);
   assert.equal(autoInput.alternativeProcurement, 588_810);
   assert.equal(autoInput.replenishmentRate, 20_000);
   assert.equal(autoInput.minimumReserveThreshold, 1_500_000);
 
   // Scenario disruption parameters are present and distinct
-  assert.equal(autoInput.supplyGap, 100_000);
   assert.equal(autoInput.disruptionDuration, 30);
 
   // Optimization runs deterministically on auto-loaded real inputs
@@ -127,3 +127,44 @@ test('Optimizer cannot be executed with missing or invalid baseline inputs', () 
   assert.equal(invalid.valid, false);
   assert.ok(invalid.issues.length > 0);
 });
+
+test('Reserves page defines all 6 crisis scenarios including Custom Crisis', () => {
+  const expectedScenarios = [
+    'Normal Supply Disruption',
+    'Strait of Hormuz Crisis',
+    'Strong Backup Supply',
+    'Reserve Safety Limit',
+    'Reserve Already Below Safe Level',
+    'Custom Crisis',
+  ];
+
+  for (const scenario of expectedScenarios) {
+    assert.match(pageSource, new RegExp(scenario));
+  }
+
+  assert.match(pageSource, /Choose a Crisis Scenario/);
+  assert.match(pageSource, /Select a predefined crisis or create your own to see how the strategic reserve responds\./);
+  assert.match(pageSource, /Run Custom Scenario/);
+});
+
+test('Scenario Inputs section uses operator-facing language and labels', () => {
+  assert.match(pageSource, /Scenario Inputs/);
+  assert.match(pageSource, /ORBIT uses current reserve and supply information as the starting point\. Crisis assumptions can be adjusted to test different situations\./);
+  assert.doesNotMatch(pageSource, /Real Database Baseline Inputs/);
+
+  const expectedLabels = [
+    'Current Reserve',
+    'Daily Demand',
+    'Available Supply',
+    'Calculated Supply Gap',
+    'Crisis Duration',
+    'Backup Supply',
+    'Refill Rate',
+    'Safety Reserve',
+  ];
+
+  for (const label of expectedLabels) {
+    assert.match(pageSource, new RegExp(label));
+  }
+});
+
