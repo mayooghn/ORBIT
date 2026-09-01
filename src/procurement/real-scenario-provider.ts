@@ -203,6 +203,15 @@ export class RealScenarioProcurementDataProvider
         supplierNameLower.includes('qatar') ||
         supplierNameLower.includes('oman');
 
+      const isPersianGulfSupplier =
+        supplierNameLower.includes('saudi') ||
+        supplierNameLower.includes('iraq') ||
+        supplierNameLower.includes('emirates') ||
+        supplierNameLower.includes('uae') ||
+        supplierNameLower.includes('kuwait') ||
+        supplierNameLower.includes('iran') ||
+        supplierNameLower.includes('qatar');
+
       const isWestAfrica =
         supplierNameLower.includes('nigeria') ||
         supplierNameLower.includes('angola') ||
@@ -256,9 +265,24 @@ export class RealScenarioProcurementDataProvider
 
         if (!compatible) continue;
 
-        // Elevate risk if transit passes through a disrupted chokepoint
-        if (routeDef.isHormuzDependent && isHormuzDisrupted) {
-          riskMultiplier = 1.8;
+        // Determine if the specific lane is physically Hormuz-dependent
+        let isLaneHormuzDependent = routeDef.isHormuzDependent;
+        if (
+          isPersianGulfSupplier &&
+          (routeDef.corridorType === 'middle_east' || routeDef.corridorType === 'general')
+        ) {
+          isLaneHormuzDependent = true;
+        }
+
+        let laneCompatible = compatible;
+
+        // Elevate risk or block entirely based on chokepoint disruption
+        if (isLaneHormuzDependent && isHormuzDisrupted) {
+          if (reductionPercent === 100) {
+            laneCompatible = false;
+          } else {
+            riskMultiplier = 1.8;
+          }
         } else if (routeDef.isMalaccaDependent && isMalaccaDisrupted) {
           riskMultiplier = 1.5;
         }
@@ -281,7 +305,7 @@ export class RealScenarioProcurementDataProvider
           laneId: `lane-${supplier.supplierId.replace('supplier-', '')}-${route.routeId.replace('shipping-route-', '')}`,
           supplierId: supplier.supplierId,
           routeId: route.routeId,
-          compatible: true,
+          compatible: laneCompatible,
           procurementCostPerUnit: costPerUnit,
           procurementCostUnit: costUnit,
           transitTimeDays: transitDays,
@@ -302,7 +326,7 @@ export class RealScenarioProcurementDataProvider
     return {
       status: 'AVAILABLE',
       data: {
-        source: `ORBIT Real Procurement Data Layer (Phase 2 SQLite supplier_imports FY ${realProcurement.financialYear}, Digital Twin corridors, & EIA crude benchmarks)`,
+        source: `ORBIT Procurement Data (FY ${realProcurement.financialYear})`,
         suppliers,
         routes,
         lanes,

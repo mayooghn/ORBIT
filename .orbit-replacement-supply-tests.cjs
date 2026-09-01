@@ -21,13 +21,12 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// tests/phase2-data-layer.test.ts
+// tests/replacement-supply.test.ts
 var import_strict = __toESM(require("node:assert/strict"), 1);
 var import_node_http = require("node:http");
+var import_node_test = __toESM(require("node:test"), 1);
 var import_node_fs4 = require("node:fs");
 var import_node_path4 = __toESM(require("node:path"), 1);
-var import_node_os = require("node:os");
-var import_node_test = __toESM(require("node:test"), 1);
 
 // server.ts
 var import_express = __toESM(require("express"), 1);
@@ -725,9 +724,9 @@ var PHASE2_DATA_TABLES = [
 // src/dataLayer/database.ts
 var defaultPhase2DbPath = () => process.env.ORBIT_DB_PATH || import_node_path.default.join(process.cwd(), "data", "orbit.db");
 var openPhase2Database = (options = {}) => {
-  const dbPath = options.dbPath || defaultPhase2DbPath();
-  (0, import_node_fs.mkdirSync)(import_node_path.default.dirname(dbPath), { recursive: true });
-  const database2 = new import_node_sqlite.DatabaseSync(dbPath, {
+  const dbPath2 = options.dbPath || defaultPhase2DbPath();
+  (0, import_node_fs.mkdirSync)(import_node_path.default.dirname(dbPath2), { recursive: true });
+  const database2 = new import_node_sqlite.DatabaseSync(dbPath2, {
     enableForeignKeyConstraints: true,
     timeout: 5e3
   });
@@ -810,8 +809,8 @@ var parseCsv = (text2) => {
     (cells) => Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]))
   );
 };
-var readCsv = (processedDir2, fileName) => {
-  const filePath = import_node_path2.default.join(processedDir2, fileName);
+var readCsv = (processedDir, fileName) => {
+  const filePath = import_node_path2.default.join(processedDir, fileName);
   if (!(0, import_node_fs2.existsSync)(filePath)) throw new Error(`Processed dataset not found: ${filePath}`);
   return parseCsv((0, import_node_fs2.readFileSync)(filePath, "utf8"));
 };
@@ -1017,10 +1016,10 @@ var insertStrategicReserves = (database2, countryIds, sourceIds) => {
   }
   return facilities.length;
 };
-var insertShippingLanes = (database2, processedDir2, rows, sourceIds) => {
+var insertShippingLanes = (database2, processedDir, rows, sourceIds) => {
   const statement = database2.prepare(`INSERT INTO shipping_lanes (shipping_lane_id, source_feature_id, source_object_id, feature_name, lane_category, geometry_type, line_part_count, coordinate_point_count, geometry_valid, geometry_bounds_lon_lat, source_geometry_crs_status, data_source_id, source_feature_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const geometryStatement = database2.prepare(`INSERT INTO shipping_lane_geometries (shipping_lane_geometry_id, shipping_lane_id, geometry_type, geometry_json, source_geometry_crs_status, geometry_status) VALUES (?, ?, ?, ?, ?, ?)`);
-  const geoJsonPath = import_node_path2.default.join(processedDir2, "shipping_lanes_v1.geojson");
+  const geoJsonPath = import_node_path2.default.join(processedDir, "shipping_lanes_v1.geojson");
   if (!(0, import_node_fs2.existsSync)(geoJsonPath)) throw new Error(`Processed shipping-lane GeoJSON not found: ${geoJsonPath}`);
   const geoJson = JSON.parse((0, import_node_fs2.readFileSync)(geoJsonPath, "utf8"));
   const features = geoJson.features || [];
@@ -1039,32 +1038,32 @@ var insertShippingLanes = (database2, processedDir2, rows, sourceIds) => {
     geometryStatement.run(stableId("shipping-lane-geometry", id), id, value(row, "geometry_type"), geometryJson, value(row, "source_geometry_crs_status"), "AVAILABLE");
   }
 };
-var insertFacts = (database2, processedDir2, sourceIds, periodIds, countryIds, productIds) => {
+var insertFacts = (database2, processedDir, sourceIds, periodIds, countryIds, productIds) => {
   const counts = {};
-  const supplierRows = readCsv(processedDir2, "supplier_imports.csv");
+  const supplierRows = readCsv(processedDir, "supplier_imports.csv");
   const supplierStatement = database2.prepare(`INSERT INTO supplier_imports (supplier_import_id, financial_period_id, country_id, quantity_tonnes, quantity_unit, source_country_name, source_country_normalized_name, country_code, source_product_code, source_product_description, product_id, source_quantity_unit, source_trade_value_source_units, trade_value_unit_status, data_source_id, source_row_number, country_mapping_status, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of supplierRows) {
     const sourceDataset = value(row, "source_dataset");
     supplierStatement.run(stableId("supplier-import", `${sourceDataset}:${value(row, "source_row_number")}`), periodIds.get(value(row, "financial_year")), nullable(row, "country_id"), requiredNumber(row, "quantity_tonnes"), value(row, "quantity_unit"), value(row, "source_country_name"), value(row, "source_country_normalized_name"), value(row, "country_code"), value(row, "source_product_code"), value(row, "source_product_description"), value(row, "product_id"), value(row, "source_quantity_unit"), numberValue(row, "source_trade_value_source_units"), "UNDOCUMENTED", sourceIds.get(sourceDataset), requiredNumber(row, "source_row_number"), value(row, "country_mapping_status"), value(row, "validation_status"));
   }
   counts.supplier_imports = supplierRows.length;
-  const crudeRows = readCsv(processedDir2, "crude_import_totals.csv");
+  const crudeRows = readCsv(processedDir, "crude_import_totals.csv");
   const crudeStatement = database2.prepare(`INSERT INTO crude_import_totals (crude_import_total_id, financial_period_id, quantity_thousand_metric_tonnes, quantity_unit, source_financial_year, data_source_id, source_row_number, validation_status, time_series_scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of crudeRows) crudeStatement.run(stableId("crude-import-total", `${value(row, "source_dataset")}:${value(row, "source_row_number")}`), periodIds.get(value(row, "financial_year")), requiredNumber(row, "quantity_thousand_metric_tonnes"), value(row, "quantity_unit"), value(row, "source_financial_year"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), value(row, "validation_status"), value(row, "time_series_scope"));
   counts.crude_import_totals = crudeRows.length;
-  const consumptionRows = readCsv(processedDir2, "petroleum_consumption.csv");
+  const consumptionRows = readCsv(processedDir, "petroleum_consumption.csv");
   const consumptionStatement = database2.prepare(`INSERT INTO petroleum_consumption (petroleum_consumption_id, product_id, financial_period_id, source_product_name, calendar_year, month_number, month_name, consumption_metric_tonnes, consumption_unit, data_source_id, source_row_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of consumptionRows) consumptionStatement.run(stableId("petroleum-consumption", `${value(row, "source_dataset")}:${value(row, "source_row_number")}`), value(row, "product_id"), periodIds.get(value(row, "financial_year")), value(row, "source_product_name"), requiredNumber(row, "calendar_year"), requiredNumber(row, "month_number"), value(row, "month_name"), requiredNumber(row, "consumption_metric_tonnes"), value(row, "consumption_unit"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), value(row, "validation_status"));
   counts.petroleum_consumption = consumptionRows.length;
-  const globalRows = readCsv(processedDir2, "global_oil_snapshot.csv");
+  const globalRows = readCsv(processedDir, "global_oil_snapshot.csv");
   const globalStatement = database2.prepare(`INSERT INTO global_oil_snapshots (global_oil_snapshot_id, country_id, canonical_country_name, source_country_name, source_rank, rank, source_proven_reserves_barrels, proven_reserves_barrels, source_production_barrels_per_day, production_barrels_per_day, source_consumption_barrels_per_day, consumption_barrels_per_day, source_exports_barrels_per_day, exports_barrels_per_day, source_imports_barrels_per_day, imports_barrels_per_day, as_of_date, data_source_id, source_row_number, missing_metric_count, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of globalRows) globalStatement.run(value(row, "global_oil_snapshot_id"), value(row, "country_id"), value(row, "canonical_country_name"), value(row, "source_country_name"), nullable(row, "source_rank"), numberValue(row, "rank"), nullable(row, "source_proven_reserves_barrels"), numberValue(row, "proven_reserves_barrels"), nullable(row, "source_production_barrels_per_day"), numberValue(row, "production_barrels_per_day"), nullable(row, "source_consumption_barrels_per_day"), numberValue(row, "consumption_barrels_per_day"), nullable(row, "source_exports_barrels_per_day"), numberValue(row, "exports_barrels_per_day"), nullable(row, "source_imports_barrels_per_day"), numberValue(row, "imports_barrels_per_day"), nullable(row, "as_of_date"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), requiredNumber(row, "missing_metric_count"), value(row, "validation_status"));
   counts.global_oil_snapshots = globalRows.length;
-  const activityFilePath = import_node_path2.default.join(processedDir2, "daily_port_activity.csv");
+  const activityFilePath = import_node_path2.default.join(processedDir, "daily_port_activity.csv");
   if ((0, import_node_fs2.existsSync)(activityFilePath)) {
-    const activityRows = readCsv(processedDir2, "daily_port_activity.csv");
+    const activityRows = readCsv(processedDir, "daily_port_activity.csv");
     const identityIds = /* @__PURE__ */ new Map();
-    for (const row of readCsv(processedDir2, "port_source_mapping.csv")) {
+    for (const row of readCsv(processedDir, "port_source_mapping.csv")) {
       identityIds.set(`${value(row, "source_dataset")}|${value(row, "source_record_key")}`, stableId("port-source", `${value(row, "source_dataset")}|${value(row, "source_record_key")}`));
     }
     const activityFields = ["portcalls_container", "portcalls_dry_bulk", "portcalls_general_cargo", "portcalls_roro", "portcalls_tanker", "portcalls_cargo", "portcalls", "import_container", "import_dry_bulk", "import_general_cargo", "import_roro", "import_tanker", "import_cargo", "import", "export_container", "export_dry_bulk", "export_general_cargo", "export_roro", "export_tanker", "export_cargo", "export"];
@@ -1080,21 +1079,21 @@ var insertFacts = (database2, processedDir2, sourceIds, periodIds, countryIds, p
   }
   return counts;
 };
-var insertQuality = (database2, processedDir2, sourceIds) => {
+var insertQuality = (database2, processedDir, sourceIds) => {
   const counts = {};
-  const summaryRows = readCsv(processedDir2, "data_quality_summary.csv");
+  const summaryRows = readCsv(processedDir, "data_quality_summary.csv");
   const summaryStatement = database2.prepare(`INSERT INTO data_quality_summaries (dataset, processed_file, source_dataset, input_row_count, output_row_count, excluded_row_count, null_count_by_important_field, duplicate_count, invalid_value_count, unresolved_mapping_count, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of summaryRows) summaryStatement.run(value(row, "dataset"), value(row, "processed_file"), value(row, "source_dataset"), requiredNumber(row, "input_row_count"), requiredNumber(row, "output_row_count"), requiredNumber(row, "excluded_row_count"), readJson(value(row, "null_count_by_important_field")), requiredNumber(row, "duplicate_count"), requiredNumber(row, "invalid_value_count"), requiredNumber(row, "unresolved_mapping_count"), value(row, "notes"));
   counts.data_quality_summaries = summaryRows.length;
-  const issueRows = readCsv(processedDir2, "data_quality_issues.csv");
+  const issueRows = readCsv(processedDir, "data_quality_issues.csv");
   const issueStatement = database2.prepare(`INSERT INTO data_quality_issues (data_quality_issue_id, data_source_id, source_dataset, source_row_number, source_record_key, issue_type, field_name, severity, issue_status, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of issueRows) issueStatement.run(stableId("quality-issue", JSON.stringify(row)), sourceIds.get(value(row, "source_dataset")), value(row, "source_dataset"), numberValue(row, "source_row_number"), value(row, "source_record_key"), value(row, "issue_type"), value(row, "field_name"), value(row, "severity"), value(row, "issue_status"), value(row, "description"));
   counts.data_quality_issues = issueRows.length;
   return counts;
 };
-var insertManualReview = (database2, processedDir2, sourceIds) => {
-  const countryRows = readCsv(import_node_path2.default.join(processedDir2, "manual_review"), "country_manual_review.csv");
-  const portRows = readCsv(import_node_path2.default.join(processedDir2, "manual_review"), "port_manual_review.csv");
+var insertManualReview = (database2, processedDir, sourceIds) => {
+  const countryRows = readCsv(import_node_path2.default.join(processedDir, "manual_review"), "country_manual_review.csv");
+  const portRows = readCsv(import_node_path2.default.join(processedDir, "manual_review"), "port_manual_review.csv");
   const statement = database2.prepare(`INSERT INTO manual_review_records (manual_review_id, review_type, data_source_id, source_dataset, source_record_key, source_name, candidate_name, source_identifier, mapping_status, review_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of countryRows) statement.run(stableId("manual-country", JSON.stringify(row)), "COUNTRY", sourceIds.get(value(row, "source_dataset")), value(row, "source_dataset"), null, value(row, "source_name"), null, nullable(row, "country_code"), "MANUAL_REVIEW", value(row, "review_reason"));
   for (const row of portRows) statement.run(stableId("manual-port", JSON.stringify(row)), "PORT", sourceIds.get(value(row, "source_dataset")), value(row, "source_dataset"), value(row, "source_record_key"), value(row, "source_port_name"), nullable(row, "candidate_canonical_port_name"), nullable(row, "source_identifier"), "MANUAL_REVIEW", value(row, "reason"));
@@ -2231,14 +2230,8 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
     const portId = text(row, "port_id");
     const candidateLatestActivity = latestPortActivityByPortId.get(portId);
     const latestActivity = candidateLatestActivity && text(candidateLatestActivity, "validation_status") === "VALID" ? candidateLatestActivity : void 0;
+    const currentFlow = void 0;
     const nodeId = `port-${text(row, "port_id")}`;
-    const isListAPort = LIST_A_PORT_IDS.has(nodeId) || LIST_A_PORT_IDS.has(portId);
-    const portName = text(row, "canonical_port_name");
-    const currentFlow = latestActivity ? { value: number(latestActivity, "export_tanker") || number(latestActivity, "import_tanker") || 0, unit: "source_tanker_units_per_activity_day" } : isListAPort ? { value: portName === "Kochi (Cochin)" ? 0 : 120, unit: "source_tanker_units_per_activity_day" } : void 0;
-    const sourceReferences = [sourceReference("ports", text(row, "port_id"))];
-    if (isListAPort) {
-      sourceReferences.push(sourceReference("daily_port_activity", `fallback-${text(row, "port_id")}`));
-    }
     addNode(model, {
       nodeId,
       nodeType: "port",
@@ -2246,7 +2239,7 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
       currentFlow,
       operationalState: BASELINE_STATE,
       stateSource: "BASELINE",
-      sourceReferences,
+      sourceReferences: [sourceReference("ports", text(row, "port_id"))],
       metadata: {
         latitude: number(row, "latitude") ?? null,
         longitude: number(row, "longitude") ?? null,
@@ -2254,10 +2247,10 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
         unLocode: text(row, "un_locode") || null,
         liquidBulkFacility: text(row, "liquid_bulk_facility") || null,
         oilTerminalFacility: text(row, "oil_terminal_facility") || null,
-        sourceBackedOperationalData: latestActivity !== void 0 || isListAPort,
-        currentFlowSource: latestActivity ? "daily_port_activity" : isListAPort ? "ports.current_flow_fallback" : null,
-        currentFlowUnitStatus: latestActivity ? text(latestActivity, "import_export_unit_status") || null : isListAPort ? "VALID" : null,
-        currentFlowActivityDate: latestActivity ? text(latestActivity, "activity_date") || null : isListAPort ? "2026-08-23" : null
+        sourceBackedOperationalData: latestActivity !== void 0,
+        currentFlowSource: null,
+        currentFlowUnitStatus: latestActivity ? text(latestActivity, "import_export_unit_status") || null : null,
+        currentFlowActivityDate: latestActivity ? text(latestActivity, "activity_date") || null : null
       }
     });
     if (latestActivity) {
@@ -2326,7 +2319,7 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
       nodeId: `strategic-reserve-${text(row, "strategic_reserve_id")}`,
       nodeType: "strategic_reserve",
       name: text(row, "facility_name") || text(row, "strategic_reserve_id"),
-      capacity: void 0,
+      capacity: capacity === void 0 ? void 0 : { value: capacity, unit: text(row, "capacity_unit") },
       operationalState: BASELINE_STATE,
       stateSource: "BASELINE",
       sourceReferences: [sourceReference("strategic_reserves", text(row, "strategic_reserve_id"))],
@@ -2357,7 +2350,7 @@ var buildDigitalTwinFromPhase2 = (repository2) => {
 var summarize = (measurements) => {
   const totals = /* @__PURE__ */ new Map();
   for (const measurement of measurements) {
-    if (!measurement || measurement.value === 0) continue;
+    if (!measurement) continue;
     totals.set(measurement.unit, (totals.get(measurement.unit) || 0) + measurement.value);
   }
   return [...totals.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([unit, value2]) => ({ value: value2, unit }));
@@ -2762,12 +2755,12 @@ var irrelevantResult = (classification, relevance, risk) => {
     impactReasons: [reason]
   };
 };
-var integrateGeopoliticalRiskWithDigitalTwin = (classificationValue, relevanceValue, riskValue, runtime) => {
+var integrateGeopoliticalRiskWithDigitalTwin = (classificationValue, relevanceValue, riskValue, runtime2) => {
   const classification = validateClassification(classificationValue);
   const relevance = validateRelevance(relevanceValue);
   const risk = validateRisk(riskValue);
   assertMatchingInputs(classification, relevance, risk);
-  const currentGraph = runtime.stateEngine.getCurrentTwin();
+  const currentGraph = runtime2.stateEngine.getCurrentTwin();
   const matchedNodeIds = [...risk.matchedNodeIds];
   assertGraphNodesExist(currentGraph, matchedNodeIds);
   if (!relevance.relevant || !classification.energyRelevant || !risk.energyRelevant) {
@@ -3357,12 +3350,12 @@ var deterministicRelevantExplanation = (risk, digitalTwinImpact) => {
   const impact = digitalTwinImpact.affectedNodeIds.length || digitalTwinImpact.affectedEdgeIds.length ? `Digital Twin impact covers ${digitalTwinImpact.affectedNodeIds.length} node(s) and ${digitalTwinImpact.affectedEdgeIds.length} edge(s).` : "No downstream Digital Twin nodes or edges were affected.";
   return `ORBIT retained the deterministic risk at ${risk.riskLevel} (${risk.riskScore}) after applying the validated event and network rules. ${impact}`;
 };
-var analyzeEventDeterministically = (eventValue, runtime) => {
+var analyzeEventDeterministically = (eventValue, runtime2) => {
   const event = new GeopoliticalEventIngestionStore().ingest(eventValue);
   const classification = classifyGeopoliticalEvent(event);
-  const relevance = analyzeGeopoliticalSupplyChainRelevance(event, runtime.stateEngine.getCurrentTwin(), classification);
+  const relevance = analyzeGeopoliticalSupplyChainRelevance(event, runtime2.stateEngine.getCurrentTwin(), classification);
   const risk = assessGeopoliticalRisk(event, classification, relevance);
-  const digitalTwinImpact = integrateGeopoliticalRiskWithDigitalTwin(classification, relevance, risk, runtime);
+  const digitalTwinImpact = integrateGeopoliticalRiskWithDigitalTwin(classification, relevance, risk, runtime2);
   return {
     event: clone(event),
     classification: clone(classification),
@@ -3371,10 +3364,10 @@ var analyzeEventDeterministically = (eventValue, runtime) => {
     digitalTwinImpact: clone(digitalTwinImpact)
   };
 };
-var analyzeGeopoliticalEventDeterministically = (request, eventValue, runtime) => {
+var analyzeGeopoliticalEventDeterministically = (request, eventValue, runtime2) => {
   const normalizedRequest = typeof request === "string" ? request.trim() : "";
   if (!normalizedRequest) throw new Error("request is required.");
-  const analysis = analyzeEventDeterministically(eventValue, runtime);
+  const analysis = analyzeEventDeterministically(eventValue, runtime2);
   const { classification, relevance, risk, digitalTwinImpact } = analysis;
   const explanation = !isEnergySupplyChainRelevant(classification, relevance, risk) ? deterministicExplanation(classification, relevance, risk) : deterministicRelevantExplanation(risk, digitalTwinImpact);
   return {
@@ -3384,8 +3377,8 @@ var analyzeGeopoliticalEventDeterministically = (request, eventValue, runtime) =
   };
 };
 var GeopoliticalRiskIntelligenceAgent = class {
-  constructor(runtime, llm) {
-    this.runtime = runtime;
+  constructor(runtime2, llm) {
+    this.runtime = runtime2;
     this.llm = llm;
   }
   async analyze(request, options = {}) {
@@ -3431,7 +3424,7 @@ var GeopoliticalRiskIntelligenceAgent = class {
     };
   }
 };
-var createGeopoliticalRiskIntelligenceAgent = (runtime, llm = createGroqAgentProvider()) => new GeopoliticalRiskIntelligenceAgent(runtime, llm);
+var createGeopoliticalRiskIntelligenceAgent = (runtime2, llm = createGroqAgentProvider()) => new GeopoliticalRiskIntelligenceAgent(runtime2, llm);
 
 // src/geopoliticalEvents/monitoring.ts
 var import_node_crypto6 = require("node:crypto");
@@ -5030,11 +5023,7 @@ var SqliteScenarioBaselineProvider = class {
       (row) => row.canonical_port_name === HORMUZ_PORT_NAME && typeof row.import_tanker === "number" && Number.isFinite(row.import_tanker)
     );
     if (validRows.length === 0) {
-      return {
-        dailySupply: 25e3,
-        unit: "source-dataset-import-tanker-units",
-        source: `daily_port_activity:${HORMUZ_PORT_NAME} (fallback)`
-      };
+      return null;
     }
     const totalTankerImport = validRows.reduce(
       (sum, row) => sum + Number(row.import_tanker),
@@ -6119,7 +6108,6 @@ var RealScenarioProcurementDataProvider = class {
       const economics = this.eiaService.getSupplierEconomics(supplier.name);
       const supplierNameLower = supplier.name.toLowerCase();
       const isMiddleEast = supplierNameLower.includes("saudi") || supplierNameLower.includes("iraq") || supplierNameLower.includes("emirates") || supplierNameLower.includes("kuwait") || supplierNameLower.includes("iran") || supplierNameLower.includes("qatar") || supplierNameLower.includes("oman");
-      const isPersianGulfSupplier = supplierNameLower.includes("saudi") || supplierNameLower.includes("iraq") || supplierNameLower.includes("emirates") || supplierNameLower.includes("uae") || supplierNameLower.includes("kuwait") || supplierNameLower.includes("iran") || supplierNameLower.includes("qatar");
       const isWestAfrica = supplierNameLower.includes("nigeria") || supplierNameLower.includes("angola") || supplierNameLower.includes("gabon") || supplierNameLower.includes("ghana") || supplierNameLower.includes("congo");
       const isSoutheastAsia = supplierNameLower.includes("malaysia") || supplierNameLower.includes("indonesia") || supplierNameLower.includes("brunei");
       const isAmericas = supplierNameLower.includes("venezuela") || supplierNameLower.includes("brazil") || supplierNameLower.includes("mexico") || supplierNameLower.includes("united states");
@@ -6152,17 +6140,8 @@ var RealScenarioProcurementDataProvider = class {
           }
         }
         if (!compatible) continue;
-        let isLaneHormuzDependent = routeDef.isHormuzDependent;
-        if (isPersianGulfSupplier && (routeDef.corridorType === "middle_east" || routeDef.corridorType === "general")) {
-          isLaneHormuzDependent = true;
-        }
-        let laneCompatible = compatible;
-        if (isLaneHormuzDependent && isHormuzDisrupted) {
-          if (reductionPercent === 100) {
-            laneCompatible = false;
-          } else {
-            riskMultiplier = 1.8;
-          }
+        if (routeDef.isHormuzDependent && isHormuzDisrupted) {
+          riskMultiplier = 1.8;
         } else if (routeDef.isMalaccaDependent && isMalaccaDisrupted) {
           riskMultiplier = 1.5;
         }
@@ -6179,7 +6158,7 @@ var RealScenarioProcurementDataProvider = class {
           laneId: `lane-${supplier.supplierId.replace("supplier-", "")}-${route.routeId.replace("shipping-route-", "")}`,
           supplierId: supplier.supplierId,
           routeId: route.routeId,
-          compatible: laneCompatible,
+          compatible: true,
           procurementCostPerUnit: costPerUnit,
           procurementCostUnit: costUnit,
           transitTimeDays: transitDays,
@@ -6198,7 +6177,7 @@ var RealScenarioProcurementDataProvider = class {
     return {
       status: "AVAILABLE",
       data: {
-        source: `ORBIT Procurement Data (FY ${realProcurement.financialYear})`,
+        source: `ORBIT Real Procurement Data Layer (Phase 2 SQLite supplier_imports FY ${realProcurement.financialYear}, Digital Twin corridors, & EIA crude benchmarks)`,
         suppliers,
         routes,
         lanes
@@ -7093,18 +7072,13 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
         );
         let procurementResult = null;
         let alternativeProcured = 0;
-        if (typeof body?.alternativeProcurement === "number") {
-          alternativeProcured = Math.max(0, body.alternativeProcurement);
-          if (resolution.status === "AVAILABLE" && resolution.request) {
-            procurementResult = await optimizeProcurement(resolution.request);
-          }
-        } else if (resolution.status === "AVAILABLE" && resolution.request) {
+        if (resolution.status === "AVAILABLE" && resolution.request) {
           procurementResult = await optimizeProcurement(resolution.request);
           if (procurementResult.status === "OPTIMAL") {
-            alternativeProcured = durationDays > 0 ? procurementResult.totalProcured / durationDays : procurementResult.totalProcured;
+            alternativeProcured = procurementResult.totalProcured;
           }
         } else {
-          alternativeProcured = 0;
+          alternativeProcured = typeof body?.alternativeProcurement === "number" ? Math.max(0, body.alternativeProcurement) : 0;
         }
         const reserveState = repository2.getCurrentStrategicReserveState();
         const reserveInput = {
@@ -7910,24 +7884,21 @@ if (!isRunningTests) {
   });
 }
 
-// tests/phase2-data-layer.test.ts
-var processedDir = (0, import_node_fs4.existsSync)(import_node_path4.default.join(process.cwd(), "Data", "processed")) ? import_node_path4.default.join(process.cwd(), "Data", "processed") : import_node_path4.default.join(process.cwd(), "data", "processed");
-var temporaryDirectory = (0, import_node_fs4.mkdtempSync)(import_node_path4.default.join((0, import_node_os.tmpdir)(), "orbit-phase2-"));
-var databasePath = import_node_path4.default.join(temporaryDirectory, "phase2.sqlite");
-var database = openPhase2Database({ dbPath: databasePath });
+// tests/replacement-supply.test.ts
+var dbPath = defaultPhase2DbPath();
+importPhase2Data({ dbPath, processedDir: "./Data/processed" });
+var database = openPhase2Database({ dbPath });
 var repository = new Phase2Repository(database);
+var runtime = createDigitalTwinRuntime(repository);
+var realDataProvider = new RealScenarioProcurementDataProvider(repository);
 var server;
 var baseUrl = "";
+var pageSource = (0, import_node_fs4.readFileSync)(
+  import_node_path4.default.join(process.cwd(), "src/pages/ReservesPage.tsx"),
+  "utf8"
+);
 (0, import_node_test.before)(async () => {
-  const firstImport = importPhase2Data({ dbPath: databasePath, processedDir });
-  import_strict.default.equal(firstImport.counts.countries, 210);
-  import_strict.default.equal(firstImport.counts.ports, 59);
-  import_strict.default.ok(firstImport.counts.daily_port_activity === 0 || firstImport.counts.daily_port_activity === 59556);
-  import_strict.default.equal(firstImport.counts.petroleum_consumption, 3888);
-  database.close();
-  database = openPhase2Database({ dbPath: databasePath });
-  repository = new Phase2Repository(database);
-  const app = createApp(repository);
+  const app = createApp(repository, runtime, void 0, void 0, realDataProvider);
   server = (0, import_node_http.createServer)(app);
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
@@ -7937,127 +7908,79 @@ var baseUrl = "";
 (0, import_node_test.after)(() => {
   server.close();
   database.close();
-  (0, import_node_fs4.rmSync)(temporaryDirectory, { recursive: true, force: true });
 });
-(0, import_node_test.default)("schema and real processed-data import are populated", () => {
-  const tables = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
-  const tableNames = new Set(tables.map((table) => table.name));
-  for (const requiredTable of ["countries", "ports", "refineries", "shipping_lanes", "chokepoints", "supplier_imports", "crude_import_totals", "petroleum_consumption", "daily_port_activity", "global_oil_snapshots", "financial_periods", "products", "data_sources", "data_quality_issues"]) import_strict.default.ok(tableNames.has(requiredTable), `missing table ${requiredTable}`);
-  import_strict.default.equal(repository.getStatus(), "READY");
-});
-(0, import_node_test.default)("re-import is idempotent and does not duplicate facts", () => {
-  const secondImport = importPhase2Data({ dbPath: databasePath, processedDir });
-  import_strict.default.ok(secondImport.counts.daily_port_activity === 0 || secondImport.counts.daily_port_activity === 59556);
-  const totalPortActivity = database.prepare("SELECT COUNT(*) AS total FROM daily_port_activity").get().total;
-  import_strict.default.ok(totalPortActivity === 0 || totalPortActivity === 59556);
-  import_strict.default.equal(database.prepare("SELECT COUNT(*) AS total FROM supplier_imports").get().total, 128);
-});
-(0, import_node_test.default)("repository queries return real processed values", () => {
-  const country = repository.getCountries({ search: "Venezuela", pageSize: 10 });
-  import_strict.default.equal(country.data.length, 1);
-  import_strict.default.equal(country.data[0].canonical_name, "Venezuela");
-  const port = repository.getPorts({ search: "Sikka", pageSize: 10 });
-  import_strict.default.equal(port.data.length, 1);
-  import_strict.default.equal(port.data[0].canonical_port_name, "Sikka");
-  const facilityPort = repository.getPorts({ search: "Mundra", pageSize: 10 });
-  import_strict.default.equal(facilityPort.data.length, 1);
-  import_strict.default.equal(facilityPort.data[0].liquid_bulk_facility, "Yes");
-  import_strict.default.equal(facilityPort.data[0].oil_terminal_facility, "Yes");
-  const refinery = repository.getRefineries({ search: "Digboi", pageSize: 10 });
-  import_strict.default.equal(refinery.data.length, 1);
-  import_strict.default.equal(refinery.data[0].capacity, 650);
-  import_strict.default.equal(refinery.data[0].latitude, 27.3881);
-  const suppliers = repository.getSuppliers({ financialYear: "2014-15", country: "Saudi", pageSize: 10 });
-  import_strict.default.equal(suppliers.data.length, 1);
-  import_strict.default.equal(suppliers.data[0].quantity_tonnes, 34492347);
-  const crude = repository.getCrudeImports({ financialYear: "2014-15", pageSize: 10 });
-  import_strict.default.equal(crude.pagination.total, 40);
-  const totals = repository.getCrudeImportTotals({ financialYear: "2023-24", pageSize: 10 });
-  import_strict.default.equal(totals.data[0].quantity_thousand_metric_tonnes, 234261.5795730779);
-  const consumption = repository.getConsumption({ product: "LPG", financialYear: "2024-25", month: 4, pageSize: 10 });
-  import_strict.default.equal(consumption.data.length, 1);
-  import_strict.default.equal(consumption.data[0].consumption_metric_tonnes, 2373);
-  const globalOil = repository.getGlobalOil({ country: "Venezuela", pageSize: 10 });
-  import_strict.default.equal(globalOil.data.length, 1);
-  import_strict.default.equal(globalOil.data[0].canonical_country_name, "Venezuela");
-  import_strict.default.ok(Number(globalOil.data[0].proven_reserves_barrels) > 0);
-});
-(0, import_node_test.default)("shipping lane geometry is loaded from the processed source GeoJSON", async () => {
-  const source = JSON.parse((0, import_node_fs4.readFileSync)(import_node_path4.default.join(processedDir, "shipping_lanes_v1.geojson"), "utf8"));
-  const sourceGeometryById = new Map(source.features.map((feature) => [String(feature.id), feature.geometry]));
-  const storedGeometryRows = database.prepare("SELECT geometry_json, geometry_status FROM shipping_lane_geometries WHERE geometry_status = 'AVAILABLE'").all();
-  import_strict.default.equal(storedGeometryRows.length, source.features.length);
-  import_strict.default.ok(storedGeometryRows.every((row) => row.geometry_json));
-  const lanes = repository.getLanes({ pageSize: 10 });
-  import_strict.default.equal(lanes.data.length, source.features.length);
-  for (const lane of lanes.data) {
-    const sourceGeometry = sourceGeometryById.get(String(lane.source_feature_id));
-    import_strict.default.ok(sourceGeometry);
-    import_strict.default.deepEqual(lane.geometry, sourceGeometry);
-    import_strict.default.equal(lane.geometry.type, lane.geometry_type);
-  }
-  const response = await fetch(`${baseUrl}/api/phase2/lanes?pageSize=10`);
+(0, import_node_test.default)("Replacement Supply backend API /api/procurement/optimize-gap returns valid optimal results", async () => {
+  const response = await fetch(`${baseUrl}/api/procurement/optimize-gap`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      supplyGap: 1e4,
+      disruptionDuration: 30
+    })
+  });
   import_strict.default.equal(response.status, 200);
-  const body = await response.json();
-  import_strict.default.equal(body.data.length, source.features.length);
-  import_strict.default.ok(body.data.every((lane) => lane.geometry && typeof lane.geometry === "object"));
-  import_strict.default.deepEqual(body.data[0].geometry, source.features.find((feature) => String(feature.id) === String(body.data[0].source_feature_id))?.geometry);
-});
-(0, import_node_test.default)("global oil endpoint returns real database records with filters", async () => {
-  const response = await fetch(`${baseUrl}/api/phase2/global-oil?country=Venezuela&pageSize=10`);
-  import_strict.default.equal(response.status, 200);
-  const body = await response.json();
-  import_strict.default.equal(body.pagination.total, 1);
-  import_strict.default.equal(body.data[0].canonical_country_name, "Venezuela");
-  import_strict.default.ok(Number(body.data[0].production_barrels_per_day) > 0);
-});
-(0, import_node_test.default)("daily activity pagination and filters are bounded", () => {
-  const page = repository.getPortActivity({ page: 2, pageSize: 25, portId: "port-21bd5d045171a73e0012", year: 2019 });
-  if (page.pagination.total > 0) {
-    import_strict.default.equal(page.data.length, 25);
-    import_strict.default.equal(page.pagination.page, 2);
-    import_strict.default.equal(page.pagination.pageSize, 25);
-    import_strict.default.ok(page.pagination.total > 25);
-    import_strict.default.ok(page.data.every((row) => row.source_year === 2019));
-  } else {
-    import_strict.default.equal(page.data.length, 0);
-    import_strict.default.equal(page.pagination.page, 2);
-    import_strict.default.equal(page.pagination.pageSize, 25);
-    import_strict.default.equal(page.pagination.total, 0);
-  }
-});
-(0, import_node_test.default)("data-quality query exposes review states and unresolved relationships", () => {
-  const quality = repository.getDataQuality({ issueType: "unresolved_port_mapping", pageSize: 10 });
-  import_strict.default.equal(quality.issues.length, 3);
-  import_strict.default.equal(quality.unresolvedRelationships.length, 5);
-  import_strict.default.equal(quality.manualReview.pagination.total, 11);
-  import_strict.default.ok(quality.summary.some((row) => row.dataset === "daily_port_activity"));
-});
-(0, import_node_test.default)("all Phase 2 API endpoints respond with structured JSON", async () => {
-  const endpoints = [
-    "/api/phase2/countries?pageSize=2",
-    "/api/phase2/ports?pageSize=2",
-    "/api/phase2/refineries?pageSize=2",
-    "/api/phase2/suppliers?pageSize=2",
-    "/api/phase2/imports/crude?pageSize=2",
-    "/api/phase2/imports/crude/totals?pageSize=2",
-    "/api/phase2/consumption?pageSize=2",
-    "/api/phase2/global-oil?pageSize=2",
-    "/api/phase2/lanes?pageSize=2",
-    "/api/phase2/chokepoints?pageSize=2",
-    "/api/phase2/port-activity?pageSize=2",
-    "/api/phase2/data-quality?pageSize=2"
-  ];
-  for (const endpoint of endpoints) {
-    const response = await fetch(`${baseUrl}${endpoint}`);
-    import_strict.default.equal(response.status, 200, endpoint);
-    const body = await response.json();
-    if (endpoint.includes("data-quality")) {
-      import_strict.default.ok(Array.isArray(body.issues));
-      import_strict.default.ok(Array.isArray(body.summary));
-    } else {
-      import_strict.default.ok(Array.isArray(body.data), endpoint);
-      import_strict.default.ok(body.pagination);
+  const result = await response.json();
+  import_strict.default.equal(result.status, "OPTIMAL");
+  import_strict.default.ok(result.procurement);
+  import_strict.default.equal(result.procurement.status, "OPTIMAL");
+  import_strict.default.ok(result.procurement.totalProcured > 0);
+  import_strict.default.equal(result.procurement.unmetSupply, 0);
+  import_strict.default.ok(result.procurement.allocations.length > 0);
+  for (const allocation of result.procurement.allocations) {
+    import_strict.default.ok(allocation.quantity >= 0);
+    import_strict.default.ok(allocation.laneId);
+    import_strict.default.ok(allocation.supplierId);
+    import_strict.default.ok(allocation.routeId);
+    if (allocation.transitTimeDays !== void 0) {
+      import_strict.default.ok(allocation.transitTimeDays >= 0);
     }
   }
+});
+(0, import_node_test.default)("Replacement Supply API with Hormuz disruption returns modified allocations due to chokepoint blockages", async () => {
+  const response = await fetch(`${baseUrl}/api/procurement/optimize-gap`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      supplyGap: 25e3,
+      disruptionDuration: 30,
+      affectedNodeId: "chokepoint-strait-of-hormuz"
+    })
+  });
+  import_strict.default.equal(response.status, 200);
+  const result = await response.json();
+  import_strict.default.ok(["OPTIMAL", "INFEASIBLE"].includes(result.status));
+  import_strict.default.ok(result.procurement);
+  const allocations = result.procurement.allocations || [];
+  const hormuzAllocations = allocations.filter((a) => a.routeId.includes("hormuz") && a.quantity > 0);
+  import_strict.default.equal(hormuzAllocations.length, 0);
+});
+(0, import_node_test.default)("Replacement Supply API handles massive infeasible gaps gracefully without crashing", async () => {
+  const response = await fetch(`${baseUrl}/api/procurement/optimize-gap`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      supplyGap: 999999999,
+      // Unreachable gap
+      disruptionDuration: 30
+    })
+  });
+  import_strict.default.equal(response.status, 200);
+  const result = await response.json();
+  import_strict.default.equal(result.status, "INFEASIBLE");
+  import_strict.default.equal(result.procurement.status, "INFEASIBLE");
+  import_strict.default.ok(result.procurement.unmetSupply > 0);
+});
+(0, import_node_test.default)("ReservesPage UI implementation contains required Replacement Supply elements", () => {
+  import_strict.default.match(pageSource, /Replacement Supply/);
+  import_strict.default.match(pageSource, /mainTab === 'replacement'/);
+  import_strict.default.match(pageSource, /fetchOptimizedReplacementSupply/);
+  import_strict.default.match(pageSource, /Active Crisis Supply Gap/);
+  import_strict.default.match(pageSource, /OPTIMAL PLAN FOUND/);
+  import_strict.default.match(pageSource, /INFEASIBLE - INSUFFICIENT CAPACITY/);
+  import_strict.default.match(pageSource, /Recommended Sourcing Corridor Allocations/);
+  import_strict.default.match(pageSource, /Bilateral Reliability/);
+  import_strict.default.match(pageSource, /Geopolitical Risk/);
+  import_strict.default.match(pageSource, /Solver Constraint & Feasibility Audit/);
+  import_strict.default.match(pageSource, /Recommendations Disclaimer/);
+  import_strict.default.match(pageSource, /No actual purchase transaction is executed/);
 });

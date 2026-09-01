@@ -76,16 +76,16 @@ export const getExternalMonitoringStatus = (
     return Number.isFinite(detectedAt) && age >= 0 && age <= EXTERNAL_MONITORING_FRESHNESS_MS;
   });
 
-  if (hasRecentExternalEvent) return { state: 'ACTIVE', message: 'External ingestion pipeline active' };
+  if (hasRecentExternalEvent) return { state: 'ACTIVE', message: 'External ingestion pipeline is receiving events.' };
   if (externalEvents.length > 0) {
     const latestEventAt = latestExternalEvent?.detectedAt;
     return {
       state: 'STANDBY',
-      message: 'Monitoring standby - no recent external webhooks',
+      message: 'No new external events recently.',
       ...(latestEventAt && Number.isFinite(Date.parse(latestEventAt)) ? { latestEventAt } : {}),
     };
   }
-  return { state: 'WAITING', message: 'Waiting for external ingestion events' };
+  return { state: 'WAITING', message: 'Waiting for the first event from the external ingestion pipeline.' };
 };
 
 export const formatExternalMonitoringEventTime = (timestamp?: string): string => {
@@ -714,6 +714,23 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
       {/* ------------------------------------------------------------- */}
       {activeTab === 'monitor' && (
         <div className="space-y-6">
+          {(() => {
+            const status = getExternalMonitoringStatus(monitoredEvents);
+            return (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-slate-800/80 bg-[#0c1019] shadow-sm font-mono text-xs">
+                <div className="flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${status.state === 'ACTIVE' ? 'bg-emerald-500' : status.state === 'STANDBY' ? 'bg-amber-500' : 'bg-slate-500'}`} />
+                  <span className="text-slate-400">Ingestion Status: <span className="text-slate-200 font-semibold">{status.state}</span></span>
+                  <span className="text-slate-600">·</span>
+                  <span className="text-slate-400">{status.message}</span>
+                </div>
+                {status.latestEventAt && (
+                  <span className="text-slate-500">Last event: {formatExternalMonitoringEventTime(status.latestEventAt)}</span>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Status Metric Overview Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl border border-slate-800 bg-[#0c1019] shadow-md">
@@ -838,10 +855,12 @@ const FilteredMonitoredFeed: React.FC<{
     return true;
   });
 
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalEvents = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalEvents / pageSize));
   const page = Math.min(currentPage, totalPages);
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = Math.min(page * pageSize, totalEvents);
 
   if (loading) {
     return (
@@ -861,7 +880,7 @@ const FilteredMonitoredFeed: React.FC<{
     );
   }
 
-  if (!total) {
+  if (!totalEvents) {
     return (
       <div className="p-12 text-center rounded-xl border border-slate-800 bg-[#0c1019] space-y-2">
         <Globe2 className="w-8 h-8 text-slate-600 mx-auto" />
@@ -874,7 +893,7 @@ const FilteredMonitoredFeed: React.FC<{
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
-        <span>Showing {paged.length} of {total} monitored events</span>
+        <span>Showing {startIndex + 1}–{endIndex} of {totalEvents} monitored events</span>
         <span>Real-time Google News & RSS Stream</span>
       </div>
 
@@ -974,7 +993,7 @@ const Pagination: React.FC<{
   const pages = getPageNumbers(currentPage, totalPages);
 
   return (
-    <nav aria-label="Pagination" className="flex items-center justify-between gap-3 pt-4">
+    <nav aria-label="Monitored events pagination" className="flex items-center justify-between gap-3 pt-4">
       <button
         type="button"
         onClick={() => onPageChange(currentPage - 1)}

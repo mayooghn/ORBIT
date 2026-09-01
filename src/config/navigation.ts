@@ -11,15 +11,6 @@ export const NAVIGATION_ROUTES: NavigationRoute[] = [
     phaseLabel: 'Phase 1 Foundation'
   },
   {
-    id: 'risk',
-    path: '/app/risk',
-    title: 'Risk Intelligence',
-    shortDescription: 'Verified disruption intelligence for energy transport',
-    iconName: 'AlertTriangle',
-    phaseNumber: 2,
-    phaseLabel: 'Future Module'
-  },
-  {
     id: 'network',
     path: '/app/network',
     title: 'Digital Twin Network',
@@ -27,24 +18,6 @@ export const NAVIGATION_ROUTES: NavigationRoute[] = [
     iconName: 'Network',
     phaseNumber: 3,
     phaseLabel: 'Phase 3 Digital Twin'
-  },
-  {
-    id: 'scenarios',
-    path: '/app/scenarios',
-    title: 'Scenario Studio',
-    shortDescription: 'Explore disruption scenarios and operating conditions',
-    iconName: 'GitBranch',
-    phaseNumber: 4,
-    phaseLabel: 'Future Module'
-  },
-  {
-    id: 'impact',
-    path: '/app/impact',
-    title: 'Predictive Impact',
-    shortDescription: 'Review modeled infrastructure impact',
-    iconName: 'TrendingUp',
-    phaseNumber: 5,
-    phaseLabel: 'Future Module'
   },
   {
     id: 'procurement',
@@ -62,15 +35,6 @@ export const NAVIGATION_ROUTES: NavigationRoute[] = [
     shortDescription: 'Review strategic reserve coverage and planning',
     iconName: 'Database',
     phaseNumber: 7,
-    phaseLabel: 'Future Module'
-  },
-  {
-    id: 'recommendations',
-    path: '/app/recommendations',
-    title: 'Executive Recommendations',
-    shortDescription: 'Review auditable mitigation recommendations',
-    iconName: 'CheckCircle2',
-    phaseNumber: 8,
     phaseLabel: 'Future Module'
   },
   {

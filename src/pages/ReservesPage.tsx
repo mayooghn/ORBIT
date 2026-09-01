@@ -24,7 +24,13 @@ import {
   fetchStrategicReserveState,
   fetchStrategicReserveHistory,
   fetchRealAlternativeProcurement,
+  fetchOptimizedReplacementSupply,
+  commitProcurement,
+  type OptimizedReplacementSupplyResponse,
+  fetchScenarioNodes,
 } from '../services/api';
+import type { ScenarioSelectableNode } from '../scenarios/model';
+import type { ProcurementResult } from '../procurement/model';
 import type {
   StrategicReserveOptimizationInput,
   StrategicReserveOptimizationResult,
@@ -175,6 +181,9 @@ export const ReservesPage: React.FC = () => {
   const [activeInput, setActiveInput] = useState<StrategicReserveOptimizationInput | null>(null);
   const [inputMode, setInputMode] = useState<StrategicReserveInputMode>('REAL_BASELINE');
   const [activePresetName, setActivePresetName] = useState<string | null>(null);
+  const [committing, setCommitting] = useState(false);
+  const [commitError, setCommitError] = useState('');
+  const [commitSuccess, setCommitSuccess] = useState(false);
   const [result, setResult] = useState<(StrategicReserveOptimizationResult & { procurementProvenance?: ProcurementProvenance; optimizationId?: string }) | null>(null);
   const [optimizing, setOptimizing] = useState(false);
   const [optimizerError, setOptimizerError] = useState('');
@@ -189,6 +198,8 @@ export const ReservesPage: React.FC = () => {
     input: StrategicReserveOptimizationInput;
     result: StrategicReserveOptimizationResult;
   }>>([]);
+  const [scenarioNodes, setScenarioNodes] = useState<ScenarioSelectableNode[]>([]);
+  const [disruptedNodeId, setDisruptedNodeId] = useState<string | undefined>(undefined);
 
   const loadAllData = useCallback(async () => {
     setInitialDataLoading(true);
@@ -196,10 +207,11 @@ export const ReservesPage: React.FC = () => {
     setOptimizerError('');
 
     try {
-      const [state, procurement, history] = await Promise.all([
+      const [state, procurement, history, nodesData] = await Promise.all([
         fetchStrategicReserveState(),
         fetchRealAlternativeProcurement({ limit: 50 }).catch(() => null),
         fetchStrategicReserveHistory(10).catch(() => []),
+        fetchScenarioNodes().catch(() => ({ status: 'AVAILABLE', nodes: [] as ScenarioSelectableNode[] })),
       ]);
 
       if (!state) {
@@ -210,6 +222,9 @@ export const ReservesPage: React.FC = () => {
       const resolvedProcurement = procurement || state.alternativeProcurement || null;
       setRealProcurement(resolvedProcurement);
       setHistoryRuns(history);
+      if (nodesData && Array.isArray(nodesData.nodes)) {
+        setScenarioNodes(nodesData.nodes);
+      }
 
       const baselineInput = buildRealBaselineOptimizationInput(state, resolvedProcurement);
       setActiveInput(baselineInput);
@@ -282,6 +297,11 @@ export const ReservesPage: React.FC = () => {
     setActivePresetName(presetName);
     setIsCustomMode(false);
     setActiveInput(presetInput);
+    if (presetName === 'Strait of Hormuz Crisis') {
+      setDisruptedNodeId('chokepoint-strait-of-hormuz');
+    } else {
+      setDisruptedNodeId(undefined);
+    }
     void runOptimization(presetInput);
   };
 
@@ -289,6 +309,7 @@ export const ReservesPage: React.FC = () => {
     setInputMode('CUSTOM');
     setActivePresetName('Custom Crisis');
     setIsCustomMode(true);
+    setDisruptedNodeId(undefined);
     const demand = liveState ? Math.round(liveState.currentDemand) : 655_271;
     const availableSupply = activeInput?.availableSupply ?? Math.max(0, demand - 100_000);
     const customDefaults: StrategicReserveOptimizationInput = activeInput ? {
@@ -318,9 +339,39 @@ export const ReservesPage: React.FC = () => {
     setInputMode('REAL_BASELINE');
     setActivePresetName(null);
     setIsCustomMode(false);
+    setDisruptedNodeId(undefined);
     setActiveInput(baseline);
     setOptimizerError('');
     void runOptimization(baseline);
+  };
+
+  const handleReplacementCrisisChange = (
+    updatedGap: number,
+    updatedDuration: number,
+    updatedNodeId: string | undefined
+  ) => {
+    if (!activeInput) return;
+
+    setInputMode('CUSTOM');
+    setActivePresetName('Custom Crisis');
+    setIsCustomMode(true);
+
+    const validatedGap = typeof updatedGap !== 'number' || isNaN(updatedGap) || !Number.isFinite(updatedGap) || updatedGap < 0 ? 0 : updatedGap;
+    const validatedDuration = typeof updatedDuration !== 'number' || isNaN(updatedDuration) || !Number.isFinite(updatedDuration) || updatedDuration < 1 ? 1 : updatedDuration;
+
+    const demand = activeInput.demand ?? 655_271;
+    const availableSupply = Math.max(0, demand - validatedGap);
+
+    const updated: StrategicReserveOptimizationInput = {
+      ...activeInput,
+      supplyGap: validatedGap,
+      disruptionDuration: validatedDuration,
+      availableSupply,
+    };
+
+    setActiveInput(updated);
+    setDisruptedNodeId(updatedNodeId);
+    void runOptimization(updated);
   };
 
   const handleApplyRealAlternative = (dailyTonnes: number) => {
@@ -331,6 +382,22 @@ export const ReservesPage: React.FC = () => {
     setActivePresetName('Custom Crisis');
     setIsCustomMode(true);
     void runOptimization(updated);
+  };
+
+  const handleCommitSourcedSupply = async () => {
+    setCommitting(true);
+    setCommitError('');
+    setCommitSuccess(false);
+    try {
+      await commitProcurement(Math.round(replacementDailyEquivalent));
+      setCommitSuccess(true);
+      handleApplyRealAlternative(replacementDailyEquivalent);
+      setMainTab('optimizer');
+    } catch (e) {
+      setCommitError(e instanceof Error ? e.message : 'Failed to commit.');
+    } finally {
+      setCommitting(false);
+    }
   };
 
   const handleInputChange = (field: keyof StrategicReserveOptimizationInput, value: number) => {
@@ -344,7 +411,53 @@ export const ReservesPage: React.FC = () => {
     void runOptimization(updated);
   };
 
-  const [mainTab, setMainTab] = useState<'telemetry' | 'optimizer' | 'suppliers'>('telemetry');
+  const [mainTab, setMainTab] = useState<'telemetry' | 'optimizer' | 'suppliers' | 'replacement'>('telemetry');
+  const [replacementResult, setReplacementResult] = useState<OptimizedReplacementSupplyResponse | null>(null);
+  const [replacementLoading, setReplacementLoading] = useState(false);
+  const [replacementError, setReplacementError] = useState('');
+
+  const loadReplacementSupply = useCallback(async () => {
+    if (!activeInput || activeInput.supplyGap <= 0) {
+      setReplacementResult(null);
+      setReplacementError('');
+      return;
+    }
+
+    setReplacementLoading(true);
+    setReplacementError('');
+
+    try {
+      // Resolve the affectedNodeId based on preset, custom selection, or active context
+      let affectedNodeId: string | undefined = undefined;
+      if (disruptedNodeId !== undefined) {
+        affectedNodeId = disruptedNodeId;
+      } else if (activePresetName === 'Strait of Hormuz Crisis') {
+        affectedNodeId = 'chokepoint-strait-of-hormuz';
+      }
+
+      const res = await fetchOptimizedReplacementSupply({
+        supplyGap: activeInput.supplyGap,
+        disruptionDuration: activeInput.disruptionDuration,
+        affectedNodeId,
+      });
+
+      setReplacementResult(res);
+      if (res.status === 'ERROR' && res.error) {
+        setReplacementError(res.error);
+      }
+    } catch (err) {
+      setReplacementResult(null);
+      setReplacementError(err instanceof Error ? err.message : 'Failed to retrieve optimized replacement supply.');
+    } finally {
+      setReplacementLoading(false);
+    }
+  }, [activeInput, activePresetName, disruptedNodeId]);
+
+  useEffect(() => {
+    if (mainTab === 'replacement') {
+      void loadReplacementSupply();
+    }
+  }, [mainTab, loadReplacementSupply]);
 
   // 1. Initial Data Loading State (No fake data or demo fallbacks rendered)
   if (initialDataLoading) {
@@ -378,6 +491,10 @@ export const ReservesPage: React.FC = () => {
       </div>
     );
   }
+
+  const replacementTotalProcured = replacementResult?.procurement?.totalProcured || 0;
+  const replacementDurationDays = activeInput?.disruptionDuration || 1;
+  const replacementDailyEquivalent = replacementDurationDays > 0 ? replacementTotalProcured / replacementDurationDays : 0;
 
   const coverageIsComplete = result?.fullyCovered === true;
   const isSafetyCapActive = result && result.maximumSafeReserveDrawdown < (result.residualSupplyGap * activeInput.disruptionDuration);
@@ -441,6 +558,19 @@ export const ReservesPage: React.FC = () => {
               {realProcurement.supplierCount}
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('replacement')}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+            mainTab === 'replacement'
+              ? 'bg-orange-500 text-slate-950 shadow-md shadow-orange-500/20 font-bold'
+              : 'text-[#9CA3AF] hover:text-[#F3F4F6] hover:bg-[#18181E] font-medium'
+          }`}
+        >
+          <Ship className="h-4 w-4" />
+          Replacement Supply
         </button>
       </div>
 
@@ -760,6 +890,43 @@ export const ReservesPage: React.FC = () => {
                     <span className="text-[11px] font-mono px-2.5 py-0.5 rounded bg-[#18181E] border border-[#2A2A36] text-[#D1D5DB]">
                       {result.constraintStatus}
                     </span>
+                  </div>
+                </div>
+
+                {/* Operator Supply Gap & Reserve Flow Integration */}
+                <div id="operator-supply-reserve-flow" className="rounded-lg border border-[#22222A] bg-[#18181E]/40 p-4 space-y-3">
+                  <h3 className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
+                    Supply Gap &amp; Drawdown Integration Flow
+                  </h3>
+                  <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-medium text-[#9CA3AF]">Original Supply Gap</p>
+                      <p className="font-mono text-sm font-bold text-[#F3F4F6]">
+                        {formatValue(result.grossSupplyGap)} <span className="text-[10px] font-normal text-[#9CA3AF]">t/d</span>
+                      </p>
+                      <p className="text-[9px] text-[#6B7280]">Demand minus supply</p>
+                    </div>
+                    <div className="space-y-1 border-l border-[#22222A] pl-3">
+                      <p className="text-[10px] font-medium text-[#9CA3AF]">External Replacement Supply</p>
+                      <p className="font-mono text-sm font-bold text-emerald-400">
+                        - {formatValue(result.procurementCoverage)} <span className="text-[10px] font-normal text-[#9CA3AF]">t/d</span>
+                      </p>
+                      <p className="text-[9px] text-[#6B7280]">Sourced capacity</p>
+                    </div>
+                    <div className="space-y-1 border-l border-[#22222A] pl-3">
+                      <p className="text-[10px] font-medium text-[#9CA3AF]">Remaining Supply Gap</p>
+                      <p className="font-mono text-sm font-bold text-amber-400">
+                        = {formatValue(result.residualSupplyGap)} <span className="text-[10px] font-normal text-[#9CA3AF]">t/d</span>
+                      </p>
+                      <p className="text-[9px] text-[#6B7280]">Unresolved shortfall/day</p>
+                    </div>
+                    <div className="space-y-1 border-l border-[#22222A] pl-3">
+                      <p className="text-[10px] font-medium text-[#9CA3AF]">Reserve Drawdown Requirement</p>
+                      <p className="font-mono text-sm font-bold text-indigo-400">
+                        {formatValue(result.requiredReserveDrawdown)} <span className="text-[10px] font-normal text-[#9CA3AF]">tonnes</span>
+                      </p>
+                      <p className="text-[9px] text-[#6B7280]">Gap × {result.duration} days</p>
+                    </div>
                   </div>
                 </div>
 
@@ -1104,6 +1271,328 @@ export const ReservesPage: React.FC = () => {
               </div>
             )}
           </section>
+        </div>
+      )}
+
+      {mainTab === 'replacement' && (
+        <div className="space-y-6">
+          {/* Active Supply Gap Context Header */}
+          <div className="rounded-xl border border-[#22222A] bg-[#121215] p-5 shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-4">
+              <div>
+                <h3 className="text-sm font-bold text-[#F3F4F6] flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-400" />
+                  Active Crisis Supply Gap
+                </h3>
+                <p className="text-xs text-[#9CA3AF] mt-0.5">
+                  Current supply gap requirements resolved from the active scenario or custom crisis assumptions.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold border border-slate-700">
+                  {activePresetName || 'Custom Scenario'}
+                </span>
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-orange-950/60 text-orange-400 border border-orange-800/50 font-semibold">
+                  {activeInput.disruptionDuration} Days Duration
+                </span>
+              </div>
+            </div>
+
+            {/* Custom Crisis Input Section */}
+            <div className="grid gap-4 sm:grid-cols-3 p-4 bg-[#18181E]/60 rounded-xl border border-[#22222A] shadow-inner">
+              <div className="space-y-1.5">
+                <label htmlFor="custom-supply-gap" className="block text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+                  Daily Supply Gap (tonnes/day)
+                </label>
+                <input
+                  type="number"
+                  id="custom-supply-gap"
+                  className="w-full bg-[#121215] border border-[#2A2A35] rounded-lg px-3 py-2 text-sm text-[#F3F4F6] font-mono focus:outline-none focus:border-indigo-500 transition-colors"
+                  placeholder="e.g. 100000"
+                  min="0"
+                  value={activeInput.supplyGap}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    handleReplacementCrisisChange(isNaN(val) ? 0 : val, activeInput.disruptionDuration, disruptedNodeId);
+                  }}
+                />
+              </div>
+
+              <div className="flex items-center justify-center text-[#6B7280] font-bold pt-6 text-lg">×</div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="custom-duration" className="block text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+                  Crisis Duration (days)
+                </label>
+                <input
+                  type="number"
+                  id="custom-duration"
+                  className="w-full bg-[#121215] border border-[#2A2A35] rounded-lg px-3 py-2 text-sm text-[#F3F4F6] font-mono focus:outline-none focus:border-indigo-500 transition-colors"
+                  placeholder="e.g. 30"
+                  min="1"
+                  value={activeInput.disruptionDuration}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    handleReplacementCrisisChange(activeInput.supplyGap, isNaN(val) ? 1 : val, disruptedNodeId);
+                  }}
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-3">
+                <label htmlFor="custom-disrupted-source" className="block text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+                  Disrupted Source Corridor
+                </label>
+                <select
+                  id="custom-disrupted-source"
+                  className="w-full bg-[#121215] border border-[#2A2A35] rounded-lg px-3 py-2 text-sm text-[#F3F4F6] focus:outline-none focus:border-indigo-500 transition-colors"
+                  value={disruptedNodeId || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleReplacementCrisisChange(
+                      activeInput.supplyGap,
+                      activeInput.disruptionDuration,
+                      val === '' ? undefined : val
+                    );
+                  }}
+                >
+                  <option value="">None Selected</option>
+                  {scenarioNodes.map((node) => (
+                    <option key={node.nodeId} value={node.nodeId}>
+                      {node.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <p className="text-sm text-[#F3F4F6] mt-4 pt-4 border-t border-[#22222A]">
+              Current crisis exposure: A supply gap of{' '}
+              <span className="font-mono font-bold text-orange-400">{formatValue(activeInput.supplyGap)}</span> tonnes/day over{' '}
+              <span className="font-mono font-bold text-indigo-400">{activeInput.disruptionDuration}</span> days results in a cumulative deficit of{' '}
+              <span className="font-mono font-bold text-orange-400">{formatValue(activeInput.supplyGap * activeInput.disruptionDuration)}</span> tonnes.
+            </p>
+          </div>
+
+          {replacementLoading ? (
+            <LoadingState
+              message="Calculating optimal alternative procurement plan..."
+              subtext="Invoking WASM GLPK solver with EIA regional crude price benchmarks and verified shipping corridor capacity."
+            />
+          ) : replacementError ? (
+            <ErrorState
+              title="Procurement calculation failed"
+              message={replacementError}
+              onRetry={() => void loadReplacementSupply()}
+            />
+          ) : !replacementResult || activeInput.supplyGap <= 0 ? (
+            <div className="rounded-xl border border-[#22222A] bg-[#121215] p-10 text-center space-y-3">
+              <div className="mx-auto w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1">
+                <h4 className="text-sm font-bold text-[#F3F4F6]">No Active Supply Gap Detected</h4>
+                <p className="text-xs text-[#9CA3AF]">
+                  There is currently no crude supply gap computed. Adjust the "Reserve Optimizer" daily demand or available supply assumptions to test optimization capabilities.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Summary Metrics & Status */}
+              <div className="rounded-xl border border-[#22222A] bg-[#121215] p-5 shadow-sm space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold text-[#9CA3AF]">Optimizer Status:</span>
+                    {replacementResult.status === 'OPTIMAL' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+                        <CheckCircle2 className="h-3 w-3" />
+                        OPTIMAL PLAN FOUND
+                      </span>
+                    ) : replacementResult.status === 'INFEASIBLE' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-red-950/60 text-red-400 border border-red-800/50">
+                        <AlertTriangle className="h-3 w-3" />
+                        INFEASIBLE - INSUFFICIENT CAPACITY
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-slate-950/60 text-slate-400 border border-slate-800/50">
+                        {replacementResult.status}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] font-mono text-[#6B7280]">
+                    Calculated via {replacementResult.source || 'GLPK WASM Solver'}
+                  </span>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-lg border border-[#22222A] bg-[#18181E] p-3.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">Requested Supply</p>
+                    <p className="mt-1.5 font-mono text-lg font-bold text-[#EDEDED]">
+                      {formatValue(activeInput.supplyGap * activeInput.disruptionDuration)} <span className="text-xs font-normal text-[#9CA3AF]">tonnes</span>
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border border-[#22222A] bg-[#18181E] p-3.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">Allocated Alternative</p>
+                    <p className="mt-1.5 font-mono text-lg font-bold text-emerald-400">
+                      {formatValue(replacementResult.procurement?.totalProcured || 0)} <span className="text-xs font-normal text-[#9CA3AF]">tonnes</span>
+                    </p>
+                  </div>
+
+                  {replacementResult.procurement && replacementResult.procurement.unmetSupply > 0 && (
+                    <div className="rounded-lg border border-red-900/40 bg-red-950/10 p-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-red-400">Unmet Deficit Gap</p>
+                      <p className="mt-1.5 font-mono text-lg font-bold text-red-400">
+                        {formatValue(replacementResult.procurement.unmetSupply)} <span className="text-xs font-normal text-red-400">tonnes</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {replacementResult.procurement && replacementResult.procurement.totalCost > 0 && (
+                    <div className="rounded-lg border border-[#22222A] bg-[#18181E] p-3.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">Projected Sourcing Cost</p>
+                      <p className="mt-1.5 font-mono text-lg font-bold text-indigo-400">
+                        ${formatValue(replacementResult.procurement.totalCost)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {replacementResult.status === 'OPTIMAL' && (
+                  <div className="mt-4 p-4 rounded-xl border border-indigo-500/30 bg-indigo-950/20 flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-[#F3F4F6] uppercase tracking-wider">Commit Sourced Supply to Optimizer</h4>
+                      <p className="text-xs text-[#9CA3AF]">
+                        Apply the calculated daily equivalent of <span className="font-mono font-bold text-emerald-400">{formatValue(Math.round(replacementDailyEquivalent))} t/d</span> (based on <span className="font-mono">{formatValue(replacementTotalProcured)} tonnes</span> over <span className="font-mono">{replacementDurationDays} days</span>) to the Reserve Optimizer as the alternative procurement rate.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      id="commit-sourced-supply-btn"
+                      onClick={handleCommitSourcedSupply}
+                      disabled={committing}
+                      className="whitespace-nowrap px-4 py-2.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow border border-indigo-500/40 disabled:opacity-50"
+                    >
+                      {committing ? 'Committing...' : 'Commit Sourced Supply to Optimizer'}
+                    </button>
+                    {commitSuccess && <p className="text-xs text-emerald-400 mt-2">Replacement supply committed to Reserve Optimizer.</p>}
+                    {commitError && <p className="text-xs text-red-400 mt-2">{commitError}</p>}
+                  </div>
+                )}
+              </div>
+
+              {/* Recommended Sourcing Allocations */}
+              <section className="rounded-xl border border-[#22222A] bg-[#121215] p-5 shadow-sm space-y-4">
+                <div className="border-b border-[#1E1E26] pb-3 flex justify-between items-center">
+                  <h3 className="text-xs font-semibold text-[#F3F4F6] uppercase tracking-wider">
+                    Recommended Sourcing Corridor Allocations
+                  </h3>
+                  <span className="text-[11px] text-[#9CA3AF]">Optimized supplier allocations</span>
+                </div>
+
+                {replacementResult.procurement?.allocations && replacementResult.procurement.allocations.filter(a => a.quantity > 0).length > 0 ? (
+                  <div className="space-y-4">
+                    {replacementResult.procurement.allocations
+                      .filter((a) => a.quantity > 0)
+                      .map((allocation, idx) => {
+                        const supplierName = replacementResult.procurement?.supplierAllocations?.find(
+                          (sa) => sa.supplierId === allocation.supplierId
+                        )?.supplierName || allocation.supplierId;
+                        const routeName = replacementResult.procurement?.routeAllocations?.find(
+                          (ra) => ra.routeId === allocation.routeId
+                        )?.routeName || allocation.routeId;
+
+                        return (
+                          <div
+                            key={allocation.laneId || idx}
+                            className="rounded-lg border border-[#22222A] bg-[#18181E] p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-[#333342] transition shadow-sm"
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-[#F3F4F6]">
+                                  {supplierName}
+                                </span>
+                                <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-orange-950/40 text-orange-400 border border-orange-900/30">
+                                  Corridor Sourced
+                                </span>
+                              </div>
+                              <p className="text-xs text-[#9CA3AF] flex items-center gap-1">
+                                <span className="text-indigo-400 font-semibold">{routeName}</span>
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-4">
+                              <div className="text-left md:text-right">
+                                <p className="text-[10px] uppercase text-[#6B7280]">Allocated Quantity</p>
+                                <p className="font-mono text-sm font-bold text-emerald-400">
+                                  {formatValue(allocation.quantity)} <span className="text-xs font-normal text-[#9CA3AF]">{allocation.quantityUnit}</span>
+                                </p>
+                              </div>
+
+                              {allocation.procurementCost !== undefined && allocation.procurementCost !== null && (
+                                <>
+                                  <div className="text-left md:text-right">
+                                    <p className="text-[10px] uppercase text-[#6B7280]">EIA Benchmark Cost</p>
+                                    <p className="font-mono text-sm font-bold text-[#EDEDED]">
+                                      ${formatValue(allocation.procurementCost / allocation.quantity)} <span className="text-[10px] font-normal text-[#9CA3AF]">{allocation.procurementCostUnit === 'USD_per_barrel' ? '/bbl' : '/t'}</span>
+                                    </p>
+                                  </div>
+                                  <div className="text-left md:text-right">
+                                    <p className="text-[10px] uppercase text-[#6B7280]">Total Sourcing Cost</p>
+                                    <p className="font-mono text-sm font-bold text-indigo-400">
+                                      ${formatValue(allocation.procurementCost)}
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+
+                              {allocation.transitTimeDays !== undefined && allocation.transitTimeDays !== null && (
+                                <div className="text-left md:text-right">
+                                  <p className="text-[10px] uppercase text-[#6B7280]">Maritime Transit</p>
+                                  <p className="font-mono text-sm font-bold text-amber-400">
+                                    {allocation.transitTimeDays} <span className="text-[10px] font-normal text-[#9CA3AF]">days</span>
+                                  </p>
+                                </div>
+                              )}
+
+                              {allocation.riskScore !== undefined && allocation.riskScore !== null && (
+                                <div className="text-left md:text-right">
+                                  <p className="text-[10px] uppercase text-[#6B7280]">Geopolitical Risk</p>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                                    allocation.riskScore > 75
+                                      ? 'bg-red-950/60 text-red-400 border border-red-800/40'
+                                      : allocation.riskScore > 40
+                                        ? 'bg-yellow-950/60 text-yellow-400 border border-yellow-800/40'
+                                        : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'
+                                  }`}>
+                                    {allocation.riskScore} / 100
+                                  </span>
+                                </div>
+                              )}
+
+                              {allocation.reliabilityScore !== undefined && allocation.reliabilityScore !== null && (
+                                <div className="text-left md:text-right">
+                                  <p className="text-[10px] uppercase text-[#6B7280]">Bilateral Reliability</p>
+                                  <p className="font-mono text-sm font-bold text-sky-400">
+                                    {Math.round(allocation.reliabilityScore * 100)}%
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-xs text-[#9CA3AF]">
+                    {replacementResult.status === 'INFEASIBLE'
+                      ? 'No allocations could be made due to insufficient shipping lane or route corridor capacity constraints.'
+                      : 'No active recommended sourcing corridor allocations.'}
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
         </div>
       )}
     </div>

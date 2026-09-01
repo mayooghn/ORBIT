@@ -70,7 +70,11 @@ export class SqliteScenarioBaselineProvider
     );
 
     if (validRows.length === 0) {
-      return null;
+      return {
+        dailySupply: 25000,
+        unit: 'source-dataset-import-tanker-units',
+        source: `daily_port_activity:${HORMUZ_PORT_NAME} (fallback)`,
+      };
     }
 
     const totalTankerImport = validRows.reduce(

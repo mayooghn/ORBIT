@@ -3,13 +3,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { RiskPage } from './pages/RiskPage';
 import { NetworkPage } from './pages/NetworkPage';
-import { ScenariosPage } from './pages/ScenariosPage';
-import { ImpactPage } from './pages/ImpactPage';
 import { ProcurementPage } from './pages/ProcurementPage';
 import { ReservesPage } from './pages/ReservesPage';
-import { RecommendationsPage } from './pages/RecommendationsPage';
 import { AssistantPage } from './pages/AssistantPage';
 import { AppShell } from './components/layout/AppShell';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
@@ -68,20 +64,12 @@ function MainRouter() {
           switch (currentPath) {
             case '/app/dashboard':
               return <DashboardPage onNavigate={navigate} />;
-            case '/app/risk':
-              return <RiskPage />;
             case '/app/network':
               return <NetworkPage />;
-            case '/app/scenarios':
-              return <ScenariosPage />;
-            case '/app/impact':
-              return <ImpactPage />;
             case '/app/procurement':
               return <ProcurementPage />;
             case '/app/reserves':
               return <ReservesPage />;
-            case '/app/recommendations':
-              return <RecommendationsPage />;
             case '/app/assistant':
               return <AssistantPage onNavigate={navigate} />;
             default:

@@ -45,15 +45,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Core Engine',
     items: [
       navigationItem('dashboard', LayoutDashboard),
-      navigationItem('risk', AlertTriangle),
       navigationItem('network', Network)
-    ]
-  },
-  {
-    title: 'Simulation',
-    items: [
-      navigationItem('scenarios', GitBranch),
-      navigationItem('impact', TrendingUp)
     ]
   },
   {
@@ -66,7 +58,6 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Intelligence',
     items: [
-      navigationItem('recommendations', CheckCircle2),
       navigationItem('assistant', Bot)
     ]
   }

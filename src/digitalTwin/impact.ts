@@ -20,7 +20,7 @@ export interface DigitalTwinImpactResult {
 const summarize = (measurements: Array<DigitalTwinMeasurement | undefined>): DigitalTwinMeasurement[] => {
   const totals = new Map<string, number>();
   for (const measurement of measurements) {
-    if (!measurement) continue;
+    if (!measurement || measurement.value === 0) continue;
     totals.set(measurement.unit, (totals.get(measurement.unit) || 0) + measurement.value);
   }
   return [...totals.entries()]

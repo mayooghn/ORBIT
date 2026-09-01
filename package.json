@@ -11,7 +11,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit",
     "phase2:import": "esbuild scripts/phase2_import.ts --bundle --platform=node --format=cjs --packages=external --outfile=.orbit-phase2-import.cjs && node .orbit-phase2-import.cjs",
-    "test": "esbuild tests/phase2-data-layer.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.orbit-phase2-tests.cjs && node --test .orbit-phase2-tests.cjs"
+    "test": "esbuild tests/phase2-data-layer.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.orbit-phase2-tests.cjs && esbuild tests/reserve-replacement-integration.test.ts --bundle --platform=node --format=cjs --packages=external --outfile=.orbit-integration-tests.cjs && node --test .orbit-phase2-tests.cjs .orbit-integration-tests.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.18.0",

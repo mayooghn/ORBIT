@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
 import { createServer as createViteServer } from 'vite';
@@ -1119,9 +1119,40 @@ export const createApp = (
   );
 
   app.post(
+    '/api/reserves/commit-procurement',
+    (request, response) => {
+      const { dailyTonnes } = request.body || {};
+      if (typeof dailyTonnes !== 'number' || dailyTonnes < 0) {
+        response.status(400).json({ status: 'ERROR', error: 'Invalid dailyTonnes.' });
+        return;
+      }
+      
+      const commitPath = path.join(process.cwd(), 'data', 'committed-procurement.json');
+      try {
+        writeFileSync(commitPath, JSON.stringify({ dailyTonnes }));
+        response.json({ status: 'AVAILABLE' });
+      } catch (error) {
+        response.status(500).json({ status: 'ERROR', error: 'Failed to save procurement.' });
+      }
+    }
+  );
+
+  app.post(
     '/api/reserves/optimize',
     (request, response) => {
-      const validation = validateStrategicReserveInput(request.body);
+      const input = { ...request.body };
+      const commitPath = path.join(process.cwd(), 'data', 'committed-procurement.json');
+      if (existsSync(commitPath)) {
+        try {
+          const data = JSON.parse(readFileSync(commitPath, 'utf8'));
+          if (typeof data.dailyTonnes === 'number') {
+            input.alternativeProcurement = data.dailyTonnes;
+          }
+        } catch (e) {
+          console.error('Failed to read committed procurement', e);
+        }
+      }
+      const validation = validateStrategicReserveInput(input);
 
       if (!validation.valid || !validation.input) {
         response.status(400).json({
@@ -1258,17 +1289,23 @@ export const createApp = (
         let procurementResult: ProcurementResult | null = null;
         let alternativeProcured = 0;
 
-        if (resolution.status === 'AVAILABLE' && resolution.request) {
+        if (typeof body?.alternativeProcurement === 'number') {
+          // Preserve manually supplied alternativeProcurement overrides exactly as they are
+          alternativeProcured = Math.max(0, body.alternativeProcurement);
+          if (resolution.status === 'AVAILABLE' && resolution.request) {
+            procurementResult = await optimizeProcurement(resolution.request);
+          }
+        } else if (resolution.status === 'AVAILABLE' && resolution.request) {
           procurementResult = await optimizeProcurement(resolution.request);
           if (procurementResult.status === 'OPTIMAL') {
-            alternativeProcured = procurementResult.totalProcured;
+            // Convert procurementResult.totalProcured from cumulative tonnes to tonnes/day
+            // Only perform this conversion for the automatically generated procurement result
+            alternativeProcured = durationDays > 0
+              ? procurementResult.totalProcured / durationDays
+              : procurementResult.totalProcured;
           }
         } else {
-          // In real mode where commercial lane cost is unavailable,
-          // user can supply alternativeProcurement override or use real available alternative capacity
-          alternativeProcured = typeof body?.alternativeProcurement === 'number'
-            ? Math.max(0, body.alternativeProcurement)
-            : 0;
+          alternativeProcured = 0;
         }
 
         // Step 5: Strategic Reserve Optimization
@@ -1482,6 +1519,102 @@ export const createApp = (
         response.status(500).json({
           status: 'ERROR',
           error: 'Procurement optimization failed unexpectedly.',
+        });
+      }
+    },
+  );
+
+  app.post(
+    '/api/procurement/optimize-gap',
+    async (request, response) => {
+      const { supplyGap, disruptionDuration, affectedNodeId } = request.body || {};
+
+      if (typeof supplyGap !== 'number' || supplyGap <= 0) {
+        response.status(400).json({
+          status: 'ERROR',
+          error: 'supplyGap must be a positive number.',
+        });
+        return;
+      }
+
+      const durationDays = typeof disruptionDuration === 'number' && disruptionDuration > 0
+        ? disruptionDuration
+        : 30;
+
+      try {
+        const cumulativeShortage = supplyGap * durationDays;
+        const scenarioResult = {
+          scenarioId: 'procurement-gap-optimization',
+          input: {
+            eventId: 'custom-crisis',
+            durationDays,
+            severity: 'HIGH' as const,
+            affectedNodeId: affectedNodeId || 'none',
+            capacityReductionPercent: 100,
+          },
+          supplyLoss: cumulativeShortage,
+          supplyLossUnit: 'tonnes',
+          affectedRoutes: [],
+          affectedPorts: [],
+          affectedRefineries: [],
+          alternativeCapacity: 0,
+          alternativeCapacityUnit: 'tonnes',
+          alternativeCapacitySource: 'Strategic Reserve State',
+          alternativeCapacityStatus: 'VERIFIED' as const,
+          shortage: cumulativeShortage,
+          shortageUnit: 'tonnes',
+          recoveryDays: durationDays,
+          recoveryTimeline: [],
+          recoveryAssumption: 'Linear Recovery',
+          impacts: [],
+          calculatedAt: new Date().toISOString(),
+        };
+
+        const graph = digitalTwin.stateEngine.getCurrentTwin();
+        const resolution = buildProcurementRequestFromScenario(
+          scenarioResult,
+          graph,
+          procurementDataProvider,
+        );
+
+        if (resolution.status === 'UNAVAILABLE' || !resolution.request) {
+          response.status(200).json({
+            status: 'UNAVAILABLE',
+            error: resolution.reason || 'Real procurement data is unavailable.',
+            source: resolution.source,
+          });
+          return;
+        }
+
+        const result = await optimizeProcurement(resolution.request);
+
+        if (result.status === 'INFEASIBLE') {
+          response.status(200).json({
+            status: 'INFEASIBLE',
+            procurement: result,
+            source: resolution.source,
+          });
+          return;
+        }
+
+        if (result.status === 'OPTIMAL') {
+          response.status(200).json({
+            status: 'OPTIMAL',
+            procurement: result,
+            source: resolution.source,
+          });
+          return;
+        }
+
+        response.status(500).json({
+          status: 'ERROR',
+          error: 'Procurement optimization returned an internal error.',
+        });
+      } catch (error) {
+        console.error('[ORBIT Procurement Optimize Gap] Error:', error);
+        response.status(500).json({
+          status: 'ERROR',
+          error: error instanceof Error ? error.message : 'Procurement optimization failed.',
         });
       }
     },

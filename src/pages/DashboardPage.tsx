@@ -22,10 +22,8 @@ interface DashboardPageProps {
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
-  const risk = getModuleServiceStatus('risk');
   const corridor = getModuleServiceStatus('corridor');
   const reserve = getModuleServiceStatus('reserve');
-  const recommendation = getModuleServiceStatus('recommendation');
   const assistant = getModuleServiceStatus('assistant');
 
   return (
@@ -44,11 +42,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Global Supply Risk Index"
+          title="Strategic Reserve Cover"
           value="—"
-          change="Risk engine not connected"
-          subtext="No verified risk measurement"
-          icon={AlertTriangle}
+          change="Awaiting reserve telemetry"
+          subtext="Reserve service not connected"
+          icon={Database}
           statusColor="amber"
         />
         <MetricCard
@@ -58,23 +56,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           change="No verified events available"
           subtext="Risk feed not connected"
           icon={Activity}
-          statusColor="amber"
-        />
-        <MetricCard
-          title="Strategic Reserve Cover"
-          value="—"
-          change="Awaiting reserve telemetry"
-          subtext="Reserve service not connected"
-          icon={Database}
-          statusColor="amber"
-        />
-        <MetricCard
-          title="Action Recommendations"
-          value={0}
-          unit="Plans"
-          change="Recommendation engine not connected"
-          subtext="No verified recommendations"
-          icon={CheckCircle2}
           statusColor="amber"
         />
       </div>
@@ -125,21 +106,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <div className="rounded-lg border border-[#222222] bg-[#121212] p-5">
           <div className="flex items-center gap-2 pb-3 border-b border-[#222222] mb-4">
-            <AlertTriangle className="w-4 h-4 text-orange-400" />
-            <h3 className="text-sm font-semibold text-[#EDEDED] font-mono">Verified Disruptions</h3>
+            <Globe className="w-4 h-4 text-orange-400" />
+            <h3 className="text-sm font-semibold text-[#EDEDED] font-mono">System Summary</h3>
           </div>
-          <NotConnectedState title="No verified events available" description={risk.message} icon={AlertTriangle} />
-        </div>
-
-        <div className="rounded-lg border border-[#222222] bg-[#121212] p-5">
-          <div className="flex items-center gap-2 pb-3 border-b border-[#222222] mb-4">
-            <CheckCircle2 className="w-4 h-4 text-orange-400" />
-            <h3 className="text-sm font-semibold text-[#EDEDED] font-mono">Recommendations</h3>
-          </div>
-          <NotConnectedState title="No recommendations available" description={recommendation.message} icon={CheckCircle2} />
+          <p className="text-xs text-[#777777]">Overview of core operational modules.</p>
         </div>
       </div>
 
@@ -148,10 +121,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           <Bot className="w-4 h-4 text-orange-400" />
           <h3 className="text-sm font-semibold text-[#EDEDED] font-mono">Module Availability</h3>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             ['Network', corridor.message, '/app/network'],
-            ['Risk Intelligence', risk.message, '/app/risk'],
             ['Reserve Management', reserve.message, '/app/reserves'],
             ['Geopolitical Risk Agent', assistant.message, '/app/assistant']
           ].map(([label, message, path]) => (

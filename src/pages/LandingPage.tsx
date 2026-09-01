@@ -82,11 +82,6 @@ const CORE_PILLARS = [
 // Section 3: The 6 Core Capabilities
 const CAPABILITIES = [
   {
-    icon: Radar,
-    title: 'Geopolitical Risk Intelligence',
-    description: 'Turns geopolitical developments into structured, traceable energy-supply risk assessments with source provenance.',
-  },
-  {
     icon: Network,
     title: 'Digital Twin Network',
     description: 'Maps suppliers, ports, refineries, pipelines, chokepoints, and other energy infrastructure to understand network exposure.',

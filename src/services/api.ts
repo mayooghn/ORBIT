@@ -553,6 +553,22 @@ export async function fetchRealAlternativeProcurement(params?: {
   return body.procurement;
 }
 
+export async function commitProcurement(dailyTonnes: number): Promise<{ status: 'AVAILABLE' }> {
+  const body = await requestJson<{ status: 'AVAILABLE' | 'ERROR'; error?: string }>('/api/reserves/commit-procurement', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ dailyTonnes }),
+  });
+
+  if (body.status !== 'AVAILABLE') {
+    throw new Error(body.error || 'Failed to commit procurement.');
+  }
+
+  return { status: 'AVAILABLE' };
+}
+
 export async function fetchStrategicReserveState(): Promise<StrategicReserveStateResponse['state']> {
   const body = await requestJson<StrategicReserveStateResponse>(
     '/api/reserves/state',
@@ -654,3 +670,26 @@ export async function analyzeDigitalTwinImpact(nodeId: string): Promise<DigitalT
   if (!body.impact) throw new Error('Digital Twin impact response did not include an impact result.');
   return body.impact;
 }
+
+export interface OptimizedReplacementSupplyResponse {
+  status: 'OPTIMAL' | 'INFEASIBLE' | 'UNAVAILABLE' | 'ERROR';
+  procurement?: ProcurementResult;
+  source?: string;
+  error?: string;
+}
+
+export async function fetchOptimizedReplacementSupply(params: {
+  supplyGap: number;
+  disruptionDuration: number;
+  affectedNodeId?: string;
+}): Promise<OptimizedReplacementSupplyResponse> {
+  return requestJson<OptimizedReplacementSupplyResponse>('/api/procurement/optimize-gap', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+}
+
