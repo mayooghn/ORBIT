@@ -156,13 +156,6 @@ async function fetchMonitoringStatus() {
     headers: { Accept: "application/json" }
   });
 }
-async function refreshGeopoliticalMonitoring() {
-  return requestJson("/api/geopolitical-risk/monitor/refresh", {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({})
-  });
-}
 async function fetchMonitoredEvents(limit = 20) {
   return requestJson(`/api/geopolitical-risk/monitor/events?limit=${encodeURIComponent(limit)}`, {
     method: "GET",
@@ -314,8 +307,6 @@ var AssistantPage = ({ onNavigate }) => {
   const [monitoringAlerts, setMonitoringAlerts] = (0, import_react.useState)([]);
   const [monitoringError, setMonitoringError] = (0, import_react.useState)(null);
   const [monitoringLoading, setMonitoringLoading] = (0, import_react.useState)(true);
-  const [monitoringRefreshing, setMonitoringRefreshing] = (0, import_react.useState)(false);
-  const [monitoringRefreshMessage, setMonitoringRefreshMessage] = (0, import_react.useState)(null);
   const [feedRiskFilter, setFeedRiskFilter] = (0, import_react.useState)("all");
   const [searchQuery, setSearchQuery] = (0, import_react.useState)("");
   const viewDigitalTwin = () => onNavigate?.("/app/network");
@@ -363,38 +354,6 @@ var AssistantPage = ({ onNavigate }) => {
     }, 6e4);
     return () => window.clearInterval(timer);
   }, []);
-  const handleRefreshNews = async () => {
-    if (monitoringRefreshing) return;
-    const previousEventKeys = new Set(monitoredEvents.map(monitoringRecordKey));
-    setMonitoringRefreshing(true);
-    setMonitoringRefreshMessage(null);
-    try {
-      const refreshResponse = await refreshGeopoliticalMonitoring();
-      const requestedAt = refreshResponse.refresh?.requestedAt;
-      let snapshot = await loadMonitoring();
-      let externalScanCompleted = Boolean(
-        requestedAt && snapshot?.monitoring?.lastSuccessfulExternalScan && Date.parse(snapshot.monitoring.lastSuccessfulExternalScan) >= Date.parse(requestedAt)
-      );
-      const deadline = Date.now() + 3e4;
-      while (!externalScanCompleted && Date.now() < deadline) {
-        await new Promise((resolve) => window.setTimeout(resolve, 1e3));
-        snapshot = await loadMonitoring();
-        externalScanCompleted = Boolean(
-          requestedAt && snapshot?.monitoring?.lastSuccessfulExternalScan && Date.parse(snapshot.monitoring.lastSuccessfulExternalScan) >= Date.parse(requestedAt)
-        );
-      }
-      if (!externalScanCompleted) {
-        setMonitoringRefreshMessage("Refresh triggered. External scan in progress.");
-      } else {
-        const hasNewEvents = snapshot?.events.some((record) => !previousEventKeys.has(monitoringRecordKey(record))) || false;
-        setMonitoringRefreshMessage(hasNewEvents ? "News refreshed successfully." : "Scan complete. No new events found.");
-      }
-    } catch {
-      setMonitoringRefreshMessage("Scan requested. Waiting for updates.");
-    } finally {
-      setMonitoringRefreshing(false);
-    }
-  };
   const handleAnalyze = async (event) => {
     event.preventDefault();
     const normalizedRequest = request.trim();
@@ -426,48 +385,33 @@ var AssistantPage = ({ onNavigate }) => {
         subtitle: "Evaluate energy supply-chain vulnerabilities, simulate crisis scenarios, and monitor real-time global disruptions."
       }
     ),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-1.5 rounded-xl border border-slate-800 bg-[#090d16]/90 backdrop-blur-md shadow-lg", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2 p-1 bg-slate-900/80 rounded-lg border border-slate-800/80", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
-          "button",
-          {
-            type: "button",
-            onClick: () => setActiveTab("assess"),
-            className: `inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${activeTab === "assess" ? "bg-orange-500 text-white shadow-md shadow-orange-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`,
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react.ShieldAlert, { className: "w-4 h-4" }),
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "Risk Assessment" })
-            ]
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
-          "button",
-          {
-            type: "button",
-            onClick: () => setActiveTab("monitor"),
-            className: `inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${activeTab === "monitor" ? "bg-orange-500 text-white shadow-md shadow-orange-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`,
-            children: [
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react.Globe2, { className: "w-4 h-4" }),
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "Live Intelligence Feed" }),
-              monitoredEvents.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: `px-2 py-0.5 rounded-full text-[10px] font-bold ${activeTab === "monitor" ? "bg-white/20 text-white" : "bg-slate-800 text-orange-400 border border-orange-500/30"}`, children: monitoredEvents.length })
-            ]
-          }
-        )
-      ] }),
-      activeTab === "monitor" && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex items-center gap-3 px-3", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-1.5 rounded-xl border border-slate-800 bg-[#090d16]/90 backdrop-blur-md shadow-lg", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2 p-1 bg-slate-900/80 rounded-lg border border-slate-800/80", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         "button",
         {
           type: "button",
-          onClick: handleRefreshNews,
-          disabled: monitoringRefreshing,
-          className: "inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-orange-300 transition-colors cursor-pointer disabled:opacity-50",
+          onClick: () => setActiveTab("assess"),
+          className: `inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${activeTab === "assess" ? "bg-orange-500 text-white shadow-md shadow-orange-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`,
           children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react.RefreshCw, { className: `w-3.5 h-3.5 ${monitoringRefreshing ? "animate-spin text-orange-400" : ""}` }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: monitoringRefreshing ? "Scanning Live Intelligence..." : "Refresh News" })
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react.ShieldAlert, { className: "w-4 h-4" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "Risk Assessment" })
           ]
         }
-      ) })
-    ] }),
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+        "button",
+        {
+          type: "button",
+          onClick: () => setActiveTab("monitor"),
+          className: `inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${activeTab === "monitor" ? "bg-orange-500 text-white shadow-md shadow-orange-500/20" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`,
+          children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react.Globe2, { className: "w-4 h-4" }),
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: "Live Intelligence Feed" }),
+            monitoredEvents.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: `px-2 py-0.5 rounded-full text-[10px] font-bold ${activeTab === "monitor" ? "bg-white/20 text-white" : "bg-slate-800 text-orange-400 border border-orange-500/30"}`, children: monitoredEvents.length })
+          ]
+        }
+      )
+    ] }) }),
     activeTab === "assess" && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "space-y-6", children: [
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("section", { className: "rounded-xl border border-slate-800/90 bg-[#0c1019] p-5 sm:p-7 shadow-xl relative overflow-hidden", children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "absolute top-0 right-0 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" }),
@@ -735,10 +679,6 @@ var AssistantPage = ({ onNavigate }) => {
             }
           )
         ] })
-      ] }),
-      monitoringRefreshMessage && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-xs text-emerald-300 flex items-center gap-2 font-mono", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_lucide_react.CheckCircle2, { className: "w-4 h-4 text-emerald-400 flex-shrink-0" }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: monitoringRefreshMessage })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
         FilteredMonitoredFeed,

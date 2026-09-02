@@ -4,7 +4,6 @@ import {
   ArrowUpRight,
   Bot,
   BrainCircuit,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
@@ -15,7 +14,6 @@ import {
   Layers,
   Loader2,
   Network,
-  RefreshCw,
   Search,
   ShieldAlert,
   Sparkles,
@@ -30,7 +28,6 @@ import {
   fetchHighRiskMonitoringAlerts,
   fetchMonitoredEvents,
   fetchMonitoringStatus,
-  refreshGeopoliticalMonitoring,
   type GeopoliticalRiskAgentResponse,
   type MeasurementSummary,
   type MonitoredEventRecord,
@@ -247,8 +244,6 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
   const [monitoringAlerts, setMonitoringAlerts] = useState<MonitoredEventRecord[]>([]);
   const [monitoringError, setMonitoringError] = useState<string | null>(null);
   const [monitoringLoading, setMonitoringLoading] = useState(true);
-  const [monitoringRefreshing, setMonitoringRefreshing] = useState(false);
-  const [monitoringRefreshMessage, setMonitoringRefreshMessage] = useState<string | null>(null);
 
   // Feed Filter & Search
   const [feedRiskFilter, setFeedRiskFilter] = useState<'all' | 'critical' | 'high'>('all');
@@ -299,41 +294,6 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
     const timer = window.setInterval(() => { void loadMonitoring(); }, 60_000);
     return () => window.clearInterval(timer);
   }, []);
-
-  const handleRefreshNews = async () => {
-    if (monitoringRefreshing) return;
-    const previousEventKeys = new Set(monitoredEvents.map(monitoringRecordKey));
-    setMonitoringRefreshing(true);
-    setMonitoringRefreshMessage(null);
-    try {
-      const refreshResponse = await refreshGeopoliticalMonitoring();
-      const requestedAt = refreshResponse.refresh?.requestedAt;
-      let snapshot = await loadMonitoring();
-      let externalScanCompleted = Boolean(
-        requestedAt && snapshot?.monitoring?.lastSuccessfulExternalScan &&
-        Date.parse(snapshot.monitoring.lastSuccessfulExternalScan) >= Date.parse(requestedAt),
-      );
-      const deadline = Date.now() + 30_000;
-      while (!externalScanCompleted && Date.now() < deadline) {
-        await new Promise((resolve) => window.setTimeout(resolve, 1_000));
-        snapshot = await loadMonitoring();
-        externalScanCompleted = Boolean(
-          requestedAt && snapshot?.monitoring?.lastSuccessfulExternalScan &&
-          Date.parse(snapshot.monitoring.lastSuccessfulExternalScan) >= Date.parse(requestedAt),
-        );
-      }
-      if (!externalScanCompleted) {
-        setMonitoringRefreshMessage('Refresh triggered. External scan in progress.');
-      } else {
-        const hasNewEvents = snapshot?.events.some((record) => !previousEventKeys.has(monitoringRecordKey(record))) || false;
-        setMonitoringRefreshMessage(hasNewEvents ? 'News refreshed successfully.' : 'Scan complete. No new events found.');
-      }
-    } catch {
-      setMonitoringRefreshMessage('Scan requested. Waiting for updates.');
-    } finally {
-      setMonitoringRefreshing(false);
-    }
-  };
 
   const handleAnalyze = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -404,21 +364,6 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
             )}
           </button>
         </div>
-
-        {/* Action Controls */}
-        {activeTab === 'monitor' && (
-          <div className="flex items-center gap-3 px-3">
-            <button
-              type="button"
-              onClick={handleRefreshNews}
-              disabled={monitoringRefreshing}
-              className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-orange-300 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${monitoringRefreshing ? 'animate-spin text-orange-400' : ''}`} />
-              <span>{monitoringRefreshing ? 'Scanning Live Intelligence...' : 'Refresh News'}</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ------------------------------------------------------------- */}
@@ -801,14 +746,6 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
               />
             </div>
           </div>
-
-          {/* Refresh Message */}
-          {monitoringRefreshMessage && (
-            <div className="p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-xs text-emerald-300 flex items-center gap-2 font-mono">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>{monitoringRefreshMessage}</span>
-            </div>
-          )}
 
           {/* Events Feed Container */}
           <FilteredMonitoredFeed
