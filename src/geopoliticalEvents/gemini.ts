@@ -87,7 +87,7 @@ export class GoogleGeminiService implements GeminiService {
 
   constructor(options: { apiKey?: string; model?: string; client?: GeminiModelClient } = {}) {
     this.apiKey = options.apiKey !== undefined ? options.apiKey : process.env.GEMINI_API_KEY;
-    this.model = options.model || process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+    this.model = options.model || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
     this.client = options.client;
   }
 

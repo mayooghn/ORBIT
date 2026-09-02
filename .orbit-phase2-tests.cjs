@@ -7006,9 +7006,38 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
     }
   );
   app.post(
+    "/api/reserves/commit-procurement",
+    (request, response) => {
+      const { dailyTonnes } = request.body || {};
+      if (typeof dailyTonnes !== "number" || dailyTonnes < 0) {
+        response.status(400).json({ status: "ERROR", error: "Invalid dailyTonnes." });
+        return;
+      }
+      const commitPath = import_node_path3.default.join(process.cwd(), "data", "committed-procurement.json");
+      try {
+        (0, import_node_fs3.writeFileSync)(commitPath, JSON.stringify({ dailyTonnes }));
+        response.json({ status: "AVAILABLE" });
+      } catch (error) {
+        response.status(500).json({ status: "ERROR", error: "Failed to save procurement." });
+      }
+    }
+  );
+  app.post(
     "/api/reserves/optimize",
     (request, response) => {
-      const validation = validateStrategicReserveInput(request.body);
+      const input = { ...request.body };
+      const commitPath = import_node_path3.default.join(process.cwd(), "data", "committed-procurement.json");
+      if ((0, import_node_fs3.existsSync)(commitPath)) {
+        try {
+          const data = JSON.parse((0, import_node_fs3.readFileSync)(commitPath, "utf8"));
+          if (typeof data.dailyTonnes === "number") {
+            input.alternativeProcurement = data.dailyTonnes;
+          }
+        } catch (e) {
+          console.error("Failed to read committed procurement", e);
+        }
+      }
+      const validation = validateStrategicReserveInput(input);
       if (!validation.valid || !validation.input) {
         response.status(400).json({
           status: "ERROR",

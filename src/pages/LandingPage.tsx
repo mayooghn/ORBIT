@@ -4,13 +4,10 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowRight,
-  BarChart3,
-  ChevronRight,
   Compass,
   Database,
   Fuel,
   GitBranch,
-  Globe2,
   Lock,
   Menu,
   Network,
@@ -19,7 +16,6 @@ import {
   Target,
   X,
   Zap,
-  GitMerge,
 } from 'lucide-react';
 import { OrbitLogo } from '../components/common/OrbitLogo';
 
@@ -33,7 +29,7 @@ const NAV_ITEMS = [
   { label: 'Why ORBIT', href: '#why-orbit' },
   { label: 'Capabilities', href: '#capabilities' },
   { label: 'Use Cases', href: '#use-cases' },
-  { label: 'Platform', href: '#workflow' },
+  { label: 'Workflow', href: '#workflow' },
   { label: 'Security', href: '#security' },
 ];
 
@@ -75,47 +71,24 @@ const CORE_PILLARS = [
   },
 ];
 
-const CAPABILITIES = [
-  {
-    icon: Network,
-    title: 'Digital Twin Network',
-    description: 'Maps suppliers, ports, refineries, pipelines, chokepoints, and other energy infrastructure to understand network exposure.',
-  },
-  {
-    icon: GitBranch,
-    title: 'Scenario Modelling',
-    description: 'Simulates disruptions and tests how different operational assumptions affect the energy system under stress.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Strategic Reserve Optimization',
-    description: 'Models strategic petroleum reserve drawdown and replenishment while strictly enforcing a minimum safety reserve floor.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Executive Response',
-    description: 'Brings source-backed intelligence, exposure metrics, and action plans together into an operational decision view for leaders.',
-  },
-];
-
 const DIFFERENTIATORS = [
   {
     icon: Database,
     title: 'SOURCE-BACKED',
     subtitle: 'Evidence Traceability',
-    description: 'Trace the evidence behind an event and its assessment. Every signal is anchored to verified source documents rather than ungrounded assumptions.',
+    description: 'Trace the evidence behind an event and its assessment. Every signal is anchored to verified source documents.',
   },
   {
     icon: Network,
     title: 'NETWORK-AWARE',
     subtitle: 'Physical Propagation',
-    description: 'Understand how geopolitical events propagate through the energy system. Connect maritime disruptions directly to refinery intake and pipeline throughput.',
+    description: 'Understand how geopolitical events propagate through the energy system from chokepoints to refinery intake.',
   },
   {
     icon: Target,
     title: 'DECISION-READY',
     subtitle: 'Deterministic Models',
-    description: 'Evaluate concrete response options through scenarios, procurement, and reserve models that respect physical constraints and reserve floors.',
+    description: 'Evaluate concrete response options through deterministic scenarios and reserve models that respect safety floors.',
   },
 ];
 
@@ -125,40 +98,24 @@ const USE_CASES = [
     title: 'Maritime Chokepoints',
     tag: 'Flow Disruption',
     description: 'Track flow disruption risks and tanker rerouting across Hormuz, Bab el-Mandeb, and Malacca corridors.',
-    event: 'Strait of Hormuz disruption',
-    impact: 'Crude transit halt',
-    network: 'Exposed routes & ports',
-    response: 'Route diversion + reserve drawdown',
   },
   {
     icon: Compass,
     title: 'Pipeline Disruptions',
     tag: 'Transit Outage',
     description: 'Model compression outages, gas transit bottlenecks, and alternative intake terminal capacity.',
-    event: 'Pipeline compression failure',
-    impact: 'Gas transit bottleneck',
-    network: 'Affected pipeline segments',
-    response: 'Alternative intake capacity',
   },
   {
     icon: ShieldCheck,
     title: 'Strategic Petroleum Reserves',
     tag: 'SPR Optimization',
     description: 'Evaluate SPR buffer days, drawdown requirements, safety reserve floors, and emergency replenishment timelines.',
-    event: 'Supply shortfall scenario',
-    impact: 'SPR drawdown requirement',
-    network: 'Reserve-to-demand gap',
-    response: 'Controlled release schedule',
   },
   {
     icon: GitBranch,
     title: 'Trade Reconfiguration',
     tag: 'Supply Shift',
     description: 'Assess origin shifts, alternative supplier capacity, and contract supply alternatives during supply cutoffs.',
-    event: 'Supplier unavailability',
-    impact: 'Contract shortfall',
-    network: 'Alternative supply paths',
-    response: 'Procurement shift',
   },
 ];
 
@@ -181,15 +138,15 @@ const WORKFLOW_STEPS = [
     number: '03',
     phase: 'MAP',
     icon: Network,
-    title: 'Digital Twin impact',
+    title: 'Digital Twin infrastructure impact',
     description: 'Trace Digital Twin infrastructure impact across ports, refineries, and pipelines.',
   },
   {
     number: '04',
     phase: 'SIMULATE',
     icon: GitBranch,
-    title: 'Scenario options',
-    description: 'Model alternative supplier capacity, rerouting timelines, and shortfall gaps.',
+    title: 'Deterministic scenarios',
+    description: 'Model alternative supplier capacity, rerouting timelines, and deterministic scenarios.',
   },
   {
     number: '05',
@@ -197,44 +154,6 @@ const WORKFLOW_STEPS = [
     icon: ShieldCheck,
     title: 'Reserve decision',
     description: 'Calculate safe SPR release, enforce safety floors, and finalize action plans.',
-  },
-];
-
-const PROCESS_STEPS = [
-  {
-    number: '01',
-    title: 'DETECT',
-    description: 'Monitor geopolitical and supply-chain events from source-backed intelligence feeds.',
-    detail: 'ORBIT begins with signals. It ingests verified data from geopolitical, maritime, and market sources.',
-    icon: Radar,
-  },
-  {
-    number: '02',
-    title: 'UNDERSTAND',
-    description: 'Assess risk exposure across crude flows, suppliers, chokepoints, and infrastructure.',
-    detail: 'ORBIT determines what the event could affect. It maps exposure across the supply chain.',
-    icon: Activity,
-  },
-  {
-    number: '03',
-    title: 'MAP',
-    description: 'Trace impact through suppliers, routes, ports, refineries, pipelines, and chokepoints.',
-    detail: 'ORBIT maps the event onto the energy network. Every affected asset becomes visible.',
-    icon: Network,
-  },
-  {
-    number: '04',
-    title: 'SIMULATE',
-    description: 'Evaluate different assumptions and operational scenarios to test response options.',
-    detail: 'ORBIT models what happens under different conditions. Different assumptions produce different outcomes.',
-    icon: GitBranch,
-  },
-  {
-    number: '05',
-    title: 'RESPOND',
-    description: 'Compare procurement alternatives, reserve implications, and operational responses.',
-    detail: 'ORBIT evaluates what actions are available. It produces a decision-ready operational picture.',
-    icon: ShieldCheck,
   },
 ];
 
@@ -299,14 +218,6 @@ const RESERVE_STATES = [
   { level: 30, label: 'MINIMUM FLOOR', color: 'var(--accent-crimson)' },
 ];
 
-const PLATFORM_LAYERS = [
-  { label: 'INTELLIGENCE', description: 'Geopolitical signals, maritime data, market feeds', icon: Radar },
-  { label: 'NETWORK MODEL', description: 'Digital twin of energy infrastructure', icon: Network },
-  { label: 'SCENARIO ENGINE', description: 'Deterministic modelling and simulation', icon: GitBranch },
-  { label: 'DECISION LAYER', description: 'Response evaluation and constraints', icon: Target },
-  { label: 'OPERATOR CONSOLE', description: 'Decision-ready operational interface', icon: BarChart3 },
-];
-
 const RESPONSE_OPTIONS = [
   { label: 'OPTION A', title: 'Procurement shift', impact: 'LOW', risk: 'MEDIUM', feasibility: 'AVAILABLE', time: '2-5 days' },
   { label: 'OPTION B', title: 'Route diversion', impact: 'MEDIUM', risk: 'LOW', feasibility: 'AVAILABLE', time: '1-3 days' },
@@ -329,11 +240,11 @@ interface FlowNodeDef {
 }
 
 const FLOW_NODES: FlowNodeDef[] = [
-  { id: 'src', x: 46, y: 130, label: 'SOURCE SIGNALS', sub: 'geopolitical \u00b7 maritime \u00b7 market', activeAt: [0] },
+  { id: 'src', x: 46, y: 130, label: 'SOURCE SIGNALS', sub: 'geopolitical · maritime · market', activeAt: [0] },
   { id: 'event', x: 215, y: 130, label: 'EVENT', sub: 'Strait of Hormuz disruption', activeAt: [0] },
-  { id: 'risk', x: 385, y: 130, label: 'RISK ENGINE', sub: 'flow vulnerability \u00b7 exposure', activeAt: [1] },
-  { id: 'twin', x: 545, y: 78, label: 'DIGITAL TWIN', sub: 'ports \u00b7 refineries \u00b7 pipelines', activeAt: [2, 3] },
-  { id: 'decision', x: 660, y: 130, label: 'DECISION', sub: 'procurement \u00b7 scenarios \u00b7 reserves', activeAt: [4, 5] },
+  { id: 'risk', x: 385, y: 130, label: 'RISK ENGINE', sub: 'flow vulnerability · exposure', activeAt: [1] },
+  { id: 'twin', x: 545, y: 78, label: 'DIGITAL TWIN', sub: 'ports · refineries · pipelines', activeAt: [2, 3] },
+  { id: 'decision', x: 660, y: 130, label: 'DECISION', sub: 'procurement · scenarios · reserves', activeAt: [4, 5] },
 ];
 
 interface FlowPathDef {
@@ -380,7 +291,7 @@ const HeroFlowVisual: React.FC = () => {
     <div
       className="relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4 sm:p-5"
       role="img"
-      aria-label={`ORBIT intelligence flow \u2014 stage ${FLOW_STAGES[stage]}`}
+      aria-label={`ORBIT intelligence flow — stage ${FLOW_STAGES[stage]}`}
       style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 8px 30px -12px rgba(0,0,0,0.10)' }}
     >
       <div className="lp-stage-sheen pointer-events-none absolute inset-0" aria-hidden="true" />
@@ -488,7 +399,7 @@ const HeroFlowVisual: React.FC = () => {
 };
 
 /* ==========================================================================
-   SCROLL REVEAL — IntersectionObserver-based entrance animation
+   SCROLL REVEAL
    ========================================================================== */
 const Reveal: React.FC<{
   children: React.ReactNode;
@@ -535,32 +446,6 @@ const Reveal: React.FC<{
       {children}
     </div>
   );
-};
-
-/* ==========================================================================
-   MOUSE PARALLAX HOOK
-   ========================================================================== */
-const useMouseParallax = () => {
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mq.matches) return;
-
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (isTouch) return;
-
-    const handleMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      setOffset({ x, y });
-    };
-
-    window.addEventListener('mousemove', handleMove, { passive: true });
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, []);
-
-  return offset;
 };
 
 /* ==========================================================================
@@ -687,7 +572,6 @@ const NetworkVisualization: React.FC = () => {
    ========================================================================== */
 const ScenarioVisualization: React.FC = () => {
   const [selected, setSelected] = useState('baseline');
-
   const current = SCENARIOS.find((s) => s.id === selected)!;
 
   return (
@@ -989,169 +873,7 @@ const SourceTraceVisual: React.FC = () => {
 };
 
 /* ==========================================================================
-   PLATFORM ARCHITECTURE VISUAL
-   ========================================================================== */
-const PlatformArchitecture: React.FC = () => {
-  const [reduced, setReduced] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.2 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={ref} className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6">
-      <div className="mb-5 flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-          Platform Architecture
-        </span>
-        <span className="font-mono text-[10px] text-[var(--text-muted)]">LAYER MODEL</span>
-      </div>
-
-      <div className="space-y-2">
-        {PLATFORM_LAYERS.map((layer, i) => {
-          const Icon = layer.icon;
-          return (
-            <div
-              key={layer.label}
-              className="lp-platform-layer flex items-center gap-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4"
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible ? 'translateY(0)' : 'translateY(10px)',
-                transition: reduced ? 'none' : `all 0.5s ease ${i * 0.12}s`,
-              }}
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
-                <Icon className="h-4 w-4" />
-              </div>
-              <div className="flex-1">
-                <span className="block text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">{layer.label}</span>
-                <span className="text-xs text-[var(--text-secondary)]">{layer.description}</span>
-              </div>
-              {i < PLATFORM_LAYERS.length - 1 && (
-                <ArrowDown className="h-3 w-3 shrink-0 text-[var(--accent-energy)]" style={{ transform: 'rotate(0deg)' }} />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-/* ==========================================================================
-   CAPABILITY MICRO VISUALS — Small visual indicators inside capability cards
-   ========================================================================== */
-const CapabilityMicroVisual: React.FC<{ type: 'network' | 'scenario' | 'reserve' | 'response' }> = ({ type }) => {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  if (reduced) return null;
-
-  const visuals = {
-    network: (
-      <svg viewBox="0 0 80 80" className="w-full h-full">
-        {/* Tiny network nodes */}
-        <circle cx="20" cy="30" r="2" fill="var(--accent-energy)" opacity="0.4">
-          <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="60" cy="20" r="1.5" fill="var(--border-emphasis)" opacity="0.3" />
-        <circle cx="50" cy="60" r="2" fill="var(--border-emphasis)" opacity="0.3" />
-        <circle cx="30" cy="55" r="1.5" fill="var(--accent-energy)" opacity="0.3">
-          <animate attributeName="opacity" values="0.15;0.4;0.15" dur="4s" repeatCount="indefinite" begin="1s" />
-        </circle>
-        {/* Connecting edges */}
-        <line x1="20" y1="30" x2="60" y2="20" stroke="var(--border-subtle)" strokeWidth="0.5" opacity="0.3" />
-        <line x1="20" y1="30" x2="30" y2="55" stroke="var(--border-subtle)" strokeWidth="0.5" opacity="0.3" />
-        <line x1="60" y1="20" x2="50" y2="60" stroke="var(--border-subtle)" strokeWidth="0.5" opacity="0.3" />
-        {/* Signal packet */}
-        <circle r="1.5" fill="var(--accent-energy)" opacity="0">
-          <animateMotion dur="3s" repeatCount="indefinite" path="M 20 30 L 60 20 L 50 60" />
-          <animate attributeName="opacity" values="0;0.5;0.5;0" dur="3s" repeatCount="indefinite" />
-        </circle>
-      </svg>
-    ),
-    scenario: (
-      <svg viewBox="0 0 80 80" className="w-full h-full">
-        {/* Scenario branching paths */}
-        <path d="M 10 40 Q 30 40, 40 30 Q 50 20, 70 15" fill="none" stroke="var(--accent-energy)" strokeWidth="0.8" opacity="0.3" strokeDasharray="3 4">
-          <animate attributeName="stroke-dashoffset" values="0;-14" dur="2s" repeatCount="indefinite" />
-        </path>
-        <path d="M 10 40 L 70 40" fill="none" stroke="var(--border-subtle)" strokeWidth="0.8" opacity="0.2" strokeDasharray="3 4">
-          <animate attributeName="stroke-dashoffset" values="0;-14" dur="3s" repeatCount="indefinite" />
-        </path>
-        <path d="M 10 40 Q 30 40, 40 50 Q 50 60, 70 65" fill="none" stroke="var(--border-subtle)" strokeWidth="0.8" opacity="0.2" strokeDasharray="3 4">
-          <animate attributeName="stroke-dashoffset" values="0;-14" dur="2.5s" repeatCount="indefinite" begin="0.5s" />
-        </path>
-        <circle cx="10" cy="40" r="2.5" fill="var(--accent-energy)" opacity="0.5" />
-      </svg>
-    ),
-    reserve: (
-      <svg viewBox="0 0 80 80" className="w-full h-full">
-        {/* Reserve level indicator */}
-        <rect x="15" y="20" width="50" height="40" rx="4" fill="none" stroke="var(--border-subtle)" strokeWidth="0.8" opacity="0.3" />
-        <rect x="15" y="45" width="50" height="15" rx="0" fill="var(--accent-emerald)" opacity="0.15">
-          <animate attributeName="y" values="45;35;45" dur="6s" repeatCount="indefinite" />
-          <animate attributeName="height" values="15;25;15" dur="6s" repeatCount="indefinite" />
-        </rect>
-        <line x1="15" y1="35" x2="65" y2="35" stroke="var(--accent-energy)" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.3" />
-      </svg>
-    ),
-    response: (
-      <svg viewBox="0 0 80 80" className="w-full h-full">
-        {/* Decision convergence */}
-        <circle cx="40" cy="40" r="3" fill="var(--accent-energy)" opacity="0.4">
-          <animate attributeName="opacity" values="0.3;0.6;0.3" dur="2s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="40" cy="40" r="3" fill="none" stroke="var(--accent-energy)" strokeWidth="0.5" opacity="0.2">
-          <animate attributeName="r" from="3" to="15" dur="2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" from="0.3" to="0" dur="2s" repeatCount="indefinite" />
-        </circle>
-        <line x1="10" y1="40" x2="37" y2="40" stroke="var(--accent-energy)" strokeWidth="0.5" opacity="0.2" />
-        <line x1="43" y1="40" x2="70" y2="40" stroke="var(--accent-energy)" strokeWidth="0.5" opacity="0.2" />
-        <line x1="40" y1="10" x2="40" y2="37" stroke="var(--accent-energy)" strokeWidth="0.5" opacity="0.2" />
-        <line x1="40" y1="43" x2="40" y2="70" stroke="var(--accent-energy)" strokeWidth="0.5" opacity="0.2" />
-      </svg>
-    ),
-  };
-
-  return (
-    <div className="lp-cap-visual">
-      {visuals[type]}
-    </div>
-  );
-};
-
-/* ==========================================================================
-   DATA ROUTING WINDOW — Minimal intelligence processing interface
+   DATA ROUTING WINDOW
    ========================================================================== */
 const ROUTING_STAGES = [
   { label: 'SOURCE SIGNAL', detail: 'Maritime intelligence', status: 'RECEIVED' },
@@ -1212,32 +934,6 @@ const DataRoutingWindow: React.FC = () => {
     };
   }, [reduced]);
 
-  if (reduced) {
-    return (
-      <div ref={sectionRef} className="lp-data-routing">
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-[var(--accent-energy)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
-              SOURCE SIGNAL
-            </span>
-          </div>
-          <span className="font-mono text-[10px] text-[var(--text-muted)]">PROCESSING</span>
-        </div>
-        {ROUTING_STAGES.map(({ label, detail, status }, i) => (
-          <div key={label} className="lp-routing-row">
-            <span className="lp-routing-dot is-active" />
-            <div className="flex-1">
-              <span className="text-xs font-semibold text-[var(--text-primary)]">{label}</span>
-              <span className="ml-2 text-xs text-[var(--text-muted)]">{detail}</span>
-            </div>
-            <span className="font-mono text-[10px] text-[var(--accent-energy)]">{status}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div ref={sectionRef} className="lp-data-routing" role="img" aria-label="ORBIT data routing pipeline">
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-2.5">
@@ -1269,84 +965,6 @@ const DataRoutingWindow: React.FC = () => {
           </div>
         );
       })}
-    </div>
-  );
-};
-
-/* ==========================================================================
-   PRODUCT PREVIEW — miniature ORBIT console
-   ========================================================================== */
-const ProductPreview: React.FC = () => {
-  const [activePanel, setActivePanel] = useState(0);
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    if (reduced) return;
-    const t = setInterval(() => setActivePanel((p) => (p + 1) % 5), 2500);
-    return () => clearInterval(t);
-  }, [reduced]);
-
-  const panels = [
-    { label: 'EVENT', value: 'Hormuz disruption', color: 'var(--accent-energy)' },
-    { label: 'RISK', value: 'HIGH exposure', color: 'var(--accent-crimson)' },
-    { label: 'NETWORK', value: '3 assets affected', color: 'var(--accent-energy)' },
-    { label: 'SCENARIO', value: 'Closure model active', color: 'var(--accent-energy)' },
-    { label: 'RESPONSE', value: '2 options ready', color: 'var(--accent-emerald)' },
-  ];
-
-  return (
-    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] overflow-hidden lp-preview-pulse">
-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 py-2">
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-[var(--accent-energy)]" />
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-primary)]">ORBIT Operator Console</span>
-        </div>
-        <span className="font-mono text-[11px] text-[var(--text-muted)]">PREVIEW</span>
-      </div>
-
-      <div className="grid grid-cols-5 gap-px bg-[var(--border-subtle)]">
-        {panels.map((panel, i) => (
-          <div
-            key={panel.label}
-            className={`lp-preview-panel cursor-pointer bg-[var(--bg-card)] p-3 text-center transition-all duration-300 ${activePanel === i ? 'is-active' : ''}`}
-            role="button"
-            tabIndex={0}
-            aria-pressed={activePanel === i}
-            onClick={() => setActivePanel(i)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActivePanel(i); } }}
-          >
-            <span className={`block text-[11px] font-bold uppercase tracking-wider transition-colors duration-300 ${activePanel === i ? 'text-[var(--accent-energy)]' : 'text-[var(--text-faint)]'}`}>
-              {panel.label}
-            </span>
-            <span className="mt-1 block text-[10px] font-semibold text-[var(--text-primary)]">{panel.value}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="p-4">
-        <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-bold text-[var(--text-primary)]">Active Assessment</span>
-            <span className="font-mono text-[11px] text-[var(--accent-energy)]">LIVE</span>
-          </div>
-          <div className="space-y-2">
-            {panels.map((panel, i) => (
-              <div key={panel.label} className={`flex items-center justify-between rounded border p-2 transition-all duration-300 ${activePanel === i ? 'border-orange-200 bg-orange-50/50' : 'border-[var(--border-subtle)] bg-[var(--bg-card)] opacity-50'}`}>
-                <span className="text-[10px] font-semibold text-[var(--text-primary)]">{panel.label}</span>
-                <span className="text-[10px] text-[var(--text-secondary)]">{panel.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
@@ -1421,14 +1039,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [activeItem, setActiveItem] = useState<string>('Why ORBIT');
   const [scrolled, setScrolled] = useState(false);
   const [scrollPct, setScrollPct] = useState(0);
-  const [propStep, setPropStep] = useState(-1);
-  const [processStep, setProcessStep] = useState(-1);
   const [heroStatusIdx, setHeroStatusIdx] = useState(0);
-  const propRef = useRef<HTMLDivElement>(null);
-  const processRef = useRef<HTMLDivElement>(null);
   const isManualScrollRef = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<number | null>(null);
-  const mouse = useMouseParallax();
 
   const primaryAction = isAuthenticated ? onNavigateToApp : onNavigateToAuth;
   const primaryLabel = isAuthenticated ? 'Dashboard' : 'Sign in';
@@ -1498,54 +1111,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     };
   }, []);
 
-  // Propagation step highlight
-  useEffect(() => {
-    const el = propRef.current;
-    if (!el) return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mq.matches) { setPropStep(4); return; }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) { setPropStep(-1); return; }
-        let step = 0;
-        const advance = () => {
-          setPropStep(step);
-          step++;
-          if (step <= 4) setTimeout(advance, 700);
-        };
-        advance();
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  // Process step highlight
-  useEffect(() => {
-    const el = processRef.current;
-    if (!el) return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mq.matches) { setProcessStep(4); return; }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) { setProcessStep(-1); return; }
-        let step = 0;
-        const advance = () => {
-          setProcessStep(step);
-          step++;
-          if (step <= 4) setTimeout(advance, 500);
-        };
-        advance();
-      },
-      { threshold: 0.25 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   // Hero status indicator cycling
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -1602,26 +1167,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </nav>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={primaryAction}
-              className="hidden text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] sm:block"
-            >
-              {primaryLabel}
-            </button>
-            {!isAuthenticated && (
+            {!isAuthenticated ? (
+              <>
+                <button
+                  type="button"
+                  onClick={primaryAction}
+                  className="hidden cursor-pointer rounded-lg border border-transparent px-3.5 py-1.5 text-[13px] font-medium text-[var(--text-secondary)] transition-all duration-200 hover:border-orange-300/80 hover:bg-orange-50 hover:text-orange-600 hover:shadow-sm active:scale-95 active:bg-orange-100 active:border-orange-400 active:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40 sm:block"
+                >
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  onClick={onNavigateToAuth}
+                  className="lp-btn-sweep hidden rounded-lg bg-[var(--text-primary)] px-4 py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 sm:inline-flex"
+                >
+                  Get started
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
-                onClick={onNavigateToAuth}
-                className="lp-btn-sweep hidden rounded-lg bg-[var(--text-primary)] px-4 py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 sm:inline-flex"
-              >
-                Get started
-              </button>
-            )}
-            {isAuthenticated && (
-              <button
-                type="button"
-                onClick={onNavigateToApp}
+                onClick={primaryAction}
                 className="lp-btn-sweep hidden rounded-lg bg-[var(--accent-energy)] px-4 py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 sm:inline-flex"
               >
                 Dashboard
@@ -1716,8 +1282,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                 <a
-                  href="#process"
-                  onClick={(e) => scrollToSection(e, 'Why ORBIT', '#process')}
+                  id="hero-primary-cta"
+                  href="#why-orbit"
+                  onClick={(e) => scrollToSection(e, 'Why ORBIT', '#why-orbit')}
                   className="lp-btn-sweep inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--text-primary)] px-6 py-3.5 text-base font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-energy)] focus-visible:ring-offset-2"
                 >
                   <span>Explore ORBIT</span>
@@ -1748,64 +1315,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ============================================================
-            PROCESS — From signal to decision
-            ============================================================ */}
-        <Reveal>
-          <section
-            id="process"
-            className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative"
-          >
-            <div className="mx-auto max-w-7xl">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  From signal to decision
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  ORBIT turns geopolitical disruption into an{' '}
-                  <span style={{ color: 'var(--accent-energy)' }}>operational energy picture</span>
-                </h2>
-                <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                  Every major section teaches the visitor something. This is how ORBIT works, step by step.
-                </p>
-              </div>
-
-              <div ref={processRef} className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 lp-process-stagger">
-                {PROCESS_STEPS.map(({ number, title, description, detail, icon: Icon }, index) => (
-                  <div
-                    key={number}
-                    className={`lp-process-step lp-step-glow lp-connected-card relative rounded-xl border p-5 transition-all duration-400 ${
-                      processStep >= index
-                        ? 'is-active border-orange-200 bg-orange-50/50'
-                        : 'border-[var(--border-subtle)] bg-[var(--bg-card)]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold tracking-[0.2em] text-[var(--accent-energy)]">{number}</span>
-                      <div className={`lp-process-icon flex h-9 w-9 items-center justify-center rounded-lg border transition-all duration-300 ${
-                        processStep >= index
-                          ? 'border-orange-200 bg-[var(--accent-energy)] text-white'
-                          : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-energy)]'
-                      }`}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                    </div>
-                    <h3 className="mt-4 text-base font-bold text-[var(--text-primary)]">{title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
-                    <p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">{detail}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            PROCESS — From signal to decision
+            WHY ORBIT — One system from detection to response
             ============================================================ */}
         <Reveal>
           <section
             id="why-orbit"
-            className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative"
+            className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative"
           >
             <div className="mx-auto max-w-7xl">
               <div className="max-w-3xl">
@@ -1831,7 +1346,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold tracking-[0.2em] text-[var(--accent-energy)]">
-                        {number} \u2014 {step}
+                        {number} — {step}
                       </span>
                       <div className="lp-card-icon lp-cap-icon-pulse flex h-9 w-9 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
                         <Icon className="h-4 w-4" />
@@ -1848,245 +1363,213 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </Reveal>
 
         {/* ============================================================
-            CAPABILITIES
+            CORE CAPABILITIES — 4 Key Operational Deep-Dives
             ============================================================ */}
-        <Reveal>
-          <section
-            id="capabilities"
-            className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative"
-          >
-            <div className="mx-auto max-w-7xl">
-              <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-                <div className="max-w-2xl">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                    Platform capabilities
-                  </p>
-                  <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                    Built for the decisions that matter during an{' '}
-                    <span style={{ color: 'var(--accent-energy)' }}>energy disruption</span>
-                  </h2>
-                </div>
-                <p className="max-w-md text-sm leading-7 text-[var(--text-secondary)] sm:text-right">
-                  Five integrated intelligence layers designed to transform complex geopolitical signals into
-                  accountable operational decisions.
-                </p>
-              </div>
+        <div id="capabilities" className="scroll-mt-24">
+          {/* 1. Digital Twin Network */}
+          <Reveal>
+            <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative border-b border-[var(--border-subtle)]">
+              <div className="mx-auto max-w-7xl">
+                <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
+                      Digital Twin Network
+                    </p>
+                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+                      See the energy network behind the event
+                    </h2>
+                    <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
+                      When a geopolitical disruption occurs, ORBIT does not stop at the headline. Its Digital
+                      Twin connects the event to suppliers, trade routes, infrastructure, refineries,
+                      chokepoints, and other network dependencies so operators can trace physical propagation.
+                    </p>
 
-              <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lp-stagger">
-                {CAPABILITIES.map(({ icon: Icon, title, description }, index) => (
-                  <article
-                    key={title}
-                    className="lp-card-hover lp-card-border-glow lp-connected-card relative rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6 overflow-hidden"
-                  >
-                    <CapabilityMicroVisual type={['network', 'scenario', 'reserve', 'response'][index] as 'network' | 'scenario' | 'reserve' | 'response'} />
-                    <div className="lp-card-icon lp-cap-icon-pulse flex h-11 w-11 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="mt-5 text-base font-semibold text-[var(--text-primary)]">{title}</h3>
-                    <p className="mt-2.5 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
-                    <div className="lp-card-signal-line" aria-hidden="true" />
-                  </article>
-                ))}
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            DIGITAL TWIN — Network Context
-            ============================================================ */}
-        <Reveal>
-          <section className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
-            <div className="mx-auto max-w-7xl">
-              <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                    Network context
-                  </p>
-                  <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                    See the energy network behind the event
-                  </h2>
-                  <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                    When a geopolitical disruption occurs, ORBIT does not stop at the headline. Its Digital
-                    Twin connects the event to suppliers, trade routes, infrastructure, refineries,
-                    chokepoints, and other network dependencies so operators can see where the disruption can
-                    propagate.
-                  </p>
-
-                  <div className="mt-8 grid grid-cols-2 gap-4">
-                    <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent-energy)]">
-                        <Fuel className="h-4 w-4" />
-                        <span>Supply & Routes</span>
+                    <div className="mt-8 grid grid-cols-2 gap-4">
+                      <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent-energy)]">
+                          <Fuel className="h-4 w-4" />
+                          <span>Supply & Routes</span>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                          Tracks crude contracts, tanker origins, and chokepoint transit volumes.
+                        </p>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                        Tracks crude contracts, tanker origins, and chokepoint transit volumes.
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent-energy)]">
-                        <Network className="h-4 w-4" />
-                        <span>Physical Assets</span>
+                      <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent-energy)]">
+                          <Network className="h-4 w-4" />
+                          <span>Physical Assets</span>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                          Connects deep-water ports, crude pipelines, and inland refinery clusters.
+                        </p>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                        Connects deep-water ports, crude pipelines, and inland refinery clusters.
-                      </p>
                     </div>
                   </div>
+
+                  <NetworkVisualization />
                 </div>
 
-                <NetworkVisualization />
+                <div className="mt-8">
+                  <DataRoutingWindow />
+                </div>
               </div>
+            </section>
+          </Reveal>
 
-              <div className="mt-8">
-                <DataRoutingWindow />
+          {/* 2. Scenario Modelling */}
+          <Reveal>
+            <section className="bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]">
+              <div className="mx-auto max-w-7xl">
+                <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-start">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
+                      Scenario Modelling
+                    </p>
+                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+                      Model the disruption before it becomes a{' '}
+                      <span style={{ color: 'var(--accent-energy)' }}>crisis</span>
+                    </h2>
+                    <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
+                      ORBIT does not simply say "this event is risky." It helps evaluate
+                      "what happens if?" Different assumptions can be tested across deterministic scenarios.
+                    </p>
+
+                    <div className="mt-6 space-y-3">
+                      {SCENARIOS.map((s) => (
+                        <div key={s.id} className="flex items-start gap-3">
+                          <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--accent-energy)]" />
+                          <div>
+                            <span className="text-sm font-semibold text-[var(--text-primary)]">{s.label}</span>
+                            <span className="ml-2 text-sm text-[var(--text-secondary)]">— {s.description}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <ScenarioVisualization />
+                </div>
               </div>
-            </div>
-          </section>
-        </Reveal>
+            </section>
+          </Reveal>
 
-        {/* ============================================================
-            SCENARIO MODELLING
-            ============================================================ */}
-        <Reveal>
-          <section className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-            <div className="mx-auto max-w-7xl">
-              <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-start">
-                <div>
+          {/* 3. Strategic Reserve Optimization */}
+          <Reveal>
+            <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]">
+              <div className="mx-auto max-w-7xl">
+                <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
+                  <ReserveGauge />
+
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
+                      Strategic Reserve Optimization
+                    </p>
+                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+                      Test how much reserve can{' '}
+                      <span style={{ color: 'var(--accent-energy)' }}>safely</span> be released
+                    </h2>
+                    <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
+                      ORBIT models strategic petroleum reserve as an operational system. Operators can
+                      evaluate disruption scenarios, calculate reserve drawdown requirements, account for
+                      alternative procurement, and enforce a minimum reserve floor.
+                    </p>
+                    <p className="mt-4 text-base leading-[1.75] text-[var(--text-secondary)]">
+                      Rather than making speculative draw decisions, teams can test various outage durations,
+                      monitor SPR buffer days, and verify replenishment feasibility under real supply constraints.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </Reveal>
+
+          {/* 4. Executive Decision & Response */}
+          <Reveal>
+            <section className="bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]">
+              <div className="mx-auto max-w-7xl">
+                <div className="max-w-3xl">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                    Scenario modelling
+                    Executive Decision & Response
                   </p>
                   <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                    Model the disruption before it becomes a{' '}
-                    <span style={{ color: 'var(--accent-energy)' }}>crisis</span>
+                    Turn intelligence into a{' '}
+                    <span style={{ color: 'var(--accent-energy)' }}>decision-ready</span>{' '}
+                    operational picture
                   </h2>
-                  <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                    ORBIT does not simply say "this event is risky." It helps evaluate
-                    "what happens if?" Different assumptions can be tested. Each scenario
-                    produces different outcomes.
+                  <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
+                    ORBIT combines source-backed intelligence, network exposure, scenario results,
+                    procurement options, and reserve implications into decision-ready operational
+                    information for leaders.
                   </p>
+                </div>
 
-                  <div className="mt-6 space-y-3">
-                    {SCENARIOS.map((s) => (
-                      <div key={s.id} className="flex items-start gap-3">
-                        <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--accent-energy)]" />
-                        <div>
-                          <span className="text-sm font-semibold text-[var(--text-primary)]">{s.label}</span>
-                          <span className="ml-2 text-sm text-[var(--text-secondary)]">\u2014 {s.description}</span>
+                <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
+                  <DecisionPreview />
+                  <ResponseComparison />
+                </div>
+              </div>
+            </section>
+          </Reveal>
+
+          {/* Differentiation & Source Traceability Deep-Dive */}
+          <Reveal>
+            <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]">
+              <div className="mx-auto max-w-7xl">
+                <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
+                      Evidence & Verification
+                    </p>
+                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
+                      Source traceability at every stage
+                    </h2>
+                    <p className="mt-4 text-base text-[var(--text-secondary)]">
+                      Every insight is anchored to verified intelligence feeds, maritime logs, and commodity market data.
+                    </p>
+                    <div className="mt-6">
+                      <SourceTraceVisual />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {DIFFERENTIATORS.map(({ icon: Icon, title, subtitle, description }) => (
+                      <div
+                        key={title}
+                        className="lp-card-hover lp-card-border-glow rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="lp-card-icon lp-cap-icon-pulse flex h-9 w-9 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <span className="block font-mono text-xs font-bold tracking-[0.16em] text-[var(--accent-energy)]">
+                              {title}
+                            </span>
+                            <span className="text-xs text-[var(--text-muted)]">{subtitle}</span>
+                          </div>
                         </div>
+                        <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
                       </div>
                     ))}
                   </div>
                 </div>
-
-                <ScenarioVisualization />
               </div>
-            </div>
-          </section>
-        </Reveal>
+            </section>
+          </Reveal>
+        </div>
 
         {/* ============================================================
-            STRATEGIC RESERVE
-            ============================================================ */}
-        <Reveal>
-          <section className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-            <div className="mx-auto max-w-7xl">
-              <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
-                <ReserveGauge />
-
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                    Strategic reserve intelligence
-                  </p>
-                  <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                    Test how much reserve can{' '}
-                    <span style={{ color: 'var(--accent-energy)' }}>safely</span> be released
-                  </h2>
-                  <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                    ORBIT models strategic petroleum reserve as an operational system. Operators can
-                    evaluate disruption scenarios, calculate reserve drawdown requirements, account for
-                    alternative procurement, and enforce a minimum reserve floor.
-                  </p>
-                  <p className="mt-4 text-base leading-[1.75] text-[var(--text-secondary)]">
-                    Rather than making speculative draw decisions, teams can test various outage durations,
-                    monitor SPR buffer days, and verify replenishment feasibility under real supply constraints.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            EXECUTIVE RESPONSE — Decision Panel
-            ============================================================ */}
-        <Reveal>
-          <section className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
-            <div className="mx-auto max-w-7xl">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  Executive response
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  Turn intelligence into a{' '}
-                  <span style={{ color: 'var(--accent-energy)' }}>decision-ready</span>{' '}
-                  operational picture
-                </h2>
-                <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                  ORBIT combines source-backed intelligence, network exposure, scenario results,
-                  procurement options, and reserve implications into decision-ready operational
-                  information for leaders.
-                </p>
-              </div>
-
-              <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
-                <DecisionPreview />
-                <ResponseComparison />
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            SOURCE TRACEABILITY
-            ============================================================ */}
-        <Reveal>
-          <section className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
-            <div className="lp-section-grid-bg absolute inset-0 pointer-events-none" aria-hidden="true" />
-            <div className="mx-auto max-w-7xl">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  Source traceability
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  Every signal traces back to{' '}
-                  <span style={{ color: 'var(--accent-energy)' }}>evidence</span>
-                </h2>
-                <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                  ORBIT does not merely produce a conclusion. Signals can be connected to
-                  source-backed evidence. The goal is to make assessments explainable.
-                </p>
-              </div>
-
-              <div className="mt-12">
-                <SourceTraceVisual />
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            USE CASES
+            USE CASES — Real-World Disruption Scenarios
             ============================================================ */}
         <Reveal>
           <section
             id="use-cases"
-            className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative"
+            className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative border-b border-[var(--border-subtle)]"
           >
             <div className="mx-auto max-w-7xl">
               <div className="max-w-3xl">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  Operational decisions
+                  Operational Use Cases
                 </p>
                 <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
                   See the decision before making it
@@ -2098,52 +1581,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </p>
               </div>
 
-              <div className="mt-10 overflow-x-auto pb-4">
-                <div className="relative flex min-w-[720px] items-center justify-between rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
-                  {/* Signal packet traveling across steps */}
-                  <div className="absolute top-1/2 left-0 h-px w-full pointer-events-none" aria-hidden="true">
-                    <div
-                      className="absolute h-1.5 w-1.5 rounded-full bg-[var(--accent-energy)]"
-                      style={{
-                        animation: 'lp-usecase-signal 6s linear infinite',
-                        boxShadow: '0 0 6px rgba(249, 115, 22, 0.5)',
-                      }}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <span className="block font-mono text-[10px] uppercase text-[var(--accent-energy)]">STEP 1</span>
-                    <span className="text-xs font-bold text-[var(--text-primary)]">EVENT</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-[var(--text-muted)]" />
-                  <div className="text-center">
-                    <span className="block font-mono text-[10px] uppercase text-[var(--accent-energy)]">STEP 2</span>
-                    <span className="text-xs font-bold text-[var(--text-primary)]">RISK</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-[var(--text-muted)]" />
-                  <div className="text-center">
-                    <span className="block font-mono text-[10px] uppercase text-[var(--accent-energy)]">STEP 3</span>
-                    <span className="text-xs font-bold text-[var(--text-primary)]">NETWORK IMPACT</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-[var(--text-muted)]" />
-                  <div className="text-center">
-                    <span className="block font-mono text-[10px] uppercase text-[var(--accent-energy)]">STEP 4</span>
-                    <span className="text-xs font-bold text-[var(--text-primary)]">SUPPLY GAP</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-[var(--text-muted)]" />
-                  <div className="text-center">
-                    <span className="block font-mono text-[10px] uppercase text-[var(--accent-energy)]">STEP 5</span>
-                    <span className="text-xs font-bold text-[var(--text-primary)]">ALTERNATIVE PROCUREMENT</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-[var(--text-muted)]" />
-                  <div className="text-center">
-                    <span className="block font-mono text-[10px] uppercase text-[var(--accent-energy)]">STEP 6</span>
-                    <span className="text-xs font-bold text-[var(--text-primary)]">RESERVE RESPONSE</span>
-                  </div>
-                </div>
-              </div>
-
               <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lp-stagger">
-                {USE_CASES.map(({ icon: Icon, title, tag, description, event, impact, network, response }) => (
+                {USE_CASES.map(({ icon: Icon, title, tag, description }) => (
                   <article
                     key={title}
                     className="lp-card-hover lp-card-border-glow rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5"
@@ -2165,137 +1604,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </Reveal>
 
         {/* ============================================================
-            PRODUCT PREVIEW
-            ============================================================ */}
-        <Reveal>
-          <section className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
-            <div className="lp-section-grid-bg absolute inset-0 pointer-events-none" aria-hidden="true" />
-            <div className="mx-auto max-w-7xl">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  Product preview
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  What the actual ORBIT experience{' '}
-                  <span style={{ color: 'var(--accent-energy)' }}>looks like</span>
-                </h2>
-                <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                  A miniature preview of the operator console. The interface you see inside ORBIT
-                  combines event detection, network context, scenario modelling, and response
-                  evaluation into one operational view.
-                </p>
-              </div>
-
-              <div className="mt-8">
-                <ProductPreview />
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            DIFFERENTIATORS
-            ============================================================ */}
-        <Reveal>
-          <section className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
-            <div className="mx-auto max-w-7xl">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  Core differentiation
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  Not just intelligence. A path to{' '}
-                  <span style={{ color: 'var(--accent-energy)' }}>action</span>
-                </h2>
-                <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                  ORBIT combines source-backed intelligence with deterministic operational models. Instead
-                  of stopping at "this event is risky," ORBIT helps answer "what does it affect, how severe
-                  is the exposure, and what can we do about it?"
-                </p>
-              </div>
-
-              <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3 lp-stagger">
-                {DIFFERENTIATORS.map(({ icon: Icon, title, subtitle, description }) => (
-                  <div
-                    key={title}
-                    className="lp-card-hover lp-card-border-glow rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="lp-card-icon lp-cap-icon-pulse flex h-10 w-10 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <span className="block font-mono text-xs font-bold tracking-[0.16em] text-[var(--accent-energy)]">
-                          {title}
-                        </span>
-                        <span className="text-xs text-[var(--text-muted)]">{subtitle}</span>
-                      </div>
-                    </div>
-                    <p className="mt-5 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
-                    <div className="lp-card-signal-line" aria-hidden="true" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            PLATFORM ARCHITECTURE
-            ============================================================ */}
-        <Reveal>
-          <section className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
-            <div className="mx-auto max-w-7xl">
-              <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-start">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                    Platform architecture
-                  </p>
-                  <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                    Five integrated layers from{' '}
-                    <span style={{ color: 'var(--accent-energy)' }}>signal to operator</span>
-                  </h2>
-                  <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                    ORBIT's architecture connects intelligence gathering, network modelling, scenario
-                    simulation, decision evaluation, and the operator console into one integrated system.
-                  </p>
-
-                  <div className="mt-6 space-y-3">
-                    {PLATFORM_LAYERS.map((layer, i) => {
-                      const Icon = layer.icon;
-                      return (
-                        <div key={layer.label} className="flex items-center gap-3">
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
-                            <Icon className="h-3 w-3" />
-                          </div>
-                          <span className="text-sm font-semibold text-[var(--text-primary)]">{layer.label}</span>
-                          {i < PLATFORM_LAYERS.length - 1 && <ArrowDown className="h-3 w-3 text-[var(--accent-energy)]" />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <PlatformArchitecture />
-                </div>
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
             WORKFLOW — End-to-End Platform Flow
             ============================================================ */}
         <Reveal>
-          <section
-            id="workflow"
-            className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative"
-          >
+          <section id="workflow" className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
             <div className="mx-auto max-w-7xl">
-              <div className="max-w-2xl">
+              <div className="max-w-3xl">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  End-to-end platform workflow
+                  End-to-End Workflow
                 </p>
                 <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
                   From signal to{' '}
@@ -2306,7 +1622,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </p>
               </div>
 
-              <div className="mt-12 flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-stretch lg:gap-3">
+              {/* Connected Non-wrapping Flow */}
+              <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-stretch lg:gap-3">
                 {WORKFLOW_STEPS.map(({ number, phase, icon: Icon, title, description }, index) => (
                   <React.Fragment key={title}>
                     <article className="lp-card-hover lp-card-border-glow lp-connected-card flex min-w-0 flex-1 flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
@@ -2333,13 +1650,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       >
                         <ArrowDown className="h-4 w-4 lg:hidden" />
                         <ArrowRight className="hidden h-4 w-4 lg:block" />
-                        {/* Signal packet on connector */}
-                        <div className="absolute hidden lg:block">
-                          <div className="h-1 w-1 rounded-full bg-[var(--accent-energy)]" style={{
-                            animation: `lp-flow-travel 2s ease-in-out infinite`,
-                            animationDelay: `${index * 0.5}s`,
-                          }} />
-                        </div>
                       </div>
                     )}
                   </React.Fragment>
@@ -2350,7 +1660,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </Reveal>
 
         {/* ============================================================
-            SECURITY
+            SECURITY — Secure Operator Access
             ============================================================ */}
         <Reveal>
           <section id="security" className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
@@ -2424,10 +1734,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </a>
                 <a
                   href="#workflow"
-                  onClick={(e) => scrollToSection(e, 'Platform', '#workflow')}
+                  onClick={(e) => scrollToSection(e, 'Workflow', '#workflow')}
                   className="transition-colors hover:text-[var(--accent-energy)]"
                 >
-                  Platform
+                  Workflow
                 </a>
                 <a
                   href="#security"
@@ -2455,7 +1765,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               procurement, and strategic reserves.
             </span>
           </div>
-          <span>Source-backed insight \u00b7 Secure operator access</span>
+          <span>Source-backed insight · Secure operator access</span>
         </div>
       </footer>
     </div>

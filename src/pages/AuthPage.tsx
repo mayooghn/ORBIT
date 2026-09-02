@@ -103,7 +103,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
         {/* Top: Brand + Badge */}
         <div className={`flex items-center justify-between mb-8 ${mounted ? 'orbit-auth-entrance' : 'opacity-0'}`}>
           <div className="flex items-center gap-2.5">
-            <OrbitLogo size="md" showWordmark={true} variant="dark" />
+            <OrbitLogo size="md" showWordmark={true} variant="light" />
           </div>
 
           <div className="orbit-auth-badge">
