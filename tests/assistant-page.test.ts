@@ -116,7 +116,6 @@ test('automatic monitoring reports STANDBY with the latest event time when exter
   assert.equal(status.message, 'No new external events recently.');
   assert.equal(status.latestEventAt, detectedAt);
   assert.equal(formatExternalMonitoringEventTime(status.latestEventAt).length > 0, true);
-  assert.match(assistantSource, /Last event:/);
 });
 
 test('automatic monitoring reports WAITING before the first external webhook event', () => {

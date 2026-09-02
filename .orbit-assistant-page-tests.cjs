@@ -609,24 +609,6 @@ var AssistantPage = ({ onNavigate }) => {
       ] })
     ] }),
     activeTab === "monitor" && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "space-y-6", children: [
-      (() => {
-        const status = getExternalMonitoringStatus(monitoredEvents);
-        return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-slate-800/80 bg-[#0c1019] shadow-sm font-mono text-xs", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: `h-2 w-2 rounded-full ${status.state === "ACTIVE" ? "bg-emerald-500" : status.state === "STANDBY" ? "bg-amber-500" : "bg-slate-500"}` }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-slate-400", children: [
-              "Ingestion Status: ",
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-slate-200 font-semibold", children: status.state })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-slate-600", children: "\xB7" }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-slate-400", children: status.message })
-          ] }),
-          status.latestEventAt && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-slate-500", children: [
-            "Last event: ",
-            formatExternalMonitoringEventTime(status.latestEventAt)
-          ] })
-        ] });
-      })(),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "grid grid-cols-2 sm:grid-cols-4 gap-4", children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "p-4 rounded-xl border border-slate-800 bg-[#0c1019] shadow-md", children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[11px] font-mono uppercase tracking-wider text-slate-400 block", children: "Total Monitored" }),
@@ -963,7 +945,6 @@ var externalEvent = (detectedAt) => ({
   import_strict.default.equal(status.message, "No new external events recently.");
   import_strict.default.equal(status.latestEventAt, detectedAt);
   import_strict.default.equal(formatExternalMonitoringEventTime(status.latestEventAt).length > 0, true);
-  import_strict.default.match(assistantSource, /Last event:/);
 });
 (0, import_node_test.default)("automatic monitoring reports WAITING before the first external webhook event", () => {
   const status = getExternalMonitoringStatus([]);

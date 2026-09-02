@@ -659,23 +659,6 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onNavigate }) => {
       {/* ------------------------------------------------------------- */}
       {activeTab === 'monitor' && (
         <div className="space-y-6">
-          {(() => {
-            const status = getExternalMonitoringStatus(monitoredEvents);
-            return (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-slate-800/80 bg-[#0c1019] shadow-sm font-mono text-xs">
-                <div className="flex items-center gap-2">
-                  <span className={`h-2 w-2 rounded-full ${status.state === 'ACTIVE' ? 'bg-emerald-500' : status.state === 'STANDBY' ? 'bg-amber-500' : 'bg-slate-500'}`} />
-                  <span className="text-slate-400">Ingestion Status: <span className="text-slate-200 font-semibold">{status.state}</span></span>
-                  <span className="text-slate-600">·</span>
-                  <span className="text-slate-400">{status.message}</span>
-                </div>
-                {status.latestEventAt && (
-                  <span className="text-slate-500">Last event: {formatExternalMonitoringEventTime(status.latestEventAt)}</span>
-                )}
-              </div>
-            );
-          })()}
-
           {/* Status Metric Overview Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl border border-slate-800 bg-[#0c1019] shadow-md">
