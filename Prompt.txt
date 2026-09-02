@@ -1,0 +1,6726 @@
+====================================================================
+ORBIT LANDING PAGE — COMPLETE PRODUCT STORY + VISUAL INTERACTION
+====================================================================
+
+IMPORTANT:
+
+THIS IS NOT A REQUEST TO REBUILD THE APPLICATION.
+
+THIS IS NOT A REQUEST TO MODIFY THE BACKEND.
+
+THIS IS NOT A REQUEST TO MODIFY AUTHENTICATION.
+
+THIS IS NOT A REQUEST TO MODIFY THE SIGN-IN EXPERIENCE.
+
+THIS IS NOT A REQUEST TO MODIFY THE AUTHENTICATED DASHBOARD.
+
+THIS IS NOT A REQUEST TO USE GIT.
+
+THIS IS NOT A REQUEST TO ACCESS GITHUB.
+
+THIS IS NOT A REQUEST TO PUSH ANYTHING.
+
+THIS IS NOT A REQUEST TO PULL ANYTHING.
+
+THIS IS NOT A REQUEST TO FETCH ANYTHING.
+
+THIS IS NOT A REQUEST TO SYNC ANYTHING.
+
+THIS IS NOT A REQUEST TO MODIFY REMOTES.
+
+THIS IS NOT A REQUEST TO CREATE BRANCHES.
+
+THIS IS NOT A REQUEST TO COMMIT.
+
+THIS IS NOT A REQUEST TO PUBLISH.
+
+THIS IS A FRONTEND-ONLY VISUAL AND CONTENT UPGRADE TO THE
+EXISTING PUBLIC PRE-SIGN-IN ORBIT LANDING PAGE.
+
+WORK ONLY WITH THE LOCAL PROJECT FILES ALREADY AVAILABLE.
+
+====================================================================
+01. ABSOLUTE SCOPE LOCK
+====================================================================
+
+ONLY modify the public landing page.
+
+The page users see BEFORE signing in.
+
+The public marketing / product overview page.
+
+The current LandingPage.tsx or equivalent public landing page.
+
+Do not modify anything outside this scope.
+
+Do not modify authenticated pages.
+
+Do not modify the operator console.
+
+Do not modify the application workspace.
+
+Do not modify dashboards that require authentication.
+
+Do not modify the sign-in page.
+
+Do not modify the sign-up page.
+
+Do not modify password reset pages.
+
+Do not modify profile pages.
+
+Do not modify settings.
+
+Do not modify backend services.
+
+Do not modify APIs.
+
+Do not modify database logic.
+
+Do not modify authentication logic.
+
+Do not modify protected routes.
+
+Do not modify server code.
+
+Do not modify unrelated shared components globally.
+
+If a shared component is required for the landing page:
+
+create a landing-page-specific variant.
+
+Do not accidentally change authenticated UI.
+
+====================================================================
+02. ABSOLUTE GIT RESTRICTION
+====================================================================
+
+NO GIT.
+
+NO GITHUB.
+
+NO REMOTE REPOSITORY ACCESS.
+
+DO NOT RUN:
+
+git status
+
+git add
+
+git commit
+
+git push
+
+git pull
+
+git fetch
+
+git clone
+
+git checkout
+
+git switch
+
+git branch
+
+git merge
+
+git rebase
+
+git remote
+
+git reset
+
+git stash
+
+git tag
+
+or any other Git command.
+
+Do not access GitHub through a browser.
+
+Do not access GitHub APIs.
+
+Do not inspect remote repositories.
+
+Do not change remote URLs.
+
+Do not push changes.
+
+Do not create commits.
+
+Do not synchronize anything.
+
+Do not publish anything.
+
+Do not upload anything.
+
+Everything must remain LOCAL.
+
+If something appears to require Git or remote access:
+
+DO NOT DO IT.
+
+Continue working locally.
+
+====================================================================
+03. MAIN OBJECTIVE
+====================================================================
+
+The current ORBIT website has a strong foundation.
+
+The current visual language is:
+
+WHITE
+BLACK
+ORANGE
+
+Keep that.
+
+The current typography is strong.
+
+Keep that.
+
+The current whitespace is good.
+
+Keep that.
+
+The current layout is professional.
+
+Keep that.
+
+The problem is not that the design is bad.
+
+The problem is:
+
+THE WEBSITE DOES NOT YET EXPLAIN ORBIT DEEPLY ENOUGH.
+
+The hero explains the concept.
+
+Then the rest of the page feels too much like a static brochure.
+
+We need the entire landing page to become an interactive explanation of the product.
+
+The visitor should understand:
+
+WHAT ORBIT IS
+
+WHY ORBIT EXISTS
+
+WHAT PROBLEM ORBIT SOLVES
+
+HOW ORBIT WORKS
+
+WHAT ORBIT ACTUALLY DOES
+
+WHAT INFORMATION ORBIT PROCESSES
+
+HOW ORBIT MAPS ENERGY NETWORKS
+
+HOW ORBIT MODELS DISRUPTIONS
+
+HOW ORBIT EVALUATES RESPONSE OPTIONS
+
+HOW ORBIT HELPS OPERATORS MAKE DECISIONS
+
+WHY ORBIT IS DIFFERENT
+
+WHAT THE USER CAN EXPECT AFTER SIGNING IN
+
+The website should answer these questions naturally while scrolling.
+
+====================================================================
+04. DESIGN REFERENCE DIRECTION
+====================================================================
+
+Use the Firecrawl homepage as a reference for:
+
+information density
+
+product storytelling
+
+section sequencing
+
+interactive demonstrations
+
+clear product explanations
+
+technical visualizations
+
+large typography
+
+visual hierarchy
+
+scroll progression
+
+interactive product previews
+
+feature explanations
+
+use-case explanations
+
+technical proof sections
+
+clear CTAs
+
+The reference is NOT:
+
+copy the website.
+
+Do not clone Firecrawl.
+
+Do not copy Firecrawl text.
+
+Do not copy Firecrawl branding.
+
+Do not copy Firecrawl assets.
+
+Do not copy Firecrawl illustrations.
+
+Do not copy Firecrawl code.
+
+Do not create a Firecrawl clone.
+
+Instead:
+
+understand WHY their website communicates the product clearly.
+
+Then apply the same principle to ORBIT.
+
+The core principle is:
+
+EVERY SECTION SHOULD TEACH THE VISITOR SOMETHING.
+
+====================================================================
+05. PRODUCT UNDERSTANDING
+====================================================================
+
+ORBIT is:
+
+ENERGY SUPPLY-CHAIN INTELLIGENCE.
+
+ORBIT connects geopolitical intelligence with the physical energy network.
+
+ORBIT helps operators understand:
+
+what changed
+
+where the exposure is
+
+how the disruption propagates
+
+what assets are affected
+
+what alternatives exist
+
+what scenarios can be evaluated
+
+what operational responses are available
+
+The landing page must communicate this clearly.
+
+Do not assume the visitor understands:
+
+digital twins
+
+supply-chain exposure
+
+scenario modelling
+
+strategic reserves
+
+geopolitical risk
+
+procurement intelligence
+
+deterministic modelling
+
+The website should explain these concepts visually.
+
+====================================================================
+06. CORE ORBIT STORY
+====================================================================
+
+The entire website should tell one continuous story.
+
+START:
+
+A geopolitical event happens.
+
+THEN:
+
+ORBIT detects the event.
+
+THEN:
+
+ORBIT understands what the event means.
+
+THEN:
+
+ORBIT maps the event onto the energy network.
+
+THEN:
+
+ORBIT identifies affected infrastructure.
+
+THEN:
+
+ORBIT evaluates supply-chain exposure.
+
+THEN:
+
+ORBIT models possible scenarios.
+
+THEN:
+
+ORBIT evaluates procurement alternatives.
+
+THEN:
+
+ORBIT evaluates strategic reserve implications.
+
+THEN:
+
+ORBIT compares response options.
+
+FINALLY:
+
+ORBIT produces a decision-ready operational picture.
+
+The website should visually communicate this progression.
+
+====================================================================
+07. CURRENT VISUAL FOUNDATION
+====================================================================
+
+KEEP:
+
+white background
+
+black text
+
+orange accent
+
+large typography
+
+thin borders
+
+rounded cards
+
+clean spacing
+
+professional typography
+
+minimal shadows
+
+technical diagrams
+
+subtle animation
+
+responsive design
+
+Do not turn the website dark.
+
+Do not introduce purple.
+
+Do not introduce neon blue.
+
+Do not introduce green as a major accent.
+
+Do not introduce random gradients.
+
+Do not create a cyberpunk aesthetic.
+
+Do not create a gaming aesthetic.
+
+Do not create a crypto aesthetic.
+
+Do not create a futuristic HUD.
+
+Do not create excessive glassmorphism.
+
+The aesthetic should remain:
+
+PREMIUM
+
+TECHNICAL
+
+CALM
+
+INTELLIGENT
+
+MODERN
+
+PROFESSIONAL
+
+====================================================================
+08. IMPORTANT TYPOGRAPHY CORRECTION
+====================================================================
+
+The current website has a problem:
+
+SECONDARY TEXT IS TOO SMALL.
+
+Improve readability across the entire landing page.
+
+Do not make everything enormous.
+
+Instead establish a clear type hierarchy.
+
+Hero headline:
+
+very large.
+
+Hero supporting paragraph:
+
+comfortable reading size.
+
+Section headings:
+
+large and confident.
+
+Section descriptions:
+
+large enough to comfortably read.
+
+Card titles:
+
+medium-large.
+
+Card descriptions:
+
+comfortable.
+
+Technical labels:
+
+small.
+
+Metadata:
+
+small.
+
+Do not make body text tiny just to fit more content.
+
+The website should feel spacious.
+
+Typography should be readable without zooming.
+
+Avoid long paragraphs in tiny font.
+
+====================================================================
+09. TYPOGRAPHY HIERARCHY
+====================================================================
+
+Create a consistent hierarchy.
+
+H1:
+
+approximately 64–88px desktop depending on viewport.
+
+H2:
+
+approximately 44–64px.
+
+H3:
+
+approximately 24–32px.
+
+Body:
+
+approximately 17–21px.
+
+Secondary body:
+
+approximately 15–18px.
+
+Technical labels:
+
+approximately 11–13px.
+
+Do not blindly follow these exact values.
+
+Use visual judgment.
+
+The important thing is:
+
+CONTENT MUST BE EASY TO READ.
+
+====================================================================
+10. HERO
+====================================================================
+
+The current hero is good.
+
+KEEP IT.
+
+But improve its communication.
+
+The visitor should immediately understand:
+
+ORBIT analyzes geopolitical events.
+
+ORBIT maps their impact on energy supply chains.
+
+ORBIT evaluates operational responses.
+
+The hero headline should remain the strongest text.
+
+Keep the orange emphasis.
+
+Keep the decision engine visualization.
+
+Make the decision engine more alive.
+
+====================================================================
+11. HERO ANIMATION
+====================================================================
+
+The hero should contain the strongest animation.
+
+But not the only animation.
+
+The current hero animation should represent:
+
+SIGNAL
+
+EVENT
+
+RISK
+
+DIGITAL TWIN
+
+DECISION
+
+The signal should travel through the pipeline.
+
+The pipeline should occasionally change state.
+
+The final decision node should activate.
+
+Then the visualization should settle.
+
+Then repeat.
+
+Do not constantly animate everything.
+
+====================================================================
+12. HERO SIGNAL
+====================================================================
+
+Create a small orange signal.
+
+It travels along the pipeline.
+
+It reaches:
+
+SOURCE SIGNALS
+
+then:
+
+EVENT
+
+then:
+
+RISK ENGINE
+
+then:
+
+DIGITAL TWIN
+
+then:
+
+DECISION
+
+Each stage activates briefly.
+
+Use:
+
+orange
+
+soft glow
+
+small movement
+
+subtle pulse
+
+Do not use giant glowing balls.
+
+====================================================================
+13. HERO STAGE LABEL
+====================================================================
+
+The bottom status can cycle through:
+
+STAGE 01 / DETECT
+
+STAGE 02 / UNDERSTAND
+
+STAGE 03 / MAP
+
+STAGE 04 / SIMULATE
+
+STAGE 05 / RESPOND
+
+STAGE 06 / READY
+
+Use smooth transitions.
+
+Do not flash.
+
+Do not blink rapidly.
+
+====================================================================
+14. HERO BACKGROUND
+====================================================================
+
+The network background should be visible.
+
+But subtle.
+
+Use:
+
+very light gray lines
+
+very light nodes
+
+small orange activity points
+
+very subtle movement
+
+The background should create depth.
+
+It must not compete with the headline.
+
+====================================================================
+15. HERO CURSOR INTERACTION
+====================================================================
+
+Keep the current mouse parallax.
+
+Make it subtle.
+
+Move background network slightly.
+
+Move visualization slightly.
+
+Do not move text dramatically.
+
+Cursor interaction should feel premium.
+
+No cursor trail.
+
+No particle explosion.
+
+No giant glow following the mouse.
+
+====================================================================
+16. HERO CTA
+====================================================================
+
+Keep:
+
+Explore ORBIT
+
+Keep:
+
+Sign in to operator console.
+
+Make both interactive.
+
+Primary CTA:
+
+subtle lift
+
+arrow movement
+
+small orange accent
+
+smooth hover
+
+Secondary CTA:
+
+border transition
+
+icon movement
+
+subtle highlight
+
+Do not make buttons bounce.
+
+====================================================================
+17. HERO INFORMATION STRIP
+====================================================================
+
+Keep the current feature strip:
+
+Source traceability
+
+Digital Twin mapping
+
+Deterministic scenarios
+
+Strategic reserve optimization
+
+Make it interactive.
+
+Hovering an item should activate a small visual cue.
+
+For example:
+
+Source traceability:
+
+small source nodes connect.
+
+Digital Twin mapping:
+
+network icon activates.
+
+Deterministic scenarios:
+
+branching paths appear.
+
+Strategic reserve:
+
+shield activates.
+
+Do not animate all four simultaneously.
+
+====================================================================
+18. FIRST MAJOR SECTION
+====================================================================
+
+Immediately after the hero:
+
+Explain WHAT ORBIT DOES.
+
+Do not jump straight into generic marketing language.
+
+Use a clear statement.
+
+Example conceptual direction:
+
+"From signal to decision."
+
+Then explain:
+
+ORBIT turns geopolitical disruption into an operational energy picture.
+
+Explain the process:
+
+DETECT
+
+UNDERSTAND
+
+MAP
+
+SIMULATE
+
+RESPOND
+
+This should be one of the main visual systems of the page.
+
+====================================================================
+19. PROCESS VISUALIZATION
+====================================================================
+
+Create a horizontal process system on desktop.
+
+Five stages.
+
+DETECT
+
+UNDERSTAND
+
+MAP
+
+SIMULATE
+
+RESPOND
+
+Each stage should have:
+
+number
+
+title
+
+short explanation
+
+small icon
+
+small visual
+
+The active stage should be orange.
+
+A signal should move through the process.
+
+On scroll:
+
+the process can activate progressively.
+
+====================================================================
+20. PROCESS CARD
+====================================================================
+
+DETECT:
+
+Monitor geopolitical and supply-chain events.
+
+Explain that ORBIT begins with signals.
+
+UNDERSTAND:
+
+Assess risk and exposure.
+
+Explain that ORBIT determines what the event could affect.
+
+MAP:
+
+Trace impact through the energy network.
+
+Explain suppliers, routes, ports, refineries, pipelines, and chokepoints.
+
+SIMULATE:
+
+Evaluate scenarios.
+
+Explain that different assumptions can be tested.
+
+RESPOND:
+
+Compare operational responses.
+
+Explain procurement, reserves, and response options.
+
+====================================================================
+21. PROCESS INTERACTION
+====================================================================
+
+Hover a stage.
+
+That stage becomes active.
+
+The visual changes.
+
+The other stages become slightly quieter.
+
+The active stage gets:
+
+orange indicator
+
+stronger title
+
+subtle border
+
+small animation
+
+Do not dramatically enlarge it.
+
+====================================================================
+22. WHY ORBIT
+====================================================================
+
+Create a strong section explaining why the product exists.
+
+Headline direction:
+
+"One system from event detection to response."
+
+Then explain:
+
+Most intelligence stops at identifying risk.
+
+ORBIT continues into:
+
+impact
+
+exposure
+
+network propagation
+
+scenario analysis
+
+response evaluation
+
+The user should understand the difference.
+
+====================================================================
+23. WHY ORBIT CARDS
+====================================================================
+
+Keep four cards.
+
+But make them more informative.
+
+DETECT
+
+UNDERSTAND
+
+MAP
+
+RESPOND
+
+Each card should explain:
+
+what happens
+
+why it matters
+
+what ORBIT produces
+
+Use concise text.
+
+Do not use meaningless marketing filler.
+
+====================================================================
+24. CARD VISUALS
+====================================================================
+
+Each card gets one tiny visualization.
+
+DETECT:
+
+signal scanning.
+
+UNDERSTAND:
+
+risk curve.
+
+MAP:
+
+network.
+
+RESPOND:
+
+decision node.
+
+These should animate on hover.
+
+Not continuously.
+
+====================================================================
+25. CAPABILITIES
+====================================================================
+
+Create a major capabilities section.
+
+The visitor should clearly understand what ORBIT can actually do.
+
+Use:
+
+DIGITAL TWIN NETWORK
+
+SCENARIO MODELLING
+
+PROCUREMENT INTELLIGENCE
+
+STRATEGIC RESERVE OPTIMIZATION
+
+EXECUTIVE RESPONSE
+
+SOURCE TRACEABILITY
+
+Do not leave the capabilities as vague cards.
+
+Explain each capability.
+
+====================================================================
+26. DIGITAL TWIN NETWORK
+====================================================================
+
+Explain:
+
+ORBIT maps the physical energy network.
+
+It can represent:
+
+suppliers
+
+trade routes
+
+ports
+
+refineries
+
+pipelines
+
+chokepoints
+
+infrastructure
+
+The purpose is:
+
+understand where a disruption can propagate.
+
+Create an interactive network visual.
+
+====================================================================
+27. DIGITAL TWIN VISUAL
+====================================================================
+
+Create nodes:
+
+SUPPLIER
+
+PORT
+
+ROUTE
+
+REFINERY
+
+PIPELINE
+
+CHOKEPOINT
+
+DEMAND
+
+Connect them.
+
+Use gray connections.
+
+Use orange active paths.
+
+Animate one signal moving through the network.
+
+On hover:
+
+highlight node.
+
+Highlight immediate connections.
+
+Show small information panel.
+
+====================================================================
+28. NETWORK HOVER
+====================================================================
+
+Hover:
+
+PORT
+
+show:
+
+PORT
+
+Physical asset
+
+Connected routes
+
+Potential exposure
+
+Do not fabricate actual numerical data.
+
+Use conceptual values.
+
+====================================================================
+29. NETWORK PROPAGATION
+====================================================================
+
+Demonstrate:
+
+EVENT
+
+↓
+
+SUPPLIERS
+
+↓
+
+ROUTES
+
+↓
+
+INFRASTRUCTURE
+
+↓
+
+IMPACT
+
+↓
+
+RESPONSE
+
+The orange signal should propagate.
+
+This is one of the signature animations.
+
+====================================================================
+30. SCENARIO MODELLING
+====================================================================
+
+Explain:
+
+ORBIT does not simply say:
+
+"This event is risky."
+
+It helps evaluate:
+
+"What happens if?"
+
+Create a scenario interface.
+
+Example:
+
+BASELINE
+
+CHOKEPOINT DISRUPTION
+
+SUPPLY SHORTFALL
+
+ALTERNATIVE ROUTE
+
+EXTENDED DISRUPTION
+
+The user should see that different scenarios produce different outcomes.
+
+====================================================================
+31. SCENARIO VISUAL
+====================================================================
+
+Create branching paths.
+
+One event.
+
+Multiple possible outcomes.
+
+Example:
+
+EVENT
+
+↓
+
+Scenario A
+
+Normal supply adjustment.
+
+Scenario B
+
+Route disruption.
+
+Scenario C
+
+Extended shortage.
+
+Each branch should be visually distinct.
+
+Orange should identify the currently selected scenario.
+
+====================================================================
+32. SCENARIO INTERACTION
+====================================================================
+
+Allow hover or click on scenario options.
+
+Selecting one should:
+
+highlight branch
+
+update small status
+
+update conceptual impact indicators
+
+update response card
+
+No backend required.
+
+This can be frontend demonstration state.
+
+Do not pretend these are live calculations.
+
+====================================================================
+33. PROCUREMENT INTELLIGENCE
+====================================================================
+
+Explain:
+
+When supply is disrupted, operators may need alternatives.
+
+ORBIT can evaluate:
+
+alternative suppliers
+
+import routes
+
+capacity
+
+procurement options
+
+trade paths
+
+Create a visual comparison.
+
+====================================================================
+34. PROCUREMENT VISUAL
+====================================================================
+
+Show:
+
+SOURCE A
+
+SOURCE B
+
+SOURCE C
+
+↓
+
+ROUTES
+
+↓
+
+REFINERY
+
+↓
+
+DEMAND
+
+Highlight the currently preferred path.
+
+Other paths remain gray.
+
+Hovering a route highlights it.
+
+====================================================================
+35. STRATEGIC RESERVE
+====================================================================
+
+Explain:
+
+ORBIT can model reserve drawdown.
+
+Show:
+
+DISRUPTION
+
+↓
+
+SUPPLY GAP
+
+↓
+
+ALTERNATIVE PROCUREMENT
+
+↓
+
+RESERVE REQUIREMENT
+
+↓
+
+SAFETY FLOOR
+
+↓
+
+RESULT
+
+The visual should feel operational.
+
+====================================================================
+36. RESERVE GAUGE
+====================================================================
+
+Create a conceptual reserve gauge.
+
+Use:
+
+AVAILABLE BUFFER
+
+SAFE ZONE
+
+MINIMUM FLOOR
+
+Do not invent actual national reserve values.
+
+The gauge is a product visualization.
+
+Not a live national data source.
+
+====================================================================
+37. RESERVE ANIMATION
+====================================================================
+
+Animate:
+
+supply gap appears.
+
+reserve buffer changes.
+
+alternative procurement offsets part of the gap.
+
+safety floor remains protected.
+
+final response appears.
+
+Keep animation slow.
+
+====================================================================
+38. EXECUTIVE RESPONSE
+====================================================================
+
+Explain the final stage.
+
+ORBIT combines:
+
+source-backed intelligence
+
+network exposure
+
+scenario results
+
+procurement options
+
+reserve implications
+
+into:
+
+decision-ready operational information.
+
+This should be one of the strongest sections.
+
+====================================================================
+39. EXECUTIVE RESPONSE VISUAL
+====================================================================
+
+Create a decision panel.
+
+Sections:
+
+EVENT
+
+EXPOSURE
+
+IMPACT
+
+OPTIONS
+
+RECOMMENDED RESPONSE
+
+STATUS
+
+Use clean cards.
+
+Make the panel look like a miniature preview of the authenticated ORBIT console.
+
+Do not actually connect to backend.
+
+This is a visual preview.
+
+====================================================================
+40. SOURCE TRACEABILITY
+====================================================================
+
+Explain why source traceability matters.
+
+The visitor should understand:
+
+ORBIT does not merely produce a conclusion.
+
+Signals can be connected to source-backed evidence.
+
+Create a visual:
+
+SOURCE
+
+↓
+
+SIGNAL
+
+↓
+
+EVENT
+
+↓
+
+ASSESSMENT
+
+↓
+
+DECISION
+
+This should communicate traceability.
+
+====================================================================
+41. SOURCE TRACEABILITY ANIMATION
+====================================================================
+
+A small signal should travel from source to decision.
+
+Hover:
+
+SOURCE
+
+show:
+
+SOURCE DOCUMENT
+
+SIGNAL
+
+ASSESSMENT
+
+Do not use fake external sources.
+
+Use conceptual placeholders.
+
+====================================================================
+42. "HOW IT WORKS"
+====================================================================
+
+Add a clear section:
+
+HOW ORBIT WORKS
+
+Explain the pipeline.
+
+1.
+
+Collect signals.
+
+2.
+
+Interpret events.
+
+3.
+
+Map network exposure.
+
+4.
+
+Model scenarios.
+
+5.
+
+Evaluate responses.
+
+6.
+
+Present decision-ready information.
+
+This section should be extremely easy to understand.
+
+====================================================================
+43. INPUT / PROCESS / OUTPUT
+====================================================================
+
+Create a visual framework.
+
+INPUT:
+
+geopolitical signals
+
+supply-chain events
+
+infrastructure data
+
+market/supply information
+
+PROCESS:
+
+event detection
+
+risk analysis
+
+digital twin mapping
+
+scenario modelling
+
+response evaluation
+
+OUTPUT:
+
+exposure picture
+
+scenario comparison
+
+procurement options
+
+reserve implications
+
+decision-ready response
+
+====================================================================
+44. INPUT VISUAL
+====================================================================
+
+Create multiple small signal cards.
+
+Examples:
+
+GEOPOLITICAL EVENT
+
+MARITIME DISRUPTION
+
+SUPPLIER CHANGE
+
+PORT DISRUPTION
+
+SUPPLY SHORTFALL
+
+These cards can drift subtly into the ORBIT engine.
+
+====================================================================
+45. PROCESS VISUAL
+====================================================================
+
+Show signals entering:
+
+ORBIT ENGINE
+
+Then moving through:
+
+DETECT
+
+UNDERSTAND
+
+MAP
+
+SIMULATE
+
+RESPOND
+
+This should be animated.
+
+====================================================================
+46. OUTPUT VISUAL
+====================================================================
+
+Show:
+
+RISK
+
+EXPOSURE
+
+SCENARIO
+
+RESPONSE
+
+The final output should have a subtle orange activation.
+
+====================================================================
+47. PRODUCT PREVIEW
+====================================================================
+
+The landing page should include at least one large miniature preview of the actual ORBIT operator experience.
+
+It should look like:
+
+a real product interface.
+
+Not a generic card.
+
+Include:
+
+event
+
+risk
+
+network
+
+scenario
+
+response
+
+status
+
+Use realistic interface hierarchy.
+
+====================================================================
+48. PRODUCT PREVIEW ANIMATION
+====================================================================
+
+Inside the product preview:
+
+one event appears.
+
+The network reacts.
+
+A risk indicator changes.
+
+A scenario activates.
+
+A response becomes ready.
+
+This should loop slowly.
+
+The preview should feel alive.
+
+====================================================================
+49. USE CASES
+====================================================================
+
+Add a dedicated:
+
+USE CASES
+
+section.
+
+Explain where ORBIT is useful.
+
+Potential categories:
+
+ENERGY SUPPLY DISRUPTION
+
+MARITIME CHOKEPOINT EVENTS
+
+SUPPLIER DISRUPTION
+
+INFRASTRUCTURE EXPOSURE
+
+STRATEGIC RESERVE PLANNING
+
+PROCUREMENT CONTINGENCY
+
+Do not fabricate customer claims.
+
+These are application scenarios.
+
+====================================================================
+50. USE CASE INTERACTION
+====================================================================
+
+When hovering a use case:
+
+show:
+
+EVENT
+
+IMPACT
+
+NETWORK
+
+RESPONSE
+
+The diagram updates to that scenario.
+
+The active use case gets orange emphasis.
+
+====================================================================
+51. MARITIME DISRUPTION
+====================================================================
+
+Demonstrate:
+
+A maritime disruption occurs.
+
+ORBIT identifies affected routes.
+
+The network highlights exposed infrastructure.
+
+Alternative routes become visible.
+
+Potential supply exposure is shown conceptually.
+
+Response options become available.
+
+====================================================================
+52. SUPPLIER DISRUPTION
+====================================================================
+
+Demonstrate:
+
+A supplier becomes unavailable.
+
+ORBIT maps dependency.
+
+Affected routes highlight.
+
+Alternative suppliers appear.
+
+Procurement options can be compared.
+
+====================================================================
+53. INFRASTRUCTURE EXPOSURE
+====================================================================
+
+Demonstrate:
+
+A physical asset becomes constrained.
+
+ORBIT traces connected routes.
+
+Downstream exposure becomes visible.
+
+Potential response options are surfaced.
+
+====================================================================
+54. STRATEGIC RESERVE PLANNING
+====================================================================
+
+Demonstrate:
+
+A supply shortfall occurs.
+
+Alternative procurement is evaluated.
+
+Reserve requirements are calculated conceptually.
+
+Safety floor is preserved.
+
+A response is produced.
+
+====================================================================
+55. RESPONSE COMPARISON
+====================================================================
+
+Create a visual comparison.
+
+OPTION A
+
+Procurement shift.
+
+OPTION B
+
+Route diversion.
+
+OPTION C
+
+Reserve drawdown.
+
+OPTION D
+
+Combined response.
+
+Show conceptual:
+
+IMPACT
+
+RISK
+
+FEASIBILITY
+
+TIME
+
+Do not fabricate numeric scores.
+
+Use qualitative states:
+
+LOW
+
+MEDIUM
+
+HIGH
+
+or:
+
+AVAILABLE
+
+LIMITED
+
+CONSTRAINED
+
+====================================================================
+56. DIFFERENTIATION
+====================================================================
+
+Create a strong section:
+
+NOT JUST INTELLIGENCE.
+
+A PATH TO ACTION.
+
+Explain:
+
+Information alone is not enough.
+
+Operators need to understand:
+
+what happened
+
+what it affects
+
+how severe it is
+
+what options exist
+
+what constraints apply
+
+what response can be taken
+
+ORBIT bridges this gap.
+
+====================================================================
+57. THREE DIFFERENTIATORS
+====================================================================
+
+SOURCE-BACKED
+
+NETWORK-AWARE
+
+DECISION-READY
+
+Each should have:
+
+large title
+
+short explanation
+
+visual demonstration
+
+small interaction
+
+====================================================================
+58. SOURCE-BACKED
+====================================================================
+
+Explain:
+
+Evidence traceability.
+
+Signals can be connected to their source context.
+
+The goal:
+
+make assessments explainable.
+
+Visual:
+
+SOURCE
+
+↓
+
+SIGNAL
+
+↓
+
+ASSESSMENT
+
+====================================================================
+59. NETWORK-AWARE
+====================================================================
+
+Explain:
+
+Physical propagation.
+
+An event is connected to the network.
+
+Visual:
+
+EVENT
+
+↓
+
+SUPPLIER
+
+↓
+
+ROUTE
+
+↓
+
+ASSET
+
+↓
+
+IMPACT
+
+====================================================================
+60. DECISION-READY
+====================================================================
+
+Explain:
+
+Deterministic operational models.
+
+Visual:
+
+SCENARIO
+
+↓
+
+CONSTRAINTS
+
+↓
+
+OPTIONS
+
+↓
+
+RESPONSE
+
+====================================================================
+61. SECURITY
+====================================================================
+
+Add a clear security section.
+
+Do not make unsupported security claims.
+
+Explain only what the current product can genuinely claim.
+
+Use conceptual wording.
+
+Example:
+
+SECURITY BY DESIGN
+
+Controlled access
+
+Protected operator experience
+
+Traceable decision context
+
+Do not invent certifications.
+
+Do not claim:
+
+SOC 2
+
+ISO 27001
+
+FedRAMP
+
+HIPAA
+
+or any other certification unless it actually exists in the project.
+
+====================================================================
+62. PLATFORM
+====================================================================
+
+Add a platform overview.
+
+Explain the architecture conceptually.
+
+Example:
+
+INTELLIGENCE
+
+NETWORK MODEL
+
+SCENARIO ENGINE
+
+DECISION LAYER
+
+OPERATOR CONSOLE
+
+Show how these layers connect.
+
+====================================================================
+63. PLATFORM VISUAL
+====================================================================
+
+Create a layered architecture.
+
+TOP:
+
+INTELLIGENCE
+
+↓
+
+NETWORK
+
+↓
+
+MODELLING
+
+↓
+
+RESPONSE
+
+↓
+
+OPERATOR
+
+Use subtle signal animation.
+
+====================================================================
+64. INFORMATION DENSITY
+====================================================================
+
+The current page has too much empty space in places.
+
+Do not fill it randomly.
+
+Fill it with useful information.
+
+Every section should answer a question.
+
+Examples:
+
+WHAT IS ORBIT?
+
+WHY DOES IT MATTER?
+
+HOW DOES IT WORK?
+
+WHAT DOES IT MONITOR?
+
+WHAT CAN IT MAP?
+
+WHAT CAN IT MODEL?
+
+WHAT DOES IT PRODUCE?
+
+WHO USES IT?
+
+WHAT MAKES IT DIFFERENT?
+
+====================================================================
+65. NO EMPTY MARKETING SECTIONS
+====================================================================
+
+Do not create sections that only say:
+
+"Powerful."
+
+"Intelligent."
+
+"Revolutionary."
+
+"Next generation."
+
+"Transform your workflow."
+
+"Built for the future."
+
+Those phrases do not explain the product.
+
+Every section needs concrete meaning.
+
+====================================================================
+66. CONTENT RULE
+====================================================================
+
+The visitor should understand ORBIT without talking to the team.
+
+A stranger should be able to scroll through the site and explain:
+
+"ORBIT watches geopolitical events, connects them to the physical energy network, models how disruptions propagate, evaluates scenarios and response options, and presents decision-ready information."
+
+If the visitor cannot explain that:
+
+the content hierarchy is not finished.
+
+====================================================================
+67. SECTION INTRODUCTION PATTERN
+====================================================================
+
+Each major section should use:
+
+EYEBROW
+
+HEADLINE
+
+EXPLANATION
+
+VISUAL
+
+INTERACTION
+
+This is preferred.
+
+Example:
+
+NETWORK CONTEXT
+
+See the energy network behind the event.
+
+Short explanation.
+
+Interactive network visualization.
+
+Hover states.
+
+====================================================================
+68. SECTION ANIMATION
+====================================================================
+
+The entire website should have noticeable animation.
+
+But:
+
+NOT EVERYTHING AT ONCE.
+
+Each major section gets one primary animation.
+
+Hero:
+
+pipeline.
+
+Process:
+
+signal progression.
+
+Capabilities:
+
+mini visualizations.
+
+Digital Twin:
+
+network propagation.
+
+Scenarios:
+
+branching simulation.
+
+Procurement:
+
+route comparison.
+
+Reserve:
+
+gauge/flow.
+
+Response:
+
+decision panel.
+
+Differentiation:
+
+three interactive concepts.
+
+Security:
+
+subtle status.
+
+====================================================================
+69. SCROLL ANIMATION
+====================================================================
+
+Every major section should animate when entering the viewport.
+
+Use:
+
+fade
+
+translate
+
+stagger
+
+draw
+
+activate
+
+Do not make every element slide from the left.
+
+Use different but restrained reveal patterns.
+
+====================================================================
+70. SCROLL STAGGER
+====================================================================
+
+For card groups:
+
+card 1
+
+then card 2
+
+then card 3
+
+then card 4.
+
+Delay:
+
+small.
+
+Approximately:
+
+60–120ms.
+
+Do not make the user wait.
+
+====================================================================
+71. DIAGRAM REVEAL
+====================================================================
+
+For diagrams:
+
+nodes appear.
+
+Then connections appear.
+
+Then labels appear.
+
+Then active signal begins.
+
+This creates visual storytelling.
+
+====================================================================
+72. SECTION TRANSITIONS
+====================================================================
+
+Do not make sections feel disconnected.
+
+Use subtle visual continuity.
+
+For example:
+
+the signal from the process section can visually lead into the Digital Twin section.
+
+The network from Digital Twin can visually lead into scenario modelling.
+
+The scenario output can visually lead into response.
+
+This creates one system.
+
+====================================================================
+73. GLOBAL SIGNAL
+====================================================================
+
+Consider a subtle orange signal motif that appears throughout the site.
+
+Not literally the same object.
+
+It can be represented as:
+
+orange packet
+
+orange line
+
+orange node
+
+orange indicator
+
+orange active state
+
+This becomes ORBIT's visual language.
+
+====================================================================
+74. ORANGE MEANING
+====================================================================
+
+Orange should mean:
+
+ACTIVE
+
+SIGNAL
+
+IMPORTANT
+
+SELECTED
+
+PROCESSING
+
+RESPONSE
+
+Do not use orange randomly.
+
+If everything is orange:
+
+nothing feels important.
+
+====================================================================
+75. BLACK MEANING
+====================================================================
+
+Black should represent:
+
+structure
+
+headlines
+
+primary information
+
+strong boundaries
+
+decisions
+
+====================================================================
+76. GRAY MEANING
+====================================================================
+
+Gray should represent:
+
+secondary information
+
+inactive states
+
+background network
+
+supporting labels
+
+non-selected options
+
+====================================================================
+77. WHITE MEANING
+====================================================================
+
+White should provide:
+
+space
+
+calm
+
+clarity
+
+contrast
+
+premium feeling
+
+Do not fill every empty area.
+
+Whitespace is part of the design.
+
+====================================================================
+78. ANIMATION DENSITY
+====================================================================
+
+Target:
+
+LOW TO MEDIUM animation density.
+
+Not:
+
+LOW enough that nothing happens.
+
+Not:
+
+HIGH enough that everything moves.
+
+The ideal feeling:
+
+The page is calm.
+
+Then something happens.
+
+The user notices.
+
+Then it settles.
+
+Then another section comes alive.
+
+====================================================================
+79. ANIMATION PRINCIPLE
+====================================================================
+
+Every animation must communicate something.
+
+Signal movement:
+
+information.
+
+Node activation:
+
+event.
+
+Path activation:
+
+propagation.
+
+Branching:
+
+scenario.
+
+Gauge movement:
+
+resource change.
+
+Decision activation:
+
+response.
+
+Hover:
+
+user focus.
+
+Scroll reveal:
+
+progress.
+
+If an animation has no meaning:
+
+remove it.
+
+====================================================================
+80. NO GENERIC PARTICLES
+====================================================================
+
+Do not use random particle backgrounds.
+
+Do not create:
+
+hundreds of floating dots.
+
+Do not create:
+
+stars.
+
+Do not create:
+
+space particles.
+
+Do not create:
+
+random glowing blobs.
+
+The animation should represent ORBIT.
+
+====================================================================
+81. NO OVERANIMATION
+====================================================================
+
+Do not animate:
+
+every word.
+
+Do not animate:
+
+every border.
+
+Do not animate:
+
+every card continuously.
+
+Do not animate:
+
+every icon constantly.
+
+Do not animate:
+
+every background layer.
+
+The website should breathe.
+
+====================================================================
+82. HOVER INTERACTIONS
+====================================================================
+
+All important interactive elements should respond.
+
+Cards:
+
+lift slightly.
+
+Buttons:
+
+react.
+
+Links:
+
+underline.
+
+Nodes:
+
+highlight.
+
+Routes:
+
+activate.
+
+Scenario:
+
+select.
+
+Use case:
+
+change visual.
+
+Keep transitions:
+
+150–400ms.
+
+====================================================================
+83. CARD HOVER
+====================================================================
+
+On hover:
+
+translateY(-2px to -4px)
+
+border becomes slightly stronger
+
+icon activates
+
+orange accent appears
+
+shadow increases subtly
+
+Do not scale cards aggressively.
+
+====================================================================
+84. BUTTON HOVER
+====================================================================
+
+Primary button:
+
+small lift
+
+arrow moves
+
+orange interaction
+
+Secondary:
+
+border darkens
+
+icon moves
+
+Do not use excessive glow.
+
+====================================================================
+85. NAVBAR
+====================================================================
+
+Keep current navigation.
+
+Improve:
+
+active section indicator
+
+hover
+
+scroll state
+
+sticky behavior
+
+The active section should be obvious.
+
+Use a subtle orange underline.
+
+====================================================================
+86. NAVBAR SCROLL
+====================================================================
+
+As the user scrolls:
+
+navbar can become slightly translucent.
+
+Add subtle border.
+
+Maintain readability.
+
+Do not create a giant floating navbar.
+
+====================================================================
+87. MOBILE
+====================================================================
+
+The entire page must remain understandable on mobile.
+
+Do not hide important information.
+
+Do not simply remove all visuals.
+
+Adapt them.
+
+Network:
+
+smaller.
+
+Pipeline:
+
+vertical.
+
+Scenario:
+
+stacked.
+
+Cards:
+
+single column.
+
+Architecture:
+
+vertical.
+
+Animations:
+
+reduced.
+
+====================================================================
+88. MOBILE TYPOGRAPHY
+====================================================================
+
+Do not use desktop font sizes on mobile.
+
+Hero:
+
+large but readable.
+
+Body:
+
+comfortable.
+
+Cards:
+
+readable.
+
+Technical labels:
+
+still legible.
+
+No tiny text.
+
+====================================================================
+89. MOBILE ANIMATION
+====================================================================
+
+Disable:
+
+mouse parallax.
+
+cursor effects.
+
+heavy background effects.
+
+Keep:
+
+signal animation.
+
+scroll reveal.
+
+card interaction.
+
+diagram activation.
+
+====================================================================
+90. REDUCED MOTION
+====================================================================
+
+Respect:
+
+prefers-reduced-motion.
+
+When enabled:
+
+stop continuous animation.
+
+Keep static visual states.
+
+Keep content.
+
+Keep hierarchy.
+
+Do not hide information.
+
+====================================================================
+91. PERFORMANCE
+====================================================================
+
+Keep the page performant.
+
+Prefer:
+
+CSS transforms.
+
+Opacity.
+
+SVG.
+
+stroke-dashoffset.
+
+CSS variables.
+
+IntersectionObserver.
+
+Lightweight state.
+
+Avoid huge canvas particle systems.
+
+Avoid heavy WebGL.
+
+Avoid unnecessary dependencies.
+
+Avoid continuous layout calculations.
+
+Avoid animation that causes layout shifts.
+
+====================================================================
+92. ACCESSIBILITY
+====================================================================
+
+Maintain:
+
+keyboard navigation.
+
+focus states.
+
+ARIA labels where necessary.
+
+Semantic HTML.
+
+Readable contrast.
+
+Decorative visuals:
+
+aria-hidden.
+
+Interactive diagrams:
+
+accessible descriptions where appropriate.
+
+====================================================================
+93. PRODUCT PREVIEW SHOULD FEEL REAL
+====================================================================
+
+The page should contain multiple miniature previews.
+
+Not generic illustrations.
+
+Examples:
+
+decision engine.
+
+network map.
+
+scenario model.
+
+reserve model.
+
+response panel.
+
+These previews make the visitor understand the product.
+
+====================================================================
+94. PRODUCT PREVIEW INTERACTION
+====================================================================
+
+When the user hovers:
+
+preview becomes active.
+
+A signal moves.
+
+A node activates.
+
+A status changes.
+
+The preview should look like the product is doing something.
+
+====================================================================
+95. INFORMATION CARDS
+====================================================================
+
+Cards should not all look identical.
+
+Use visual hierarchy.
+
+Some cards:
+
+large.
+
+Some:
+
+medium.
+
+Some:
+
+compact.
+
+But maintain consistency.
+
+====================================================================
+96. BENTO-LIKE STRUCTURE
+====================================================================
+
+Use bento-style layouts where appropriate.
+
+Not everywhere.
+
+Use larger blocks for important product concepts.
+
+Use smaller cards for supporting concepts.
+
+This prevents the page from feeling like:
+
+CARD
+
+CARD
+
+CARD
+
+CARD
+
+CARD.
+
+====================================================================
+97. VISUAL HIERARCHY
+====================================================================
+
+Each viewport should have a clear focal point.
+
+Do not make:
+
+headline
+
+diagram
+
+cards
+
+buttons
+
+background
+
+all equally strong.
+
+The hierarchy should be obvious.
+
+====================================================================
+98. CONTENT RHYTHM
+====================================================================
+
+Alternate:
+
+text-heavy
+
+visual-heavy
+
+balanced
+
+visual-heavy
+
+text-heavy
+
+This prevents monotony.
+
+====================================================================
+99. SECTION RHYTHM
+====================================================================
+
+Example structure:
+
+HERO
+
+PROCESS
+
+WHY ORBIT
+
+CAPABILITIES
+
+DIGITAL TWIN
+
+SCENARIO MODELLING
+
+PROCUREMENT
+
+RESERVE
+
+DECISION
+
+DIFFERENTIATION
+
+USE CASES
+
+PLATFORM
+
+SECURITY
+
+FINAL CTA
+
+Do not blindly follow this order if the existing page structure suggests a better flow.
+
+But the page must progressively explain the product.
+
+====================================================================
+100. FINAL CTA
+====================================================================
+
+End with a strong final section.
+
+Example conceptual message:
+
+"Turn disruption into a decision."
+
+Supporting copy:
+
+"ORBIT connects signals, infrastructure, scenarios, and response options into one operational picture."
+
+CTA:
+
+Explore ORBIT
+
+or:
+
+Sign in to operator console.
+
+Keep it clean.
+
+====================================================================
+101. FINAL CTA ANIMATION
+====================================================================
+
+Use a subtle final network animation.
+
+Signals converge.
+
+Network settles.
+
+Response node activates.
+
+CTA becomes subtly emphasized.
+
+Do not make the final CTA explode with effects.
+
+====================================================================
+102. FOOTER
+====================================================================
+
+Improve the footer if it belongs to the public landing page.
+
+Keep it clean.
+
+Include relevant navigation.
+
+Do not add fake company information.
+
+Do not add fake addresses.
+
+Do not add fake social accounts.
+
+Do not add fake certifications.
+
+====================================================================
+103. CONTENT ACCURACY
+====================================================================
+
+Only use information supported by the existing ORBIT project.
+
+Known concepts include:
+
+Energy supply-chain intelligence.
+
+Geopolitical event analysis.
+
+Source traceability.
+
+Digital Twin mapping.
+
+Deterministic scenarios.
+
+Strategic reserve optimization.
+
+Procurement intelligence.
+
+Network exposure.
+
+Infrastructure propagation.
+
+Operational response.
+
+Decision-ready information.
+
+Do not invent unsupported capabilities.
+
+====================================================================
+104. NO FAKE METRICS
+====================================================================
+
+Do not add:
+
+99.99% uptime.
+
+98% accuracy.
+
+5000+ users.
+
+1000+ organizations.
+
+90% faster.
+
+10x better.
+
+or similar claims.
+
+Unless the project actually provides those values.
+
+Use conceptual indicators instead.
+
+====================================================================
+105. NO FAKE CUSTOMERS
+====================================================================
+
+Do not add:
+
+trusted by NASA.
+
+trusted by Shell.
+
+trusted by government.
+
+trusted by Fortune 500.
+
+unless actually supported.
+
+Do not fabricate logos.
+
+====================================================================
+106. NO FAKE LIVE DATA
+====================================================================
+
+Do not claim:
+
+LIVE CRISIS
+
+LIVE HORMUZ STATUS
+
+LIVE OIL PRICE
+
+LIVE GOVERNMENT DATA
+
+unless the backend actually provides it.
+
+The landing page can demonstrate conceptual scenarios.
+
+Label them clearly as examples.
+
+====================================================================
+107. EXAMPLE DATA
+====================================================================
+
+If using visual demo data:
+
+label it:
+
+EXAMPLE SCENARIO
+
+DEMO
+
+ILLUSTRATIVE
+
+SAMPLE EVENT
+
+This makes the distinction clear.
+
+====================================================================
+108. PRODUCT LANGUAGE
+====================================================================
+
+Use precise language.
+
+Prefer:
+
+"maps"
+
+"models"
+
+"evaluates"
+
+"traces"
+
+"connects"
+
+"assesses"
+
+"simulates"
+
+"compares"
+
+"surfaces"
+
+Avoid excessive:
+
+"revolutionizes"
+
+"disrupts"
+
+"unlocks"
+
+"supercharges"
+
+"redefines"
+
+The website should sound intelligent.
+
+====================================================================
+109. HEADLINE STYLE
+====================================================================
+
+Headlines should be short.
+
+Examples:
+
+From geopolitical events to energy decisions.
+
+See the network behind the event.
+
+Model the disruption before it becomes a crisis.
+
+Test the response before committing to it.
+
+Turn intelligence into action.
+
+Do not make headlines paragraphs.
+
+====================================================================
+110. BODY COPY STYLE
+====================================================================
+
+Body copy should explain.
+
+Use 1–3 short paragraphs.
+
+Avoid giant walls of text.
+
+Keep line length comfortable.
+
+====================================================================
+111. TECHNICAL COPY
+====================================================================
+
+Technical labels can use:
+
+monospace.
+
+uppercase.
+
+letter spacing.
+
+Examples:
+
+EVENT SIGNAL
+
+NETWORK IMPACT
+
+SCENARIO
+
+RESPONSE
+
+STATUS
+
+Do not overuse monospace.
+
+====================================================================
+112. PRODUCT EXPLANATION
+====================================================================
+
+The site should explain:
+
+ORBIT receives signals.
+
+ORBIT identifies events.
+
+ORBIT maps network dependencies.
+
+ORBIT evaluates exposure.
+
+ORBIT models scenarios.
+
+ORBIT compares responses.
+
+ORBIT helps operators make decisions.
+
+This should appear in multiple visual forms.
+
+====================================================================
+113. DON'T REPEAT YOURSELF
+====================================================================
+
+Do not copy the same paragraph into every section.
+
+Each section should introduce a new concept.
+
+Hero:
+
+what ORBIT is.
+
+Process:
+
+how it works.
+
+Digital Twin:
+
+how network impact is mapped.
+
+Scenarios:
+
+how uncertainty is tested.
+
+Procurement:
+
+how alternatives are evaluated.
+
+Reserve:
+
+how constraints are considered.
+
+Response:
+
+how decisions are produced.
+
+====================================================================
+114. INFORMATION PROGRESSION
+====================================================================
+
+Every section should build upon the previous section.
+
+Do not explain:
+
+Digital Twin
+
+then later explain:
+
+what ORBIT is.
+
+The visitor should never feel lost.
+
+====================================================================
+115. VISUAL PROGRESSION
+====================================================================
+
+The visual system should evolve.
+
+Hero:
+
+simple pipeline.
+
+Process:
+
+structured flow.
+
+Network:
+
+complex graph.
+
+Scenario:
+
+branching graph.
+
+Procurement:
+
+route graph.
+
+Reserve:
+
+constraint model.
+
+Response:
+
+decision interface.
+
+This creates increasing sophistication.
+
+====================================================================
+116. INTERACTION PROGRESSION
+====================================================================
+
+Hero:
+
+ambient animation.
+
+Process:
+
+hover.
+
+Network:
+
+node interaction.
+
+Scenario:
+
+selection.
+
+Procurement:
+
+route interaction.
+
+Reserve:
+
+simulation.
+
+Response:
+
+decision preview.
+
+The interaction complexity should gradually increase.
+
+====================================================================
+117. SIGNATURE VISUAL LANGUAGE
+====================================================================
+
+ORBIT's visual language:
+
+orange signal.
+
+gray network.
+
+black decision.
+
+white space.
+
+This should appear throughout the site.
+
+====================================================================
+118. SIGNATURE ORBIT ANIMATION
+====================================================================
+
+Create one reusable animation concept:
+
+ORBIT SIGNAL.
+
+An orange signal travels through the interface.
+
+It can represent:
+
+event
+
+data
+
+risk
+
+propagation
+
+decision.
+
+Reuse the visual concept.
+
+Do not reuse the exact animation everywhere.
+
+====================================================================
+119. SECTION-SPECIFIC MOTION
+====================================================================
+
+Hero:
+
+signal travels.
+
+Process:
+
+progression.
+
+Digital Twin:
+
+propagation.
+
+Scenario:
+
+branch.
+
+Procurement:
+
+route.
+
+Reserve:
+
+gauge.
+
+Response:
+
+decision.
+
+Differentiation:
+
+activation.
+
+Use cases:
+
+scenario transition.
+
+Platform:
+
+layer activation.
+
+Security:
+
+status pulse.
+
+====================================================================
+120. ANIMATION TIMING
+====================================================================
+
+Ambient:
+
+6–15 seconds.
+
+Hero:
+
+4–8 second sequence.
+
+Hover:
+
+150–350ms.
+
+Card reveal:
+
+400–700ms.
+
+Section reveal:
+
+500–800ms.
+
+Signal travel:
+
+1.5–3 seconds.
+
+Do not make animations sluggish.
+
+Do not make them frantic.
+
+====================================================================
+121. STAGGER
+====================================================================
+
+Use stagger only when it improves hierarchy.
+
+Cards:
+
+60–120ms.
+
+Text:
+
+small delay.
+
+Visual:
+
+after heading.
+
+Do not stagger entire pages.
+
+====================================================================
+122. SCROLL PROGRESS
+====================================================================
+
+Keep the existing scroll progress indicator.
+
+Make it subtle.
+
+Orange.
+
+Thin.
+
+It should indicate progression.
+
+It must not dominate.
+
+====================================================================
+123. ACTIVE NAVIGATION
+====================================================================
+
+The navbar should indicate:
+
+current section.
+
+Use:
+
+orange underline.
+
+Do not use huge navigation animations.
+
+====================================================================
+124. SECTION MARKERS
+====================================================================
+
+Each major section can have:
+
+01
+
+02
+
+03
+
+04
+
+etc.
+
+Use subtle technical labels.
+
+Example:
+
+01 / DETECT
+
+02 / UNDERSTAND
+
+03 / MAP
+
+04 / SIMULATE
+
+05 / RESPOND
+
+This reinforces the ORBIT workflow.
+
+====================================================================
+125. SECTION COUNTERS
+====================================================================
+
+Use section counters sparingly.
+
+They should add technical character.
+
+Not decoration.
+
+====================================================================
+126. GRID SYSTEM
+====================================================================
+
+Maintain a consistent grid.
+
+Use:
+
+12-column desktop grid where appropriate.
+
+Comfortable gutters.
+
+Large margins.
+
+Do not create cramped layouts.
+
+====================================================================
+127. MAX WIDTH
+====================================================================
+
+Keep content constrained.
+
+Do not stretch text across the entire viewport.
+
+Large screens should still feel composed.
+
+====================================================================
+128. SECTION SPACING
+====================================================================
+
+Use generous vertical spacing.
+
+But avoid massive empty gaps.
+
+The goal:
+
+breathing room.
+
+Not:
+
+unused space.
+
+====================================================================
+129. DESKTOP
+====================================================================
+
+At desktop:
+
+use large visual compositions.
+
+Two-column sections.
+
+Interactive diagrams.
+
+Bento cards.
+
+Product previews.
+
+====================================================================
+130. TABLET
+====================================================================
+
+At tablet:
+
+reduce complexity.
+
+Maintain two columns where comfortable.
+
+Stack when necessary.
+
+Keep diagrams readable.
+
+====================================================================
+131. MOBILE
+====================================================================
+
+At mobile:
+
+single column.
+
+Vertical process.
+
+Stacked cards.
+
+Compact visualizations.
+
+Readable typography.
+
+====================================================================
+132. MOBILE NAVIGATION
+====================================================================
+
+Do not allow navigation to overflow.
+
+Use existing mobile navigation pattern if present.
+
+Do not redesign unrelated navigation.
+
+====================================================================
+133. MOBILE HERO
+====================================================================
+
+Hero should show:
+
+headline
+
+description
+
+CTA
+
+compact decision engine
+
+The decision engine must remain understandable.
+
+====================================================================
+134. MOBILE NETWORK
+====================================================================
+
+Convert horizontal network to:
+
+vertical.
+
+Or:
+
+compact horizontally scrollable visualization if necessary.
+
+Do not create unreadable miniature diagrams.
+
+====================================================================
+135. MOBILE CARDS
+====================================================================
+
+Cards should have:
+
+comfortable padding.
+
+readable text.
+
+clear hierarchy.
+
+subtle hover/tap state.
+
+====================================================================
+136. PERFORMANCE TEST
+====================================================================
+
+The page must remain smooth.
+
+Target:
+
+smooth scrolling.
+
+no major frame drops.
+
+no layout jumps.
+
+no flashing.
+
+no excessive CPU usage.
+
+====================================================================
+137. BUILD
+====================================================================
+
+After implementation:
+
+run the existing project build.
+
+Verify:
+
+build succeeds.
+
+No TypeScript errors.
+
+No missing imports.
+
+No broken assets.
+
+No invalid CSS.
+
+No runtime errors.
+
+====================================================================
+138. BROWSER TEST
+====================================================================
+
+Open the actual public landing page.
+
+Do not judge from code alone.
+
+Scroll from top to bottom.
+
+Observe every section.
+
+====================================================================
+139. INTERACTION TEST
+====================================================================
+
+Test:
+
+navbar.
+
+hero.
+
+CTA.
+
+cards.
+
+process.
+
+network.
+
+scenario.
+
+procurement.
+
+reserve.
+
+response.
+
+use cases.
+
+footer.
+
+====================================================================
+140. VISUAL QA
+====================================================================
+
+Ask:
+
+Can I understand ORBIT within 10 seconds?
+
+Can I understand what ORBIT does within 30 seconds?
+
+Can I understand how ORBIT works within 60 seconds?
+
+Can I see evidence of the product visually?
+
+Can I see how the network is involved?
+
+Can I see how scenarios are evaluated?
+
+Can I see how decisions are produced?
+
+If not:
+
+improve the content hierarchy.
+
+====================================================================
+141. ANIMATION QA
+====================================================================
+
+Ask:
+
+Is animation visible?
+
+Is animation meaningful?
+
+Is animation smooth?
+
+Is animation restrained?
+
+Is animation distributed across the entire page?
+
+Does every section feel alive?
+
+Does any section feel overloaded?
+
+If overloaded:
+
+reduce.
+
+If static:
+
+strengthen the existing effect.
+
+====================================================================
+142. FONT QA
+====================================================================
+
+Inspect:
+
+hero.
+
+section headings.
+
+body.
+
+cards.
+
+technical labels.
+
+If any important text is too small:
+
+increase it.
+
+Do not solve layout problems by shrinking text.
+
+====================================================================
+143. CONTENT QA
+====================================================================
+
+Verify that the page explains:
+
+what
+
+why
+
+how
+
+capabilities
+
+workflow
+
+use cases
+
+outputs
+
+differentiation
+
+response.
+
+====================================================================
+144. FIRECRAWL-STYLE INFORMATION CLARITY
+====================================================================
+
+The reference website works because it does not expect the visitor to infer what the product does.
+
+Apply the same principle.
+
+Do not rely on:
+
+"Digital Twin"
+
+alone.
+
+Explain:
+
+what the Digital Twin represents.
+
+Do not rely on:
+
+"Scenario Modelling"
+
+alone.
+
+Explain:
+
+what scenarios are tested.
+
+Do not rely on:
+
+"Procurement Intelligence"
+
+alone.
+
+Explain:
+
+what procurement alternatives are evaluated.
+
+====================================================================
+145. PRODUCT DEMONSTRATION
+====================================================================
+
+Whenever possible:
+
+SHOW.
+
+Do not only:
+
+TELL.
+
+Instead of:
+
+"ORBIT maps the network."
+
+Show a network.
+
+Instead of:
+
+"ORBIT models scenarios."
+
+Show branching scenarios.
+
+Instead of:
+
+"ORBIT evaluates reserves."
+
+Show a reserve model.
+
+Instead of:
+
+"ORBIT supports decisions."
+
+Show a decision panel.
+
+====================================================================
+146. VISUAL EXPLANATION
+====================================================================
+
+The page should almost function as an interactive product demo.
+
+The user scrolls.
+
+The system demonstrates itself.
+
+This is the goal.
+
+====================================================================
+147. NO STATIC WALL
+====================================================================
+
+Do not create a section containing:
+
+huge heading
+
+paragraph
+
+empty space.
+
+If a section is important:
+
+give it a visual.
+
+====================================================================
+148. NO CARD WALL
+====================================================================
+
+Do not create:
+
+six identical cards.
+
+Instead:
+
+combine cards with:
+
+visuals.
+
+diagrams.
+
+flows.
+
+product previews.
+
+====================================================================
+149. NO VISUAL NOISE
+====================================================================
+
+Even though more content is being added:
+
+maintain whitespace.
+
+Maintain hierarchy.
+
+Maintain restraint.
+
+====================================================================
+150. THE 70/30 RULE
+====================================================================
+
+Approximately:
+
+70% calm structure.
+
+30% active visual/product demonstration.
+
+Do not turn the page into an animation showcase.
+
+====================================================================
+151. PRODUCT STORY RULE
+====================================================================
+
+Every major viewport should answer at least one meaningful question.
+
+Example:
+
+Viewport 1:
+
+What is ORBIT?
+
+Viewport 2:
+
+How does it work?
+
+Viewport 3:
+
+What does it map?
+
+Viewport 4:
+
+How does it model scenarios?
+
+Viewport 5:
+
+How does it evaluate response?
+
+Viewport 6:
+
+Why is it different?
+
+Viewport 7:
+
+What does the operator actually get?
+
+====================================================================
+152. HERO QUESTION
+====================================================================
+
+The hero answers:
+
+"What is ORBIT?"
+
+====================================================================
+153. PROCESS QUESTION
+====================================================================
+
+Process answers:
+
+"How does ORBIT work?"
+
+====================================================================
+154. NETWORK QUESTION
+====================================================================
+
+Network answers:
+
+"What does ORBIT connect?"
+
+====================================================================
+155. SCENARIO QUESTION
+====================================================================
+
+Scenario answers:
+
+"What happens if something changes?"
+
+====================================================================
+156. RESPONSE QUESTION
+====================================================================
+
+Response answers:
+
+"What can operators actually do with the information?"
+
+====================================================================
+157. DIFFERENTIATION QUESTION
+====================================================================
+
+Differentiation answers:
+
+"Why is ORBIT different from simply monitoring news?"
+
+====================================================================
+158. PRODUCT QUESTION
+====================================================================
+
+Product preview answers:
+
+"What does the actual ORBIT experience look like?"
+
+====================================================================
+159. FINAL QUESTION
+====================================================================
+
+Final CTA answers:
+
+"What should I do next?"
+
+====================================================================
+160. VISUAL QUALITY
+====================================================================
+
+The website should feel:
+
+engineered.
+
+Not decorated.
+
+====================================================================
+161. PREMIUM QUALITY
+====================================================================
+
+Premium means:
+
+precision.
+
+Spacing.
+
+Typography.
+
+Motion.
+
+Hierarchy.
+
+Interaction.
+
+Not:
+
+more gradients.
+
+====================================================================
+162. ANIMATION QUALITY
+====================================================================
+
+Prefer:
+
+one beautiful signal.
+
+over:
+
+twenty particles.
+
+====================================================================
+163. INTERACTION QUALITY
+====================================================================
+
+Prefer:
+
+one meaningful network hover.
+
+over:
+
+ten useless hover effects.
+
+====================================================================
+164. CONTENT QUALITY
+====================================================================
+
+Prefer:
+
+one clear explanation.
+
+over:
+
+three marketing paragraphs.
+
+====================================================================
+165. PAGE PERSONALITY
+====================================================================
+
+ORBIT should have its own personality.
+
+Not:
+
+Firecrawl.
+
+Not:
+
+Linear.
+
+Not:
+
+Stripe.
+
+Not:
+
+generic AI.
+
+ORBIT should feel like:
+
+energy intelligence.
+
+network awareness.
+
+operational decision-making.
+
+====================================================================
+166. VISUAL METAPHOR
+====================================================================
+
+The primary metaphor is:
+
+SIGNAL → NETWORK → DECISION.
+
+Keep returning to this.
+
+====================================================================
+167. SIGNAL
+====================================================================
+
+Represents:
+
+information.
+
+event.
+
+intelligence.
+
+====================================================================
+168. NETWORK
+====================================================================
+
+Represents:
+
+relationships.
+
+dependencies.
+
+physical infrastructure.
+
+====================================================================
+169. DECISION
+====================================================================
+
+Represents:
+
+action.
+
+response.
+
+operational outcome.
+
+====================================================================
+170. VISUAL TRANSITION
+====================================================================
+
+Sections should progressively move from:
+
+SIGNAL
+
+to:
+
+NETWORK
+
+to:
+
+DECISION.
+
+====================================================================
+171. HERO
+====================================================================
+
+SIGNAL.
+
+====================================================================
+172. DIGITAL TWIN
+====================================================================
+
+NETWORK.
+
+====================================================================
+173. RESPONSE
+====================================================================
+
+DECISION.
+
+====================================================================
+174. FINAL VISUAL
+====================================================================
+
+Combine:
+
+signal
+
+network
+
+decision.
+
+====================================================================
+175. INTERACTION STORY
+====================================================================
+
+The visitor's interaction should feel like:
+
+"I am looking at the system."
+
+not:
+
+"I am interacting with a website."
+
+====================================================================
+176. MICRO-INTERACTIONS
+====================================================================
+
+Use subtle:
+
+icon movement.
+
+arrow movement.
+
+border transitions.
+
+orange activation.
+
+text emphasis.
+
+path drawing.
+
+node pulse.
+
+====================================================================
+177. NO BOUNCY UI
+====================================================================
+
+Do not use:
+
+bounce.
+
+rubber band.
+
+elastic scaling.
+
+cartoon transitions.
+
+====================================================================
+178. NO GLITCH
+====================================================================
+
+Do not use:
+
+glitch text.
+
+digital corruption.
+
+random flicker.
+
+====================================================================
+179. NO CONSTANT GLOW
+====================================================================
+
+Glow only when:
+
+active.
+
+selected.
+
+signal.
+
+response.
+
+====================================================================
+180. NO CONSTANT PULSING
+====================================================================
+
+Do not pulse every element.
+
+Only active system states.
+
+====================================================================
+181. SECTION SIGNATURES
+====================================================================
+
+Each section should have one recognizable visual signature.
+
+Hero:
+
+pipeline.
+
+Network:
+
+graph.
+
+Scenario:
+
+branch.
+
+Reserve:
+
+gauge.
+
+Response:
+
+decision panel.
+
+====================================================================
+182. TECHNICAL DETAIL
+====================================================================
+
+Use tiny details sparingly.
+
+Examples:
+
+STATUS
+
+SIGNAL
+
+EVENT
+
+NETWORK
+
+MODEL
+
+OUTPUT
+
+Do not clutter.
+
+====================================================================
+183. DATA LABELS
+====================================================================
+
+Use conceptual labels.
+
+Example:
+
+NETWORK STATUS
+
+CONNECTED
+
+MODEL STATUS
+
+READY
+
+SCENARIO
+
+ACTIVE
+
+RESPONSE
+
+AVAILABLE
+
+These are interface states.
+
+====================================================================
+184. DEMO STATE
+====================================================================
+
+Clearly communicate when a visual is illustrative.
+
+Use:
+
+EXAMPLE WORKFLOW.
+
+EXAMPLE SCENARIO.
+
+DEMO MODEL.
+
+====================================================================
+185. NO BACKEND DEPENDENCY
+====================================================================
+
+Do not add backend requirements.
+
+All landing-page visual demonstrations can use local static state.
+
+====================================================================
+186. FRONTEND STATE
+====================================================================
+
+Use local state for:
+
+selected scenario.
+
+selected node.
+
+selected route.
+
+active stage.
+
+active use case.
+
+====================================================================
+187. DO NOT FAKE API CALLS
+====================================================================
+
+Do not create fake network requests.
+
+Do not create fake loading calls.
+
+Do not pretend to call production APIs.
+
+Use local demo state.
+
+====================================================================
+188. PRODUCT PREVIEW
+====================================================================
+
+The product preview should feel credible.
+
+Use:
+
+clean interface.
+
+small status indicators.
+
+structured panels.
+
+network visualization.
+
+scenario controls.
+
+response output.
+
+====================================================================
+189. PRODUCT PREVIEW ANIMATION
+====================================================================
+
+The preview can cycle:
+
+DETECT
+
+ANALYZE
+
+MAP
+
+MODEL
+
+RESPOND.
+
+====================================================================
+190. VISUAL HIERARCHY
+====================================================================
+
+The preview should never overpower the main headline.
+
+It is supporting evidence.
+
+====================================================================
+191. HERO WIDTH
+====================================================================
+
+Keep the hero balanced.
+
+Text on left.
+
+Product visualization on right.
+
+Do not make either side cramped.
+
+====================================================================
+192. HERO SPACING
+====================================================================
+
+Maintain comfortable space between:
+
+eyebrow
+
+headline
+
+paragraph
+
+CTA
+
+feature strip.
+
+====================================================================
+193. SECTION WIDTH
+====================================================================
+
+Do not allow body paragraphs to become too wide.
+
+Readable line lengths.
+
+====================================================================
+194. CARD WIDTH
+====================================================================
+
+Cards should be large enough to breathe.
+
+Do not cram.
+
+====================================================================
+195. CARD CONTENT
+====================================================================
+
+Each card:
+
+title.
+
+short description.
+
+visual.
+
+interaction.
+
+====================================================================
+196. SECTION HEADINGS
+====================================================================
+
+Use large headings.
+
+The page should feel editorial.
+
+====================================================================
+197. SECTION EYEBROWS
+====================================================================
+
+Use:
+
+WHY ORBIT
+
+CAPABILITIES
+
+NETWORK CONTEXT
+
+SCENARIO MODELLING
+
+DECISION INTELLIGENCE
+
+USE CASES
+
+Keep consistent.
+
+====================================================================
+198. ORANGE WORDS
+====================================================================
+
+Continue highlighting important words in orange.
+
+Do not highlight entire sentences.
+
+====================================================================
+199. VISUAL BALANCE
+====================================================================
+
+If text is heavy:
+
+add visual.
+
+If visual is heavy:
+
+add concise explanation.
+
+====================================================================
+200. FINAL DESIGN PHILOSOPHY
+====================================================================
+
+The goal is:
+
+NOT:
+
+"Add more animations."
+
+The goal is:
+
+"Make the product visible."
+
+The visitor should be able to SEE what ORBIT does.
+
+====================================================================
+201. COMPLETE PAGE EXPERIENCE
+====================================================================
+
+The final page should feel like:
+
+A guided tour of ORBIT.
+
+Not:
+
+a static brochure.
+
+====================================================================
+202. SCROLL EXPERIENCE
+====================================================================
+
+When scrolling:
+
+something new should happen.
+
+Not necessarily animation.
+
+It could be:
+
+new information.
+
+new visualization.
+
+new interaction.
+
+new product concept.
+
+====================================================================
+203. ATTENTION CURVE
+====================================================================
+
+Hero:
+
+high attention.
+
+Process:
+
+medium-high.
+
+Capabilities:
+
+medium.
+
+Network:
+
+high.
+
+Scenario:
+
+high.
+
+Reserve:
+
+medium-high.
+
+Response:
+
+high.
+
+Final CTA:
+
+high.
+
+====================================================================
+204. REST
+====================================================================
+
+Between high-attention sections:
+
+give the user visual rest.
+
+White space.
+
+Static copy.
+
+Calm card.
+
+====================================================================
+205. PREMIUM CONTRAST
+====================================================================
+
+Motion becomes more noticeable because most of the interface is calm.
+
+Preserve that.
+
+====================================================================
+206. VISUAL SURPRISE
+====================================================================
+
+Include small surprises.
+
+Example:
+
+Hovering a network node reveals a connection.
+
+Hovering a capability activates its miniature model.
+
+Selecting a scenario changes the route.
+
+Do not make surprises huge.
+
+====================================================================
+207. DISCOVERY
+====================================================================
+
+The user should discover details naturally.
+
+The interface should reward exploration.
+
+====================================================================
+208. SCROLL REVEAL
+====================================================================
+
+Do not reveal everything immediately.
+
+Let sections unfold.
+
+====================================================================
+209. PRODUCT UNDERSTANDING
+====================================================================
+
+At the end:
+
+The visitor should understand:
+
+ORBIT detects.
+
+ORBIT maps.
+
+ORBIT models.
+
+ORBIT evaluates.
+
+ORBIT responds.
+
+====================================================================
+210. FINAL PRODUCT SENTENCE
+====================================================================
+
+The entire site should support this conceptual statement:
+
+"ORBIT connects geopolitical signals to the physical energy network and turns disruption analysis into decision-ready operational response."
+
+====================================================================
+211. DO NOT OVERWRITE
+====================================================================
+
+Do not destroy the existing work.
+
+Inspect existing components.
+
+Reuse existing animations.
+
+Reuse existing visual systems.
+
+Extend them.
+
+====================================================================
+212. DO NOT REWRITE EVERYTHING
+====================================================================
+
+Only refactor when necessary.
+
+Do not rewrite a working component just because it is not perfect.
+
+====================================================================
+213. DO NOT CREATE UNNECESSARY FILES
+====================================================================
+
+Keep the project organized.
+
+Only create files when they provide clear value.
+
+====================================================================
+214. DO NOT ADD DEPENDENCIES WITHOUT NEED
+====================================================================
+
+Use existing project dependencies whenever possible.
+
+====================================================================
+215. CSS
+====================================================================
+
+Keep styles organized.
+
+Avoid giant inline style duplication.
+
+Use reusable classes.
+
+====================================================================
+216. COMPONENTS
+====================================================================
+
+If the current LandingPage is very large:
+
+extract only meaningful visual components.
+
+Examples:
+
+HeroFlowVisual.
+
+IntelligenceField.
+
+ProcessFlow.
+
+NetworkVisualization.
+
+ScenarioModel.
+
+ReserveModel.
+
+DecisionPreview.
+
+Do not refactor unrelated application architecture.
+
+====================================================================
+217. COMPONENT ISOLATION
+====================================================================
+
+Landing-page components must not modify authenticated UI.
+
+====================================================================
+218. ANIMATION ISOLATION
+====================================================================
+
+Animations should be scoped.
+
+Do not globally alter transitions.
+
+====================================================================
+219. RESPONSIVE ISOLATION
+====================================================================
+
+Landing page media queries should not break application pages.
+
+====================================================================
+220. TESTING
+====================================================================
+
+After implementation:
+
+build.
+
+Run existing checks.
+
+Open browser.
+
+Inspect.
+
+Fix.
+
+Repeat.
+
+====================================================================
+221. FIRST VIEW TEST
+====================================================================
+
+At first load:
+
+The visitor should immediately see:
+
+ORBIT.
+
+What it does.
+
+A product visualization.
+
+A CTA.
+
+====================================================================
+222. FIRST 10 SECONDS
+====================================================================
+
+Within 10 seconds:
+
+The visitor should understand the core concept.
+
+====================================================================
+223. FIRST 30 SECONDS
+====================================================================
+
+Within 30 seconds:
+
+The visitor should understand the workflow.
+
+====================================================================
+224. FIRST 60 SECONDS
+====================================================================
+
+Within 60 seconds:
+
+The visitor should understand capabilities.
+
+====================================================================
+225. FULL SCROLL
+====================================================================
+
+After scrolling:
+
+The visitor should understand:
+
+why ORBIT matters.
+
+====================================================================
+226. VISUAL TEST
+====================================================================
+
+Take screenshots mentally or through browser inspection.
+
+Look for:
+
+tiny fonts.
+
+large empty areas.
+
+repeated cards.
+
+static sections.
+
+weak visual hierarchy.
+
+====================================================================
+227. FIX EMPTY AREAS
+====================================================================
+
+If an area is unnecessarily empty:
+
+add useful information or visual explanation.
+
+Do not add decoration simply to fill space.
+
+====================================================================
+228. FIX TINY TEXT
+====================================================================
+
+If information is important:
+
+make it readable.
+
+====================================================================
+229. FIX STATIC SECTIONS
+====================================================================
+
+If a section feels static:
+
+add one meaningful visual interaction.
+
+Do not add random animation.
+
+====================================================================
+230. FIX REPETITION
+====================================================================
+
+If multiple sections look identical:
+
+vary layout.
+
+Use:
+
+two-column.
+
+bento.
+
+full-width diagram.
+
+timeline.
+
+comparison.
+
+product preview.
+
+====================================================================
+231. VISUAL VARIETY
+====================================================================
+
+Use different compositions.
+
+But keep the same design language.
+
+====================================================================
+232. SECTION TYPES
+====================================================================
+
+Possible section types:
+
+hero.
+
+process.
+
+cards.
+
+diagram.
+
+timeline.
+
+comparison.
+
+product preview.
+
+scenario.
+
+architecture.
+
+CTA.
+
+Use them intentionally.
+
+====================================================================
+233. INTERACTIVE TIMELINE
+====================================================================
+
+Create a timeline where appropriate.
+
+Example:
+
+EVENT
+
+T+0
+
+DETECTION
+
+T+1
+
+NETWORK IMPACT
+
+T+2
+
+SCENARIO
+
+T+3
+
+RESPONSE.
+
+Do not imply real timing.
+
+Use:
+
+STEP 01.
+
+STEP 02.
+
+etc.
+
+====================================================================
+234. SCENARIO TIMELINE
+====================================================================
+
+Show how the system progresses.
+
+====================================================================
+235. NETWORK TIMELINE
+====================================================================
+
+Show propagation.
+
+====================================================================
+236. RESPONSE TIMELINE
+====================================================================
+
+Show decision.
+
+====================================================================
+237. INTERACTIVE COMPARISON
+====================================================================
+
+Create comparison between:
+
+WITHOUT ORBIT
+
+WITH ORBIT.
+
+Without:
+
+event.
+
+uncertainty.
+
+fragmented information.
+
+manual analysis.
+
+With:
+
+event.
+
+network.
+
+scenario.
+
+response.
+
+Do not disparage existing systems with unsupported claims.
+
+====================================================================
+238. COMPARISON VISUAL
+====================================================================
+
+Left:
+
+fragmented signals.
+
+Right:
+
+connected system.
+
+Orange represents ORBIT's connected flow.
+
+====================================================================
+239. CORE VALUE
+====================================================================
+
+ORBIT connects:
+
+intelligence.
+
+network.
+
+model.
+
+response.
+
+====================================================================
+240. VISUALIZE CONNECTION
+====================================================================
+
+Use a central ORBIT node.
+
+Inputs enter.
+
+Network expands.
+
+Outputs emerge.
+
+====================================================================
+241. CENTRAL SYSTEM
+====================================================================
+
+The ORBIT engine should feel like:
+
+the connective tissue.
+
+Not:
+
+a magic black box.
+
+====================================================================
+242. EXPLAINABILITY
+====================================================================
+
+Show that decisions are supported by:
+
+signals.
+
+network context.
+
+models.
+
+constraints.
+
+This reinforces trust.
+
+====================================================================
+243. DECISION TRACE
+====================================================================
+
+Visual:
+
+SOURCE
+
+↓
+
+EVENT
+
+↓
+
+IMPACT
+
+↓
+
+SCENARIO
+
+↓
+
+OPTION
+
+↓
+
+DECISION.
+
+This can be a major visual.
+
+====================================================================
+244. DECISION TRACE ANIMATION
+====================================================================
+
+Orange signal travels through.
+
+Each stage activates.
+
+====================================================================
+245. SOURCE TRACEABILITY
+====================================================================
+
+Use subtle source-document motifs.
+
+Do not use real documents unless available.
+
+====================================================================
+246. SCENARIO CONSTRAINTS
+====================================================================
+
+Show that scenarios respect:
+
+supply.
+
+capacity.
+
+infrastructure.
+
+reserve floor.
+
+This communicates deterministic modelling.
+
+====================================================================
+247. RESPONSE CONSTRAINTS
+====================================================================
+
+Show:
+
+possible.
+
+constrained.
+
+unavailable.
+
+Use visual states.
+
+====================================================================
+248. NO FAKE PRECISION
+====================================================================
+
+Do not invent numerical values.
+
+Conceptual data is fine.
+
+====================================================================
+249. FINAL RESPONSE PANEL
+====================================================================
+
+Create:
+
+RESPONSE READY
+
+with:
+
+event.
+
+exposure.
+
+scenario.
+
+recommended option.
+
+constraints.
+
+This should be the final product moment.
+
+====================================================================
+250. FINAL CTA COPY
+====================================================================
+
+Use a strong statement.
+
+Potential:
+
+"See the system behind the decision."
+
+or:
+
+"Turn disruption into a decision."
+
+Keep concise.
+
+====================================================================
+251. FINAL CTA VISUAL
+====================================================================
+
+Signal.
+
+Network.
+
+Decision.
+
+All converge.
+
+====================================================================
+252. FINAL CTA INTERACTION
+====================================================================
+
+CTA hover:
+
+arrow.
+
+subtle sweep.
+
+small lift.
+
+====================================================================
+253. FOOTER
+====================================================================
+
+Keep minimal.
+
+====================================================================
+254. NO RANDOM LINKS
+====================================================================
+
+Only include links that actually exist.
+
+====================================================================
+255. NO FAKE CONTACT
+====================================================================
+
+Do not invent contact information.
+
+====================================================================
+256. NO FAKE SOCIALS
+====================================================================
+
+Do not invent social links.
+
+====================================================================
+257. CONTENT CONSISTENCY
+====================================================================
+
+Use the same terminology throughout.
+
+Prefer:
+
+Digital Twin.
+
+Scenario Modelling.
+
+Procurement Intelligence.
+
+Strategic Reserve Optimization.
+
+Source Traceability.
+
+Decision-Ready.
+
+====================================================================
+258. TERMINOLOGY
+====================================================================
+
+Do not alternate randomly between:
+
+digital twin.
+
+network model.
+
+energy graph.
+
+asset graph.
+
+unless the distinction is intentional.
+
+====================================================================
+259. TERMINOLOGY
+====================================================================
+
+Do not randomly rename:
+
+strategic reserve.
+
+reserve model.
+
+reserve optimization.
+
+Keep consistent.
+
+====================================================================
+260. TERMINOLOGY
+====================================================================
+
+Do not call the product:
+
+AI assistant.
+
+chatbot.
+
+generic AI.
+
+unless the actual product does that.
+
+====================================================================
+261. PRODUCT CATEGORY
+====================================================================
+
+The visitor should understand:
+
+ORBIT is an energy supply-chain intelligence and operational decision system.
+
+====================================================================
+262. AI LANGUAGE
+====================================================================
+
+If AI is mentioned:
+
+explain its role.
+
+Do not make:
+
+"AI"
+
+the entire value proposition.
+
+The product is about:
+
+intelligence.
+
+network.
+
+models.
+
+decisions.
+
+====================================================================
+263. TRUST
+====================================================================
+
+Trust comes from:
+
+clarity.
+
+traceability.
+
+constraints.
+
+explainability.
+
+Do not fabricate trust badges.
+
+====================================================================
+264. VISUAL TRUST
+====================================================================
+
+Clean borders.
+
+Readable labels.
+
+Structured data.
+
+Calm animation.
+
+====================================================================
+265. TECHNICAL TRUST
+====================================================================
+
+Use product-like interfaces.
+
+Not decorative illustrations.
+
+====================================================================
+266. PRODUCT MATURITY
+====================================================================
+
+The page should feel like a serious platform.
+
+Not a student portfolio.
+
+====================================================================
+267. PREMIUM
+====================================================================
+
+Premium is:
+
+restraint.
+
+precision.
+
+interaction.
+
+clarity.
+
+====================================================================
+268. "PEOPLE SHOULD STARE"
+====================================================================
+
+The goal is not:
+
+maximum animation.
+
+The goal is:
+
+interesting behavior.
+
+A user should notice:
+
+"That signal just moved through the network."
+
+Then:
+
+"That node just activated."
+
+Then:
+
+"Oh, that is showing how the event propagates."
+
+That is the desired reaction.
+
+====================================================================
+269. ATTENTION
+====================================================================
+
+Use animation to guide attention.
+
+Not steal attention.
+
+====================================================================
+270. WHOLE PAGE ANIMATION
+====================================================================
+
+IMPORTANT:
+
+Do NOT leave only the homepage hero animated.
+
+The entire landing page must contain meaningful interactive motion.
+
+Every major section should have at least one noticeable visual interaction or animation.
+
+But keep it restrained.
+
+====================================================================
+271. HERO
+====================================================================
+
+Animated.
+
+====================================================================
+272. PROCESS
+====================================================================
+
+Animated.
+
+====================================================================
+273. CAPABILITIES
+====================================================================
+
+Interactive.
+
+====================================================================
+274. DIGITAL TWIN
+====================================================================
+
+Animated.
+
+====================================================================
+275. SCENARIOS
+====================================================================
+
+Interactive.
+
+====================================================================
+276. PROCUREMENT
+====================================================================
+
+Interactive.
+
+====================================================================
+277. RESERVE
+====================================================================
+
+Animated.
+
+====================================================================
+278. RESPONSE
+====================================================================
+
+Animated.
+
+====================================================================
+279. DIFFERENTIATION
+====================================================================
+
+Interactive.
+
+====================================================================
+280. USE CASES
+====================================================================
+
+Interactive.
+
+====================================================================
+281. PLATFORM
+====================================================================
+
+Animated.
+
+====================================================================
+282. SECURITY
+====================================================================
+
+Subtle animation.
+
+====================================================================
+283. FINAL CTA
+====================================================================
+
+Animated.
+
+====================================================================
+284. NOT TOO MUCH
+====================================================================
+
+However:
+
+do not make every section constantly move.
+
+Use:
+
+on-scroll.
+
+on-hover.
+
+on-selection.
+
+periodic signature animation.
+
+====================================================================
+285. ANIMATION RHYTHM
+====================================================================
+
+CALM
+
+↓
+
+ACTIVITY
+
+↓
+
+CALM
+
+↓
+
+INTERACTION
+
+↓
+
+CALM
+
+This is the desired rhythm.
+
+====================================================================
+286. VISUAL RHYTHM
+====================================================================
+
+TEXT
+
+↓
+
+VISUAL
+
+↓
+
+TEXT
+
+↓
+
+DIAGRAM
+
+↓
+
+PRODUCT
+
+↓
+
+TEXT
+
+↓
+
+VISUAL.
+
+====================================================================
+287. PAGE FEEL
+====================================================================
+
+The page should feel:
+
+alive.
+
+not noisy.
+
+====================================================================
+288. PAGE FEEL
+====================================================================
+
+The page should feel:
+
+technical.
+
+not complicated.
+
+====================================================================
+289. PAGE FEEL
+====================================================================
+
+The page should feel:
+
+premium.
+
+not flashy.
+
+====================================================================
+290. PAGE FEEL
+====================================================================
+
+The page should feel:
+
+intelligent.
+
+not artificial.
+
+====================================================================
+291. PAGE FEEL
+====================================================================
+
+The page should feel:
+
+clear.
+
+not simplistic.
+
+====================================================================
+292. FIRECRAWL PRINCIPLE
+====================================================================
+
+Use the reference principle:
+
+show the product doing the thing.
+
+Apply that to ORBIT.
+
+====================================================================
+293. FIRECRAWL PRINCIPLE
+====================================================================
+
+If the product searches:
+
+show search.
+
+If the product scrapes:
+
+show extraction.
+
+For ORBIT:
+
+if the product detects:
+
+show detection.
+
+If the product maps:
+
+show mapping.
+
+If the product models:
+
+show modelling.
+
+If the product responds:
+
+show response.
+
+====================================================================
+294. PRODUCT-FIRST DESIGN
+====================================================================
+
+Every major visual should resemble something the user could actually see inside ORBIT.
+
+====================================================================
+295. NO RANDOM ILLUSTRATION
+====================================================================
+
+Do not use generic illustrations.
+
+====================================================================
+296. NO STOCK PHOTOS
+====================================================================
+
+Do not add stock photography.
+
+====================================================================
+297. NO GENERIC 3D
+====================================================================
+
+Do not add generic 3D objects.
+
+====================================================================
+298. NO DECORATIVE AI BRAIN
+====================================================================
+
+Do not add AI brain graphics.
+
+====================================================================
+299. NO GLOBE
+====================================================================
+
+Do not add a generic spinning globe unless it actually represents a network visualization.
+
+====================================================================
+300. ENERGY VISUAL LANGUAGE
+====================================================================
+
+If using geographic or infrastructure visuals:
+
+prefer:
+
+routes.
+
+nodes.
+
+ports.
+
+pipelines.
+
+refineries.
+
+trade flows.
+
+chokepoints.
+
+Do not use generic Earth graphics simply for decoration.
+
+====================================================================
+301. NETWORK VISUAL LANGUAGE
+====================================================================
+
+Use:
+
+nodes.
+
+edges.
+
+routes.
+
+signals.
+
+activation.
+
+====================================================================
+302. DECISION VISUAL LANGUAGE
+====================================================================
+
+Use:
+
+options.
+
+constraints.
+
+selection.
+
+result.
+
+====================================================================
+303. SCENARIO VISUAL LANGUAGE
+====================================================================
+
+Use:
+
+branches.
+
+paths.
+
+states.
+
+comparison.
+
+====================================================================
+304. RESERVE VISUAL LANGUAGE
+====================================================================
+
+Use:
+
+buffer.
+
+floor.
+
+drawdown.
+
+replenishment.
+
+====================================================================
+305. SOURCE VISUAL LANGUAGE
+====================================================================
+
+Use:
+
+document.
+
+signal.
+
+trace.
+
+evidence.
+
+====================================================================
+306. COMPLETE PRODUCT LANGUAGE
+====================================================================
+
+The entire website should visually speak:
+
+SIGNAL
+
+↓
+
+NETWORK
+
+↓
+
+MODEL
+
+↓
+
+DECISION.
+
+====================================================================
+307. IMPLEMENTATION ORDER
+====================================================================
+
+Do not attempt random changes.
+
+Work in this order:
+
+1.
+
+Inspect current landing page.
+
+2.
+
+Understand existing components.
+
+3.
+
+Preserve current design.
+
+4.
+
+Fix typography.
+
+5.
+
+Improve content hierarchy.
+
+6.
+
+Add missing explanatory content.
+
+7.
+
+Improve hero.
+
+8.
+
+Implement process visualization.
+
+9.
+
+Implement capability visuals.
+
+10.
+
+Implement Digital Twin visualization.
+
+11.
+
+Implement scenario visualization.
+
+12.
+
+Implement procurement visualization.
+
+13.
+
+Implement reserve visualization.
+
+14.
+
+Implement decision preview.
+
+15.
+
+Implement use cases.
+
+16.
+
+Implement platform section.
+
+17.
+
+Implement final CTA.
+
+18.
+
+Add section animations.
+
+19.
+
+Add hover interactions.
+
+20.
+
+Add responsive behavior.
+
+21.
+
+Run build.
+
+22.
+
+Open browser.
+
+23.
+
+Perform visual QA.
+
+24.
+
+Fix issues.
+
+====================================================================
+308. DO NOT STOP AFTER HERO
+====================================================================
+
+This is extremely important.
+
+Do not finish after:
+
+Hero animation.
+
+The user explicitly requires:
+
+THE WHOLE PUBLIC LANDING PAGE TO FEEL ALIVE.
+
+Continue through every major section.
+
+====================================================================
+309. DO NOT STOP AFTER CSS
+====================================================================
+
+Do not merely add CSS classes.
+
+Verify the visual result.
+
+====================================================================
+310. DO NOT STOP AFTER BUILD
+====================================================================
+
+A successful build does not mean the design is complete.
+
+Open the browser.
+
+====================================================================
+311. BROWSER INSPECTION
+====================================================================
+
+Inspect at:
+
+1440px.
+
+1600px.
+
+1920px.
+
+1024px.
+
+768px.
+
+430px.
+
+390px.
+
+====================================================================
+312. FONT INSPECTION
+====================================================================
+
+Check:
+
+body.
+
+headings.
+
+cards.
+
+navigation.
+
+technical labels.
+
+No important text should be uncomfortably small.
+
+====================================================================
+313. SCROLL INSPECTION
+====================================================================
+
+Scroll slowly.
+
+Watch each section enter.
+
+Watch animations.
+
+Watch transitions.
+
+====================================================================
+314. HOVER INSPECTION
+====================================================================
+
+Hover every interactive component.
+
+====================================================================
+315. CLICK INSPECTION
+====================================================================
+
+Click interactive demo controls.
+
+Ensure state changes visually.
+
+====================================================================
+316. NO BROKEN STATES
+====================================================================
+
+No:
+
+blank panel.
+
+broken diagram.
+
+undefined state.
+
+missing icon.
+
+overlapping text.
+
+====================================================================
+317. NO LAYOUT SHIFT
+====================================================================
+
+Animations must not move page layout unexpectedly.
+
+====================================================================
+318. NO HORIZONTAL OVERFLOW
+====================================================================
+
+Check mobile.
+
+====================================================================
+319. NO Z-INDEX BUGS
+====================================================================
+
+Ensure visual layers remain correct.
+
+====================================================================
+320. NO TEXT OVERLAP
+====================================================================
+
+Especially:
+
+hero.
+
+cards.
+
+network labels.
+
+mobile.
+
+====================================================================
+321. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does this look like a real product?
+
+====================================================================
+322. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Can I understand it without a presenter?
+
+====================================================================
+323. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does every major section teach something?
+
+====================================================================
+324. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does every major section feel alive?
+
+====================================================================
+325. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Is the animation noticeable?
+
+====================================================================
+326. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Is the animation restrained?
+
+====================================================================
+327. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Is the page still premium?
+
+====================================================================
+328. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Is the white background still dominant?
+
+====================================================================
+329. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Is orange still meaningful?
+
+====================================================================
+330. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Is typography readable?
+
+====================================================================
+331. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does the product story flow naturally?
+
+====================================================================
+332. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does the visitor understand:
+
+DETECT
+
+UNDERSTAND
+
+MAP
+
+SIMULATE
+
+RESPOND?
+
+====================================================================
+333. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does the visitor understand:
+
+WHY
+
+HOW
+
+WHAT
+
+RESULT?
+
+====================================================================
+334. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does the website feel like an interactive product demo?
+
+====================================================================
+335. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does the page feel too empty?
+
+If yes:
+
+add useful product information.
+
+====================================================================
+336. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does the page feel too crowded?
+
+If yes:
+
+remove decorative elements.
+
+====================================================================
+337. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does the page feel too static?
+
+If yes:
+
+strengthen existing meaningful animations.
+
+====================================================================
+338. FINAL VISUAL CHECK
+====================================================================
+
+Ask:
+
+Does the page feel too animated?
+
+If yes:
+
+reduce simultaneous motion.
+
+====================================================================
+339. FINAL QUALITY TARGET
+====================================================================
+
+The page should feel:
+
+LIKE A PRODUCT.
+
+Not:
+
+LIKE A POSTER.
+
+====================================================================
+340. FINAL QUALITY TARGET
+====================================================================
+
+The page should feel:
+
+LIKE A SYSTEM.
+
+Not:
+
+LIKE A TEMPLATE.
+
+====================================================================
+341. FINAL QUALITY TARGET
+====================================================================
+
+The page should feel:
+
+LIKE INTELLIGENCE IS HAPPENING.
+
+Not:
+
+LIKE CSS IS HAPPENING.
+
+====================================================================
+342. FINAL QUALITY TARGET
+====================================================================
+
+The page should make the visitor curious.
+
+====================================================================
+343. FINAL QUALITY TARGET
+====================================================================
+
+The page should make the visitor understand.
+
+====================================================================
+344. FINAL QUALITY TARGET
+====================================================================
+
+The page should make the visitor want to explore the actual product.
+
+====================================================================
+345. FINAL QUALITY TARGET
+====================================================================
+
+The page should NOT overwhelm the visitor.
+
+====================================================================
+346. FINAL QUALITY TARGET
+====================================================================
+
+The page should NOT require a presenter.
+
+====================================================================
+347. FINAL QUALITY TARGET
+====================================================================
+
+The page should NOT require a technical background.
+
+====================================================================
+348. FINAL QUALITY TARGET
+====================================================================
+
+Technical users should appreciate the detail.
+
+Non-technical users should understand the story.
+
+====================================================================
+349. FINAL QUALITY TARGET
+====================================================================
+
+This is the balance.
+
+====================================================================
+350. FINAL COMMAND
+====================================================================
+
+NOW IMPLEMENT THE COMPLETE UPGRADE.
+
+Do not only plan it.
+
+Do not only describe it.
+
+Do not stop after the hero.
+
+Do not stop after CSS.
+
+Do not stop after adding one animation.
+
+Actually implement the full public landing page experience.
+
+Preserve the existing good work.
+
+Improve typography.
+
+Improve information density.
+
+Explain the product.
+
+Add product demonstrations.
+
+Add meaningful animations throughout the page.
+
+Add interactive visualizations.
+
+Add use cases.
+
+Add platform explanation.
+
+Add decision visualization.
+
+Maintain white / black / orange.
+
+Maintain premium whitespace.
+
+Maintain restraint.
+
+Make the entire page feel alive.
+
+Make the product understandable.
+
+Make the interface memorable.
+
+====================================================================
+351. STRICT SCOPE REMINDER
+====================================================================
+
+ONLY:
+
+PUBLIC PRE-SIGN-IN ORBIT LANDING PAGE.
+
+NOT:
+
+AUTHENTICATED DASHBOARD.
+
+NOT:
+
+SIGN-IN.
+
+NOT:
+
+SIGN-UP.
+
+NOT:
+
+BACKEND.
+
+NOT:
+
+DATABASE.
+
+NOT:
+
+API.
+
+NOT:
+
+AUTHENTICATION.
+
+NOT:
+
+SERVER.
+
+NOT:
+
+OTHER PAGES.
+
+====================================================================
+352. STRICT GIT REMINDER
+====================================================================
+
+NO GIT.
+
+NO GITHUB.
+
+NO REMOTE.
+
+NO PUSH.
+
+NO PULL.
+
+NO FETCH.
+
+NO COMMIT.
+
+NO BRANCH.
+
+NO CLONE.
+
+NO SYNC.
+
+NO REMOTE OPERATIONS.
+
+WORK ONLY LOCALLY.
+
+====================================================================
+353. FINAL SUCCESS CONDITION
+====================================================================
+
+The task is complete ONLY when:
+
+The hero is animated.
+
+The process is animated.
+
+The capability section is interactive.
+
+The Digital Twin is interactive.
+
+The scenario section is interactive.
+
+The procurement section is interactive.
+
+The reserve section is animated.
+
+The response section is animated.
+
+The differentiation section is interactive.
+
+The use-case section is interactive.
+
+The platform section is animated.
+
+The final CTA is animated.
+
+Typography is readable.
+
+Information is clear.
+
+The whole page feels alive.
+
+The page remains clean.
+
+The page remains premium.
+
+The page remains white/black/orange.
+
+The page is responsive.
+
+The page builds successfully.
+
+The browser has been visually inspected.
+
+No unrelated pages were modified.
+
+No Git operations were performed.
+
+====================================================================
+354. FINAL EMOTIONAL TARGET
+====================================================================
+
+FIRST IMPRESSION:
+
+"That's clean."
+
+SECOND IMPRESSION:
+
+"Oh, this is an actual intelligence system."
+
+THIRD IMPRESSION:
+
+"I can see how the system works."
+
+FOURTH IMPRESSION:
+
+"Oh, the network is actually reacting."
+
+FIFTH IMPRESSION:
+
+"I understand what ORBIT does."
+
+FINAL IMPRESSION:
+
+"I want to see the actual ORBIT platform."
+
+====================================================================
+355. THE GOLDEN RULE
+====================================================================
+
+DO NOT ADD MORE JUST FOR THE SAKE OF MORE.
+
+ADD WHAT MAKES ORBIT EASIER TO UNDERSTAND.
+
+ADD WHAT MAKES ORBIT FEEL ALIVE.
+
+ADD WHAT MAKES THE PRODUCT VISIBLE.
+
+ADD WHAT MAKES THE EXPERIENCE MEMORABLE.
+
+KEEP IT CLEAN.
+
+KEEP IT PREMIUM.
+
+KEEP IT INTELLIGENT.
+
+KEEP IT INTERACTIVE.
+
+KEEP IT ORBIT.
+
+====================================================================
+END OF INSTRUCTIONS
+====================================================================

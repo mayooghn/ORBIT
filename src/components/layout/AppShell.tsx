@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TopBar } from './TopBar';
 import { Sidebar } from './Sidebar';
 
@@ -15,9 +15,16 @@ export const AppShell: React.FC<AppShellProps> = ({
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pageKey, setPageKey] = useState(currentPath);
+
+  useEffect(() => {
+    if (currentPath !== pageKey) {
+      setPageKey(currentPath);
+    }
+  }, [currentPath]);
 
   return (
-    <div className="h-screen w-full flex flex-col bg-[#0A0A0A] text-[#E5E7EB] selection:bg-orange-500/30 overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-[#000000] text-[#E5E7EB] selection:bg-orange-500/30 overflow-hidden">
       {/* Top Header */}
       <TopBar onToggleSidebar={() => setMobileOpen(!mobileOpen)} onNavigate={onNavigate} />
 
@@ -39,7 +46,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               className="fixed inset-0 bg-black/80 backdrop-blur-xs"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#0D0D0D] border-r border-[#222222] z-50">
+            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#030303] border-r border-[#1a1a1a] z-50">
               <Sidebar
                 currentPath={currentPath}
                 onNavigate={(path) => {
@@ -56,13 +63,13 @@ export const AppShell: React.FC<AppShellProps> = ({
         {/* Main Content View Area */}
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="max-w-7xl mx-auto space-y-6 orbit-page-enter" key={pageKey}>
               {children}
             </div>
           </main>
 
           {/* Foundation Status Footer */}
-          <footer className="mt-auto min-h-10 border-t border-[#222222] bg-[#0F0F0F] flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 sm:px-8 py-2 text-xs text-[#555555] font-mono">
+          <footer className="mt-auto min-h-10 border-t border-[#1a1a1a] bg-[#000000] flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 sm:px-8 py-2 text-xs text-[#555555] font-mono">
             <div></div>
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-orange-500/80"></span>

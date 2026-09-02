@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, AlertCircle, Loader2, Mail, KeyRound, ShieldCheck, CheckCircle2, Globe2, Radio, Lock } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Loader2, Mail, KeyRound, ShieldCheck, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { ThreeEnergyGlobe } from '../components/common/ThreeEnergyGlobe';
+import { OrbitLogo } from '../components/common/OrbitLogo';
 
 interface AuthPageProps {
   onBackToLanding: () => void;
@@ -14,8 +15,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const changeMode = (nextMode: 'signin' | 'signup') => {
     setMode(nextMode);
@@ -48,77 +55,84 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-[#ededed] flex flex-col lg:flex-row selection:bg-orange-500/30 overflow-x-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row overflow-x-hidden">
       {/* ------------------------------------------------------------- */}
-      {/* LEFT SIDE: 3D Globe & Energy Intelligence Telemetry Visuals */}
+      {/* LEFT SIDE: Interactive Globe & Energy Network Visual           */}
       {/* ------------------------------------------------------------- */}
-      <div className="relative w-full lg:w-[58%] xl:w-[62%] min-h-[500px] lg:min-h-screen bg-[#06080d] border-b lg:border-b-0 lg:border-r border-[#1e293b]/70 flex flex-col overflow-hidden">
-        {/* Top Floating Controls on Globe */}
-        <div className="absolute top-4 left-4 z-20 flex items-center pointer-events-none">
+      <div className="orbit-auth-globe relative w-full lg:w-[50%] xl:w-[55%] min-h-[400px] lg:min-h-screen flex flex-col">
+        {/* Ambient glow */}
+        <div className="orbit-auth-globe-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+
+        {/* Subtle boundary glow connecting to auth panel */}
+        <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-orange-500/20 to-transparent pointer-events-none hidden lg:block" />
+
+        {/* Back button */}
+        <div className="absolute top-4 left-4 z-20">
           <button
             id="back-to-landing-button"
             onClick={onBackToLanding}
             type="button"
             title="Back to Overview"
-            className="pointer-events-auto inline-flex items-center justify-center p-2 rounded-lg text-xs font-mono text-[#94a3b8] hover:text-white transition-colors cursor-pointer bg-[#0f172a]/90 backdrop-blur-md border border-[#334155] shadow-lg hover:border-orange-500/50"
+            className="orbit-auth-back"
           >
-            <ArrowLeft className="w-4 h-4 text-orange-400" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
         </div>
 
-        {/* The 3D Three.js Interactive Globe */}
+        {/* Top-left: Subtle technical annotation */}
+        <div className={`absolute top-4 left-14 z-10 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-2' : 'opacity-0'}`}>
+          <div className="orbit-auth-annotation">
+            <span className="orbit-auth-annotation-label">GLOBAL NETWORK</span>
+            <span className="orbit-auth-annotation-status">
+              <span className="orbit-auth-annotation-dot" />
+              LIVE
+            </span>
+          </div>
+        </div>
+
+        {/* The 3D Globe */}
         <div className="w-full h-full flex-1 flex">
           <ThreeEnergyGlobe />
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* RIGHT SIDE: HackerRank-Style Dedicated Authentication Panel   */}
+      {/* RIGHT SIDE: White ORBIT Authentication Panel                  */}
       {/* ------------------------------------------------------------- */}
-      <div className="relative w-full lg:w-[42%] xl:w-[38%] min-h-screen bg-[#0b0f17] flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16">
-        {/* Subtle Ambient Glow in background */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/[0.03] rounded-full blur-3xl pointer-events-none" />
-
-        {/* Top Header Logo */}
-        <div className="flex items-center justify-between mb-8">
+      <div className="orbit-auth-panel relative w-full lg:w-[50%] xl:w-[45%] min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16">
+        {/* Top: Brand + Badge */}
+        <div className={`flex items-center justify-between mb-8 ${mounted ? 'orbit-auth-entrance' : 'opacity-0'}`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white shadow-md shadow-orange-500/20 font-mono font-bold text-sm">
-              <div className="w-4 h-4 border-2 border-white rounded-full flex items-center justify-center">
-                <div className="w-1 h-1 bg-white rounded-full" />
-              </div>
-            </div>
-            <span className="font-mono text-base font-bold tracking-tight text-white">ORBIT</span>
+            <OrbitLogo size="md" showWordmark={true} variant="dark" />
           </div>
 
-          <div className="text-[11px] font-mono text-[#64748b] bg-[#131b28] px-2.5 py-1 rounded border border-[#1e293b]">
-            v2.4 SECURE
+          <div className="orbit-auth-badge">
+            <span className="orbit-auth-badge-dot" />
+            <span>SECURE ACCESS</span>
           </div>
         </div>
 
-        {/* Main Form Center Block */}
-        <div className="my-auto max-w-md w-full mx-auto">
-          <div className="mb-6">
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-mono">
-              {mode === 'signin' ? 'Welcome back!' : 'Create Account'}
-            </h2>
-            <p className="text-sm text-[#94a3b8] mt-1.5 font-mono">
+        {/* Center: Auth Content */}
+        <div className="my-auto max-w-sm w-full mx-auto">
+          {/* Welcome */}
+          <div className={`mb-8 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-1' : 'opacity-0'}`}>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--auth-text)]">
+              {mode === 'signin' ? 'Welcome back.' : 'Create account.'}
+            </h1>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--auth-text-secondary)]">
               {mode === 'signin'
-                ? 'Login to access the energy supply chain command console.'
+                ? 'Access the ORBIT energy intelligence command console.'
                 : 'Register operator credentials for scenario simulation.'}
             </p>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="grid grid-cols-2 p-1 rounded-lg bg-[#07090e] border border-[#1e293b] mb-6">
+          {/* Tabs */}
+          <div className={`orbit-auth-tabs mb-6 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-2' : 'opacity-0'}`}>
             <button
               id="auth-tab-signin"
               type="button"
               onClick={() => changeMode('signin')}
-              className={`py-2 text-xs font-mono font-semibold rounded-md transition-all cursor-pointer ${
-                mode === 'signin'
-                  ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30'
-                  : 'text-[#94a3b8] hover:text-white'
-              }`}
+              className={`orbit-auth-tab ${mode === 'signin' ? 'orbit-auth-tab-active' : ''}`}
             >
               Log In
             </button>
@@ -126,37 +140,37 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
               id="auth-tab-signup"
               type="button"
               onClick={() => changeMode('signup')}
-              className={`py-2 text-xs font-mono font-semibold rounded-md transition-all cursor-pointer ${
-                mode === 'signup'
-                  ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30'
-                  : 'text-[#94a3b8] hover:text-white'
-              }`}
+              className={`orbit-auth-tab ${mode === 'signup' ? 'orbit-auth-tab-active' : ''}`}
             >
               Sign Up
             </button>
           </div>
 
+          {/* Firebase config warning */}
           {!isConfigured && (
-            <div className="mb-5 p-3.5 rounded-lg border border-amber-900/60 bg-amber-950/30 text-amber-200 text-xs font-mono flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+            <div className={`orbit-auth-warning mb-5 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-3' : 'opacity-0'}`}>
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>Firebase Authentication is awaiting config variables. Provide VITE_FIREBASE_API_KEY to authenticate live.</span>
             </div>
           )}
 
+          {/* Error message */}
           {(error || localError) && (
-            <div className="mb-5 p-3.5 rounded-lg border border-rose-900/60 bg-rose-950/30 text-rose-300 text-xs font-mono flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400 mt-0.5" />
+            <div className="orbit-auth-error mb-5" role="alert" aria-live="assertive">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>{error || localError}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className={`space-y-4 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-3' : 'opacity-0'}`}>
+            {/* Email */}
             <div>
-              <label htmlFor="auth-email-input" className="block text-xs font-mono font-medium text-[#cbd5e1] mb-1.5">
-                Your email address
+              <label htmlFor="auth-email-input" className="orbit-auth-label">
+                Email address
               </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-[#64748b] absolute left-3.5 top-3" />
+              <div className="orbit-auth-input-group">
+                <Mail className="orbit-auth-input-icon w-4 h-4" />
                 <input
                   id="auth-email-input"
                   type="email"
@@ -165,111 +179,128 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
                   placeholder="operator@orbit-energy.gov"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg bg-[#07090e] border border-[#1e293b] text-white placeholder-[#475569] focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all font-mono"
+                  className="orbit-auth-input"
                 />
               </div>
             </div>
 
+            {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="auth-password-input" className="block text-xs font-mono font-medium text-[#cbd5e1]">
+                <label htmlFor="auth-password-input" className="orbit-auth-label" style={{ marginBottom: 0 }}>
                   Password
                 </label>
                 {mode === 'signin' && (
-                  <span className="text-[11px] font-mono text-orange-400 hover:text-orange-300 cursor-pointer">
+                  <button type="button" className="orbit-auth-link text-[13px]">
                     Forgot password?
-                  </span>
+                  </button>
                 )}
               </div>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 text-[#64748b] absolute left-3.5 top-3" />
+              <div className="orbit-auth-input-group">
+                <KeyRound className="orbit-auth-input-icon w-4 h-4" />
                 <input
                   id="auth-password-input"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   minLength={6}
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                  placeholder="••••••••••••"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg bg-[#07090e] border border-[#1e293b] text-white placeholder-[#475569] focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all font-mono"
+                  className="orbit-auth-input"
+                  style={{ paddingRight: 42 }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="orbit-auth-eye"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
+            {/* Confirm Password (signup only) */}
             {mode === 'signup' && (
               <div>
-                <label htmlFor="auth-confirm-password-input" className="block text-xs font-mono font-medium text-[#cbd5e1] mb-1.5">
+                <label htmlFor="auth-confirm-password-input" className="orbit-auth-label">
                   Confirm Password
                 </label>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 text-[#64748b] absolute left-3.5 top-3" />
+                <div className="orbit-auth-input-group">
+                  <KeyRound className="orbit-auth-input-icon w-4 h-4" />
                   <input
                     id="auth-confirm-password-input"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     minLength={6}
                     autoComplete="new-password"
-                    placeholder="••••••••••••"
+                    placeholder="Confirm your password"
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
-                    className="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg bg-[#07090e] border border-[#1e293b] text-white placeholder-[#475569] focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all font-mono"
+                    className="orbit-auth-input"
                   />
                 </div>
               </div>
             )}
 
+            {/* Remember me */}
             {mode === 'signin' && (
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 text-xs font-mono text-[#94a3b8] cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-[#334155] bg-[#07090e] text-orange-500 focus:ring-orange-500/20"
-                  />
-                  <span>Remember me</span>
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="remember-me"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="orbit-auth-checkbox"
+                />
+                <label htmlFor="remember-me" className="text-[13px] text-[var(--auth-text-secondary)] cursor-pointer select-none">
+                  Remember me
                 </label>
               </div>
             )}
 
+            {/* CTA */}
             <button
               id="auth-submit-button"
               type="submit"
               disabled={loading || !isConfigured}
-              className="w-full mt-3 py-3 px-4 rounded-lg bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-bold font-mono text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-lg shadow-orange-500/25"
+              className="orbit-auth-cta mt-4"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 orbit-auth-spinner" />
                   <span>Authenticating...</span>
                 </>
               ) : (
-                <span>{mode === 'signin' ? 'Log In' : 'Create Account'}</span>
+                <>
+                  <span>{mode === 'signin' ? 'Log In' : 'Create Account'}</span>
+                  <ArrowRight className="orbit-auth-cta-arrow w-4 h-4" />
+                </>
               )}
             </button>
           </form>
 
-          {/* Bottom Switcher */}
-          <div className="text-center mt-6 pt-6 border-t border-[#1e293b] text-xs font-mono text-[#94a3b8]">
+          {/* Account switch */}
+          <div className={`text-center mt-6 pt-6 border-t border-[var(--auth-border)] ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-5' : 'opacity-0'}`}>
             {mode === 'signin' ? (
-              <p>
+              <p className="text-[13px] text-[var(--auth-text-muted)]">
                 Don't have an account?{' '}
                 <button
                   type="button"
                   onClick={() => changeMode('signup')}
-                  className="text-orange-400 hover:text-orange-300 font-semibold cursor-pointer underline-offset-4 hover:underline"
+                  className="orbit-auth-link"
                 >
                   Sign up
                 </button>
               </p>
             ) : (
-              <p>
+              <p className="text-[13px] text-[var(--auth-text-muted)]">
                 Already have an account?{' '}
                 <button
                   type="button"
                   onClick={() => changeMode('signin')}
-                  className="text-orange-400 hover:text-orange-300 font-semibold cursor-pointer underline-offset-4 hover:underline"
+                  className="orbit-auth-link"
                 >
                   Log in
                 </button>
@@ -278,14 +309,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
           </div>
         </div>
 
-        {/* Footer Security Badge */}
-        <div className="mt-8 pt-4 border-t border-[#1e293b]/50 flex items-center justify-between text-[11px] font-mono text-[#64748b]">
-          <div className="flex items-center gap-1.5 text-emerald-400/90">
+        {/* Footer: Trust indicators */}
+        <div className={`mt-8 pt-4 border-t border-[var(--auth-border)] flex items-center justify-between ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-6' : 'opacity-0'}`}>
+          <div className="orbit-auth-trust">
             <Lock className="w-3.5 h-3.5" />
-            <span>End-to-End Encrypted Access</span>
+            <span>Encrypted Access</span>
           </div>
-          <div className="flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-orange-400" />
+          <div className="orbit-auth-trust">
+            <ShieldCheck className="w-3.5 h-3.5 text-[var(--auth-accent)]" />
             <span>Firebase Auth</span>
           </div>
         </div>
@@ -293,4 +324,3 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
     </div>
   );
 };
-

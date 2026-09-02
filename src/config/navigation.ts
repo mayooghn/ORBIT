@@ -20,15 +20,6 @@ export const NAVIGATION_ROUTES: NavigationRoute[] = [
     phaseLabel: 'Phase 3 Digital Twin'
   },
   {
-    id: 'procurement',
-    path: '/app/procurement',
-    title: 'Procurement',
-    shortDescription: 'Evaluate supply alternatives and procurement options',
-    iconName: 'ShoppingCart',
-    phaseNumber: 6,
-    phaseLabel: 'Future Module'
-  },
-  {
     id: 'reserves',
     path: '/app/reserves',
     title: 'Reserve Management',

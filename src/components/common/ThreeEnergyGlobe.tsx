@@ -522,13 +522,13 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
     // Scene, Camera, Renderer
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      42,
+      36,
       container.clientWidth / container.clientHeight,
       0.1,
       1000
     );
-    // Centered directly on origin (0, 0, 0)
-    camera.position.set(0, 0, 4.8);
+    // Pull camera back to make globe fill ~70-80% of left panel
+    camera.position.set(0, 0.15, 5.5);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
@@ -609,12 +609,13 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
     const pointColors: number[] = [];
 
     // Dense Fibonacci Sphere Sampling for 360° Globe
-    const numPoints = 14000;
+    const numPoints = 15000;
     const orangeColor = new THREE.Color('#f97316');
     const amberColor = new THREE.Color('#fb923c');
     const cyanColor = new THREE.Color('#38bdf8');
-    const landColor = new THREE.Color('#64748b');
+    const landColor = new THREE.Color('#94a3b8');
     const dimOceanColor = new THREE.Color('#1e293b');
+    const brightLandColor = new THREE.Color('#cbd5e1');
 
     for (let i = 0; i < numPoints; i++) {
       const y = 1 - (i / (numPoints - 1)) * 2; // -1 to 1
@@ -657,10 +658,16 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
         } else if (isAmericasOrEastAsia) {
           pointColors.push(cyanColor.r, cyanColor.g, cyanColor.b);
         } else {
-          pointColors.push(landColor.r, landColor.g, landColor.b);
+          // Vary land point brightness based on random factor
+          const brightness = 0.7 + Math.random() * 0.3;
+          pointColors.push(
+            landColor.r * brightness,
+            landColor.g * brightness,
+            landColor.b * brightness
+          );
         }
-      } else if (Math.random() < 0.22) {
-        // High quality ocean tactical reference matrix for complete spherical coverage
+      } else if (Math.random() < 0.15) {
+        // Ocean points with reduced density for cleaner look
         const v = latLonToVector3(lat, lon, GLOBE_RADIUS * 1.0);
         pointPositions.push(v.x, v.y, v.z);
         pointColors.push(dimOceanColor.r, dimOceanColor.g, dimOceanColor.b);
@@ -672,10 +679,11 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
     pointsGeo.setAttribute('color', new THREE.Float32BufferAttribute(pointColors, 3));
 
     const pointsMat = new THREE.PointsMaterial({
-      size: 0.026,
+      size: 0.032,
       vertexColors: true,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.92,
+      sizeAttenuation: true
     });
     const landPointsMesh = new THREE.Points(pointsGeo, pointsMat);
     globeGroup.add(landPointsMesh);
@@ -711,13 +719,13 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
       });
 
       // Draw route arc line
-      const points = curve.getPoints(45);
+      const points = curve.getPoints(35);
       const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
       const color = new THREE.Color(route.color);
       const lineMat = new THREE.LineBasicMaterial({
         color: color,
         transparent: true,
-        opacity: route.isPrimary ? 0.75 : 0.45,
+        opacity: route.isPrimary ? 0.85 : 0.55,
         linewidth: 2
       });
       const line = new THREE.Line(lineGeo, lineMat);
@@ -743,10 +751,10 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
     particlesGeo.setAttribute('color', new THREE.Float32BufferAttribute(particleColors, 3));
 
     const particlesMat = new THREE.PointsMaterial({
-      size: 0.055,
+      size: 0.065,
       vertexColors: true,
       transparent: true,
-      opacity: 0.95,
+      opacity: 1.0,
       blending: THREE.AdditiveBlending
     });
     const flowingParticles = new THREE.Points(particlesGeo, particlesMat);
@@ -806,43 +814,60 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
     globeGroup.add(nodeGroup);
 
     // -------------------------------------------------------------
-    // 6. Equatorial Tactical Ring Orbit
+    // Outer Atmospheric Glow Rim - Enhanced
     // -------------------------------------------------------------
-    const orbitRingGeo = new THREE.BufferGeometry();
-    const orbitPoints: THREE.Vector3[] = [];
-    const orbitRadius = GLOBE_RADIUS * 1.25;
-    for (let i = 0; i <= 96; i++) {
-      const theta = (i / 96) * Math.PI * 2;
-      orbitPoints.push(new THREE.Vector3(orbitRadius * Math.cos(theta), 0, orbitRadius * Math.sin(theta)));
-    }
-    orbitRingGeo.setFromPoints(orbitPoints);
-    const orbitRing = new THREE.Line(
-      orbitRingGeo,
-      new THREE.LineDashedMaterial({
-        color: 0xf97316,
-        transparent: true,
-        opacity: 0.35,
-        dashSize: 0.1,
-        gapSize: 0.05
-      })
-    );
-    orbitRing.computeLineDistances();
-    orbitRing.rotation.x = THREE.MathUtils.degToRad(25);
-    globeGroup.add(orbitRing);
-
-    // Outer Atmospheric Glow Rim
-    const atmosGeo = new THREE.SphereGeometry(GLOBE_RADIUS * 1.15, 48, 48);
+    const atmosGeo = new THREE.SphereGeometry(GLOBE_RADIUS * 1.18, 48, 48);
     const atmosMat = new THREE.MeshBasicMaterial({
       color: 0xf97316,
       transparent: true,
-      opacity: 0.03,
+      opacity: 0.05,
       side: THREE.BackSide
     });
     const atmos = new THREE.Mesh(atmosGeo, atmosMat);
     scene.add(atmos);
 
+    // Inner subtle glow for depth
+    const innerGlowGeo = new THREE.SphereGeometry(GLOBE_RADIUS * 1.02, 32, 32);
+    const innerGlowMat = new THREE.MeshBasicMaterial({
+      color: 0x1e293b,
+      transparent: true,
+      opacity: 0.1,
+      side: THREE.BackSide
+    });
+    const innerGlow = new THREE.Mesh(innerGlowGeo, innerGlowMat);
+    globeGroup.add(innerGlow);
+
+    // Subtle cyan atmospheric rim for depth
+    const rimGeo = new THREE.SphereGeometry(GLOBE_RADIUS * 1.08, 48, 48);
+    const rimMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.02,
+      side: THREE.BackSide
+    });
+    const rim = new THREE.Mesh(rimGeo, rimMat);
+    scene.add(rim);
+
+    // Subtle latitude rings floating around globe
+    const orbitalRingGroup = new THREE.Group();
+    for (let i = 0; i < 3; i++) {
+      const radius = GLOBE_RADIUS * (1.25 + i * 0.15);
+      const ringGeo = new THREE.RingGeometry(radius - 0.003, radius + 0.003, 128);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: i === 1 ? 0x38bdf8 : 0x94a3b8,
+        transparent: true,
+        opacity: 0.04 - i * 0.01,
+        side: THREE.DoubleSide
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2 + (i - 1) * 0.3;
+      ring.rotation.z = i * 0.2;
+      orbitalRingGroup.add(ring);
+    }
+    scene.add(orbitalRingGroup);
+
     // -------------------------------------------------------------
-    // Mouse Interaction (Click & Drag Rotation)
+    // Mouse Interaction (Click & Drag Rotation + Parallax)
     // -------------------------------------------------------------
     let isDragging = false;
     let prevMouseX = 0;
@@ -850,6 +875,10 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
     let autoRotate = true;
     let targetRotationY = globeGroup.rotation.y;
     let targetRotationX = globeGroup.rotation.x;
+    let parallaxX = 0;
+    let parallaxY = 0;
+    let targetParallaxX = 0;
+    let targetParallaxY = 0;
 
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
@@ -859,6 +888,15 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
     };
 
     const onMouseMove = (e: MouseEvent) => {
+      // Parallax effect (subtle, non-drag)
+      if (!isDragging && container) {
+        const rect = container.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        targetParallaxX = ((e.clientX - centerX) / rect.width) * 0.15;
+        targetParallaxY = ((e.clientY - centerY) / rect.height) * 0.1;
+      }
+      
       if (!isDragging) return;
       const deltaX = e.clientX - prevMouseX;
       const deltaY = e.clientY - prevMouseY;
@@ -939,12 +977,18 @@ export const ThreeEnergyGlobe: React.FC<ThreeEnergyGlobeProps> = ({
       const delta = clock.getDelta();
       const elapsed = clock.getElapsedTime();
 
-      // Smooth rotation
+      // Smooth rotation - slow and steady
       if (autoRotate) {
-        targetRotationY += delta * 0.08;
+        targetRotationY += delta * 0.04;
       }
       globeGroup.rotation.y += (targetRotationY - globeGroup.rotation.y) * 0.08;
       globeGroup.rotation.x += (targetRotationX - globeGroup.rotation.x) * 0.08;
+
+      // Subtle parallax effect
+      parallaxX += (targetParallaxX - parallaxX) * 0.05;
+      parallaxY += (targetParallaxY - parallaxY) * 0.05;
+      globeGroup.position.x = parallaxX;
+      globeGroup.position.y = parallaxY;
 
       // Animate flowing energy photons along Great Circle supply routes
       const posAttr = flowingParticles.geometry.getAttribute('position') as THREE.BufferAttribute;

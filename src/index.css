@@ -4,15 +4,15 @@
 @layer base {
   :root {
     color-scheme: dark;
-    --bg-primary: #0a0a0a;
-    --bg-secondary: #0d0d0d;
-    --bg-surface: #0f0f0f;
-    --bg-card: #121212;
-    --bg-card-hover: #1a1a1a;
-    --bg-subtle: #151515;
-    --border-subtle: #222222;
-    --border-emphasis: #333333;
-    --border-faint: #444444;
+    --bg-primary: #000000;
+    --bg-secondary: #030303;
+    --bg-surface: #060606;
+    --bg-card: #080808;
+    --bg-card-hover: #0f0f0f;
+    --bg-subtle: #0a0a0a;
+    --border-subtle: #1a1a1a;
+    --border-emphasis: #252525;
+    --border-faint: #333333;
     --text-primary: #ededed;
     --text-secondary: #999999;
     --text-muted: #666666;
@@ -46,43 +46,660 @@
   }
 }
 
+/* ==========================================================================
+   ORBIT GLOBAL ANIMATION SYSTEM
+   Purposeful motion: interaction → information → transition → ambient
+   ========================================================================== */
+
+/* Page transition - applied to route wrappers */
+.orbit-page-enter {
+  animation: orbit-page-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes orbit-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sidebar nav item hover */
+.orbit-nav-item {
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.orbit-nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 3px;
+  height: 60%;
+  background: var(--accent-energy);
+  border-radius: 0 2px 2px 0;
+  transition: transform 0.2s ease;
+}
+
+.orbit-nav-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.orbit-nav-item:hover .orbit-nav-icon {
+  color: var(--accent-energy);
+  transform: scale(1.08);
+}
+
+.orbit-nav-item.is-active {
+  background: rgba(249, 115, 22, 0.06);
+}
+
+.orbit-nav-item.is-active::before {
+  transform: translateY(-50%) scaleY(1);
+}
+
+.orbit-nav-item.is-active .orbit-nav-icon {
+  color: var(--accent-energy);
+}
+
+.orbit-nav-icon {
+  transition: all 0.2s ease;
+}
+
+/* Button interactions */
+.orbit-btn {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.orbit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.orbit-btn:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+}
+
+.orbit-btn-primary {
+  background: var(--accent-energy);
+  color: white;
+}
+
+.orbit-btn-primary:hover {
+  background: var(--accent-energy-hover);
+}
+
+/* Card hover system */
+.orbit-card {
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  border: 1px solid var(--border-subtle);
+}
+
+.orbit-card:hover {
+  border-color: var(--border-emphasis);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Input focus transitions */
+.orbit-input {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.orbit-input:focus {
+  border-color: var(--accent-energy);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+/* Status indicator pulse */
+.orbit-status-pulse {
+  animation: orbit-status-breathe 3s ease-in-out infinite;
+}
+
+@keyframes orbit-status-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Signal packet travel */
+.orbit-signal-travel {
+  animation: orbit-signal-move 2s ease-in-out infinite;
+}
+
+@keyframes orbit-signal-move {
+  0% { offset-distance: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* Subtle node pulse for network elements */
+.orbit-node-pulse {
+  animation: orbit-node-glow 3s ease-in-out infinite;
+}
+
+@keyframes orbit-node-glow {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+    opacity: 0.7;
+  }
+  50% { 
+    box-shadow: 0 0 8px 2px rgba(249, 115, 22, 0.15);
+    opacity: 1;
+  }
+}
+
+/* Radar sweep for monitoring elements */
+.orbit-radar-sweep {
+  animation: orbit-radar-rotate 8s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes orbit-radar-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Data value count-up transition */
+.orbit-value-transition {
+  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chart bar grow animation */
+.orbit-bar-grow {
+  animation: orbit-bar-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform-origin: bottom;
+}
+
+@keyframes orbit-bar-rise {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* Progress fill animation */
+.orbit-progress-fill {
+  animation: orbit-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes orbit-fill {
+  from { width: 0%; }
+}
+
+/* Fade in up - general purpose */
+.orbit-fade-in-up {
+  animation: orbit-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes orbit-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger children */
+.orbit-stagger > * {
+  opacity: 0;
+  animation: orbit-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.orbit-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.orbit-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.orbit-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.orbit-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.orbit-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.orbit-stagger > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* Reduced motion - disable all continuous animations */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-page-enter,
+  .orbit-fade-in-up,
+  .orbit-stagger > *,
+  .orbit-status-pulse,
+  .orbit-node-pulse,
+  .orbit-radar-sweep,
+  .orbit-bar-grow,
+  .orbit-progress-fill {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  
+  .orbit-card:hover {
+    transform: none;
+  }
+  
+  .orbit-btn:hover {
+    transform: none;
+  }
+  
+  .orbit-nav-item:hover .orbit-nav-icon {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   ORBIT PUBLIC LANDING - SCOPED LIGHT SURFACE SYSTEM
+   ========================================================================== */
+.orbit-landing {
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-surface: #f7f7f8;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fdfdfd;
+  --bg-subtle: #f3f3f4;
+  --border-subtle: #e8e8ea;
+  --border-emphasis: #d7d7da;
+  --border-faint: #c6c6cb;
+  --text-primary: #0b0b0d;
+  --text-secondary: #3a3a42;
+  --text-muted: #555560;
+  --text-faint: #7a7a85;
+  --accent-energy: #f97316;
+  --accent-energy-hover: #ea580c;
+  --accent-amber: #b45309;
+  --accent-emerald: #047857;
+  --accent-crimson: #b91c1c;
+  --lp-accent-soft: #fff3ec;
+  --lp-accent-ring: rgb(233 88 12 / 0.35);
+  --lp-glow: rgb(249 115 22 / 0.10);
+}
+
+/* Global background grid - more visible */
 .landing-network-grid {
-  background-image: linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-image:
+    linear-gradient(rgb(10 10 12 / 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(10 10 12 / 0.06) 1px, transparent 1px);
   background-size: 34px 34px;
   mask-image: linear-gradient(to bottom, black, transparent 85%);
 }
 
+/* Hero glow - subtle presence */
 .landing-hero-glow {
-  background: radial-gradient(ellipse, rgba(249, 115, 22, 0.14), transparent 65%);
+  background: radial-gradient(ellipse at center, rgb(249 115 22 / 0.08), transparent 65%);
   pointer-events: none;
 }
 
-.landing-gradient-text {
-  background: linear-gradient(100deg, #f97316 0%, #fb923c 48%, #f59e0b 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.orbit-landing .lp-stage-sheen {
+  background: linear-gradient(100deg, transparent, rgb(249 115 22 / 0.08), transparent);
 }
 
+/* ==========================================================================
+   SCROLL REVEAL SYSTEM
+   ========================================================================== */
+.orbit-reveal {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--orbit-reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.orbit-reveal.is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.orbit-reveal-left {
+  opacity: 0;
+  transform: translate3d(-40px, 0, 0);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--orbit-reveal-delay, 0ms);
+}
+
+.orbit-reveal-left.is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.orbit-reveal-right {
+  opacity: 0;
+  transform: translate3d(40px, 0, 0);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--orbit-reveal-delay, 0ms);
+}
+
+.orbit-reveal-right.is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.orbit-reveal-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--orbit-reveal-delay, 0ms);
+}
+
+.orbit-reveal-scale.is-revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.orbit-landing :focus-visible {
+  outline-color: var(--lp-accent-ring);
+}
+
+/* ==========================================================================
+   AMBIENT MOTION - Gated to users who do not request reduced motion
+   ========================================================================== */
 @media (prefers-reduced-motion: no-preference) {
-  .landing-network-visual svg {
-    animation: orbit-network-drift 16s ease-in-out infinite alternate;
+  .landing-network-grid {
+    animation: orbit-grid-drift 30s ease-in-out infinite alternate;
+  }
+  .landing-hero-glow {
+    animation: orbit-glow-breathe 10s ease-in-out infinite alternate;
+  }
+  .orbit-landing .lp-flow-path {
+    stroke-dasharray: 2 9;
+    animation: orbit-flow-dash 6s linear infinite;
+  }
+  .orbit-landing .lp-node-pulse {
+    animation: orbit-node-pulse 2.8s ease-in-out infinite;
+    transform-box: fill-box;
     transform-origin: center;
   }
+  .orbit-landing .lp-output-pulse {
+    animation: orbit-output-breathe 3.4s ease-in-out infinite alternate;
+  }
+  .orbit-landing .lp-stage-sheen {
+    animation: orbit-scan-sheen 8s ease-in-out infinite;
+  }
 
-  .landing-network-visual {
-    animation: orbit-panel-breathe 8s ease-in-out infinite alternate;
+  /* Network node hover highlight */
+  .lp-network-node {
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .lp-network-node:hover circle {
+    fill: var(--accent-energy) !important;
+    r: 7;
+  }
+  .lp-network-node:hover text {
+    fill: var(--accent-energy) !important;
+    font-weight: 700;
+  }
+
+  /* Scenario branch animation */
+  .lp-scenario-branch {
+    transition: opacity 0.4s ease, stroke 0.4s ease;
+  }
+  .lp-scenario-branch.is-active {
+    stroke: var(--accent-energy) !important;
+    opacity: 1 !important;
+  }
+
+  /* Reserve gauge animation */
+  .lp-reserve-fill {
+    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Signal pulse on network */
+  .lp-signal-pulse {
+    animation: lp-signal-pulse 2s ease-in-out infinite;
+  }
+  @keyframes lp-signal-pulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* Decision panel activation */
+  .lp-decision-activate {
+    animation: lp-decision-glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes lp-decision-glow {
+    from { box-shadow: 0 0 0 rgba(249, 115, 22, 0); }
+    to { box-shadow: 0 0 24px rgba(249, 115, 22, 0.18); }
+  }
+
+  /* Source trace signal */
+  .lp-source-signal {
+    animation: lp-source-travel 3s ease-in-out infinite;
+  }
+  @keyframes lp-source-travel {
+    0% { transform: translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* Platform layer cascade */
+  .lp-layer-cascade > * {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: lp-layer-in 0.5s ease forwards;
+  }
+  .lp-layer-cascade > *:nth-child(1) { animation-delay: 0.1s; }
+  .lp-layer-cascade > *:nth-child(2) { animation-delay: 0.25s; }
+  .lp-layer-cascade > *:nth-child(3) { animation-delay: 0.4s; }
+  .lp-layer-cascade > *:nth-child(4) { animation-delay: 0.55s; }
+  .lp-layer-cascade > *:nth-child(5) { animation-delay: 0.7s; }
+  @keyframes lp-layer-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Process step activation */
+  .lp-process-step {
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .lp-process-step.is-active {
+    border-color: rgba(249, 115, 22, 0.5) !important;
+    background: rgba(249, 115, 22, 0.04) !important;
+  }
+  .lp-process-step.is-active .lp-process-icon {
+    background: var(--accent-energy) !important;
+    color: white !important;
+    transform: scale(1.1);
+  }
+
+  /* Procurement route highlight */
+  .lp-route {
+    transition: all 0.4s ease;
+  }
+  .lp-route.is-active {
+    stroke: var(--accent-energy) !important;
+    stroke-width: 2.5 !important;
+    opacity: 1 !important;
+  }
+
+  /* Product preview pulse */
+  .lp-preview-pulse {
+    animation: lp-preview-breathe 4s ease-in-out infinite alternate;
+  }
+  @keyframes lp-preview-breathe {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
+  }
+
+  /* ==========================================================================
+     ENHANCED BACKGROUND ANIMATIONS
+     ========================================================================== */
+
+  /* Orbital path animation - much slower */
+  .lp-orbital-path {
+    animation: lp-orbit 60s linear infinite;
+    transform-origin: center;
+  }
+  @keyframes lp-orbit {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .lp-orbital-path-reverse {
+    animation: lp-orbit-reverse 80s linear infinite;
+    transform-origin: center;
+  }
+  @keyframes lp-orbit-reverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+
+  /* Node activation ripple */
+  .lp-node-ripple {
+    animation: lp-node-ripple 2s ease-out infinite;
+  }
+  @keyframes lp-node-ripple {
+    0% { r: 4; opacity: 0.6; }
+    100% { r: 20; opacity: 0; }
+  }
+
+  /* Flowing connection line */
+  .lp-flowing-line {
+    stroke-dasharray: 8 12;
+    animation: lp-flow-line 3s linear infinite;
+  }
+  @keyframes lp-flow-line {
+    to { stroke-dashoffset: -40; }
+  }
+
+  /* Background node breathing - subtle */
+  .lp-bg-node-breathe {
+    animation: lp-bg-breathe 6s ease-in-out infinite;
+  }
+  @keyframes lp-bg-breathe {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Orange node activation */
+  .lp-bg-node-active {
+    animation: lp-bg-active 4s ease-in-out infinite;
+  }
+  @keyframes lp-bg-active {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Card hover signal line */
+  .lp-card-signal-line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-energy), transparent);
+    transition: width 0.4s ease;
+    pointer-events: none;
+  }
+  .lp-card-hover:hover .lp-card-signal-line {
+    width: 100%;
+  }
+
+  /* Card hover icon glow */
+  .lp-card-hover:hover .lp-card-icon-glow {
+    opacity: 1;
+  }
+  .lp-card-icon-glow {
+    position: absolute;
+    inset: -4px;
+    border-radius: 12px;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.15), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  /* Propagation step connecting line */
+  .lp-prop-connector {
+    animation: lp-connector-draw 1s ease forwards;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+  }
+  .lp-prop-connector.is-active {
+    stroke-dashoffset: 0;
+  }
+
+  /* Section entrance stagger for process cards */
+  .lp-process-stagger > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .orbit-reveal.is-revealed .lp-process-stagger > *:nth-child(1) { transition-delay: 0ms; opacity: 1; transform: translateY(0); }
+  .orbit-reveal.is-revealed .lp-process-stagger > *:nth-child(2) { transition-delay: 120ms; opacity: 1; transform: translateY(0); }
+  .orbit-reveal.is-revealed .lp-process-stagger > *:nth-child(3) { transition-delay: 240ms; opacity: 1; transform: translateY(0); }
+  .orbit-reveal.is-revealed .lp-process-stagger > *:nth-child(4) { transition-delay: 360ms; opacity: 1; transform: translateY(0); }
+  .orbit-reveal.is-revealed .lp-process-stagger > *:nth-child(5) { transition-delay: 480ms; opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   REDUCED MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-reveal,
+  .orbit-reveal-left,
+  .orbit-reveal-right,
+  .orbit-reveal-scale {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .orbit-landing .lp-flow-path,
+  .orbit-landing .lp-node-pulse,
+  .orbit-landing .lp-output-pulse,
+  .orbit-landing .lp-stage-sheen,
+  .landing-network-grid,
+  .landing-hero-glow,
+  .lp-hero-network,
+  .lp-orbital-path,
+  .lp-orbital-path-reverse,
+  .lp-section-bg-drift,
+  .lp-bg-node-breathe,
+  .lp-bg-node-active,
+  .lp-depth-layer-1,
+  .lp-depth-layer-2,
+  .lp-depth-layer-3 {
+    animation: none !important;
   }
 }
 
-@keyframes orbit-network-drift {
-  from { transform: translate3d(-2px, 2px, 0) scale(0.995); }
-  to { transform: translate3d(2px, -2px, 0) scale(1.005); }
+/* ==========================================================================
+   KEYFRAMES
+   ========================================================================== */
+@keyframes orbit-grid-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(3px, -3px, 0); }
 }
 
-@keyframes orbit-panel-breathe {
-  from { box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12); }
-  to { box-shadow: 0 28px 70px rgba(249, 115, 22, 0.08); }
+@keyframes orbit-glow-breathe {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+@keyframes orbit-flow-dash {
+  to { stroke-dashoffset: -88; }
+}
+
+@keyframes orbit-node-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes orbit-output-breathe {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+
+@keyframes orbit-scan-sheen {
+  from { transform: translate3d(-12%, 0, 0); opacity: 0; }
+  14% { opacity: 0.55; }
+  86% { opacity: 0.55; }
+  to { transform: translate3d(112%, 0, 0); opacity: 0; }
 }
 
 button,
@@ -118,4 +735,2197 @@ summary:focus-visible {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #404040;
+}
+
+/* ==========================================================================
+   INTERACTIVE VISUAL INTELLIGENCE LAYER
+   ========================================================================== */
+
+/* Hero Intelligence Field */
+.lp-intelligence-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lp-parallax {
+  transition: transform 0.12s ease-out;
+  will-change: transform;
+}
+
+.lp-intel-node {
+  animation: orbit-intel-breathe 4s ease-in-out infinite;
+  animation-delay: var(--node-delay, 0s);
+}
+
+@keyframes orbit-intel-breathe {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.55; }
+}
+
+.lp-intel-node-orange {
+  animation: orbit-intel-orange 3s ease-in-out infinite;
+  animation-delay: var(--node-delay, 0s);
+}
+
+@keyframes orbit-intel-orange {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.lp-intel-ring {
+  animation: orbit-intel-ring 2.5s ease-out infinite;
+  animation-delay: var(--ring-delay, 0s);
+}
+
+@keyframes orbit-intel-ring {
+  0% { r: 3; opacity: 0.6; }
+  70% { r: 20; opacity: 0; }
+  100% { r: 20; opacity: 0; }
+}
+
+/* Enhanced card hover */
+.lp-card-hover {
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(249, 115, 22, 0.4);
+  box-shadow: 0 12px 40px -10px rgba(249, 115, 22, 0.15);
+}
+
+.lp-card-hover:hover .lp-card-icon {
+  transform: scale(1.08);
+}
+
+.lp-card-icon {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* CTA button orange sweep */
+.lp-btn-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-btn-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.18), transparent);
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+
+.lp-btn-sweep:hover::after {
+  left: 100%;
+}
+
+.lp-btn-arrow {
+  transition: transform 0.25s ease;
+  display: inline-block;
+}
+
+.lp-btn-sweep:hover .lp-btn-arrow {
+  transform: translateX(3px);
+}
+
+/* Scroll progress indicator */
+.lp-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--accent-energy);
+  z-index: 100;
+  transform-origin: left;
+  pointer-events: none;
+}
+
+/* Stagger children reveal */
+.lp-stagger > * {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.orbit-reveal.is-revealed .lp-stagger > *:nth-child(1) { transition-delay: 0ms; opacity: 1; transform: translateY(0); }
+.orbit-reveal.is-revealed .lp-stagger > *:nth-child(2) { transition-delay: 90ms; opacity: 1; transform: translateY(0); }
+.orbit-reveal.is-revealed .lp-stagger > *:nth-child(3) { transition-delay: 180ms; opacity: 1; transform: translateY(0); }
+.orbit-reveal.is-revealed .lp-stagger > *:nth-child(4) { transition-delay: 270ms; opacity: 1; transform: translateY(0); }
+.orbit-reveal.is-revealed .lp-stagger > *:nth-child(5) { transition-delay: 360ms; opacity: 1; transform: translateY(0); }
+.orbit-reveal.is-revealed .lp-stagger > *:nth-child(6) { transition-delay: 450ms; opacity: 1; transform: translateY(0); }
+
+/* Propagation step highlight */
+.lp-prop-step {
+  transition: all 0.4s ease;
+}
+
+.lp-prop-step.is-prop-active {
+  border-color: rgba(249, 115, 22, 0.5) !important;
+  background: rgba(249, 115, 22, 0.04) !important;
+}
+
+.lp-prop-step.is-prop-active .lp-prop-label {
+  color: var(--accent-energy);
+}
+
+/* Nav active underline */
+.lp-nav-active {
+  position: relative;
+}
+
+.lp-nav-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1.5px;
+  background: var(--accent-energy);
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 1px;
+}
+
+.lp-nav-active:hover::after,
+.lp-nav-active.is-active::after {
+  width: 65%;
+}
+
+/* Hero headline entrance */
+.lp-hero-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: lp-word-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.lp-hero-word:nth-child(1) { animation-delay: 0.1s; }
+.lp-hero-word:nth-child(2) { animation-delay: 0.18s; }
+.lp-hero-word:nth-child(3) { animation-delay: 0.26s; }
+.lp-hero-word:nth-child(4) { animation-delay: 0.34s; }
+.lp-hero-word:nth-child(5) { animation-delay: 0.42s; }
+.lp-hero-word:nth-child(6) { animation-delay: 0.50s; }
+
+@keyframes lp-word-enter {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Orange word highlight glow on hover */
+.lp-orange-interactive {
+  transition: text-shadow 0.3s ease;
+  cursor: default;
+}
+
+.lp-orange-interactive:hover {
+  text-shadow: 0 0 24px rgba(249, 115, 22, 0.3);
+}
+
+/* Stage status text crossfade */
+.lp-stage-status {
+  transition: opacity 0.4s ease;
+}
+
+/* Tiny metric readout */
+.lp-metric {
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  transition: color 0.3s ease;
+}
+
+.lp-metric.is-metric-active {
+  color: var(--accent-energy);
+}
+
+/* Flow packet dot */
+@keyframes orbit-packet-travel {
+  0% { offset-distance: 0%; opacity: 0; }
+  5% { opacity: 1; }
+  90% { opacity: 0.9; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* Reserve gauge fill */
+.lp-reserve-bar {
+  transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Network info panel */
+.lp-network-info {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.lp-network-info.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Scenario select glow */
+.lp-scenario-select {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.lp-scenario-select:hover {
+  border-color: rgba(249, 115, 22, 0.5);
+  background: rgba(249, 115, 22, 0.04);
+}
+
+.lp-scenario-select.is-selected {
+  border-color: var(--accent-energy);
+  background: rgba(249, 115, 22, 0.06);
+}
+
+/* Product preview mini-panels */
+.lp-preview-panel {
+  transition: all 0.4s ease;
+}
+
+.lp-preview-panel.is-active {
+  border-color: rgba(249, 115, 22, 0.4);
+  background: rgba(249, 115, 22, 0.03);
+}
+
+/* Decision trace line animation */
+.lp-trace-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 1.5s ease;
+}
+
+.lp-trace-line.is-active {
+  stroke-dashoffset: 0;
+}
+
+/* Platform layer */
+.lp-platform-layer {
+  transition: all 0.4s ease;
+}
+
+.lp-platform-layer:hover {
+  transform: translateX(4px);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+
+/* Use case visual update */
+.lp-usecase-visual {
+  transition: all 0.4s ease;
+}
+
+/* Response comparison bar */
+.lp-response-bar {
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ==========================================================================
+   REDUCED MOTION - Full list
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .lp-parallax { transition: none; }
+  .lp-card-hover:hover { transform: none; }
+  .lp-card-hover:hover .lp-card-icon { transform: none; }
+  .lp-btn-sweep::after { display: none; }
+  .lp-btn-sweep:hover .lp-btn-arrow { transform: none; }
+  .lp-hero-word { opacity: 1; transform: none; animation: none; }
+  .lp-intel-node, .lp-intel-node-orange, .lp-intel-ring { animation: none; }
+  .lp-stagger > * { opacity: 1; transform: none; transition: none; }
+  .lp-prop-step.is-prop-active { transition: none; }
+  .lp-process-step.is-active { transition: none; }
+  .lp-network-info { transition: none; }
+  .lp-scenario-select { transition: none; }
+  .lp-preview-panel { transition: none; }
+  .lp-platform-layer { transition: none; }
+  .lp-trace-line { transition: none; }
+  .lp-reserve-bar { transition: none; }
+  .lp-process-stagger > * { opacity: 1; transform: none; transition: none; }
+  .lp-orbital-path, .lp-orbital-path-reverse { animation: none; }
+  .lp-bg-node-breathe, .lp-bg-node-active { animation: none; }
+  .lp-bg-wave, .lp-section-pulse, .lp-slow-drift { animation: none; }
+  .lp-node-appear, .lp-signal-packet { animation: none; }
+  .lp-hero-network-line-active { animation: none; }
+  .lp-section-grid-bg { animation: none; }
+  .lp-cap-icon-pulse { transition: none; }
+  .lp-flowing-dash { animation: none; }
+  .lp-card-signal-line { width: 0; transition: none; }
+  .lp-orbital-ring, .lp-orbital-ring-reverse { animation: none; }
+  .lp-shield-pulse { animation: none; }
+  .lp-platform-flow-signal { animation: none; }
+  .lp-connected-card:hover { transform: none; }
+  .lp-pipeline-ring.is-active { animation: none; opacity: 0; }
+  [style*="lp-usecase-signal"] { animation: none !important; }
+  .lp-data-routing .lp-routing-signal { animation: none; opacity: 0; }
+  .lp-radial-orbit { animation: none !important; }
+  .lp-grid-intersection.is-active::before { animation: none; }
+  .lp-grid-intersection.is-active::after { animation: none; }
+  .lp-card-premium-hover::after { display: none; }
+  .lp-hero-status.is-active .lp-hero-status-dot { animation: none; }
+  .lp-section-continuity-signal { animation: none; opacity: 0; }
+  .lp-convergence-path { animation: none; }
+  .lp-wave-flowing { animation: none; }
+  .lp-wave-travel-1, .lp-wave-travel-2, .lp-wave-travel-3 { animation: none; opacity: 0; }
+  .lp-wave-breathe { animation: none; }
+  .lp-wave-drift-h { animation: none; }
+  .lp-wave-drift-v { animation: none; }
+  .lp-wave-node-pulse { animation: none; }
+  .lp-wave-convergence-ring { animation: none; }
+  .lp-wave-intersection.is-active { animation: none; }
+}
+
+/* ==========================================================================
+   FULL-PAGE MOTION / VISUAL DEPTH SYSTEM
+   ========================================================================== */
+
+/* Animated technical background grid */
+.lp-tech-grid {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lp-tech-grid svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Ambient signal particles layer */
+.lp-ambient-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Section signal wave */
+.lp-signal-wave {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Background node field */
+.lp-node-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Section connector between sections */
+.lp-section-connector {
+  position: relative;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Card signal line on hover */
+.lp-cap-icon-pulse {
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lp-card-hover:hover .lp-cap-icon-pulse {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.3));
+}
+
+/* Process flow connector line */
+.lp-flow-connector {
+  stroke-dasharray: 4 6;
+  opacity: 0.2;
+}
+
+/* Data metric count-up */
+.lp-metric-value {
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease;
+}
+
+/* Background wave animation */
+.lp-bg-wave {
+  animation: lp-wave-drift 12s ease-in-out infinite;
+}
+
+@keyframes lp-wave-drift {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(8px) translateY(-2px); }
+  50% { transform: translateX(0) translateY(-4px); }
+  75% { transform: translateX(-8px) translateY(-2px); }
+}
+
+/* Subtle section pulse */
+.lp-section-pulse {
+  animation: lp-section-breathe 8s ease-in-out infinite;
+}
+
+@keyframes lp-section-breathe {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.06; }
+}
+
+/* Flowing dash animation for signal paths */
+.lp-flowing-dash {
+  stroke-dasharray: 6 10;
+  animation: lp-dash-flow 4s linear infinite;
+}
+
+@keyframes lp-dash-flow {
+  to { stroke-dashoffset: -32; }
+}
+
+/* Slow drift for background elements */
+.lp-slow-drift {
+  animation: lp-slow-move 20s ease-in-out infinite alternate;
+}
+
+@keyframes lp-slow-move {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(6px, -6px, 0); }
+}
+
+/* Signal packet travel */
+.lp-signal-packet {
+  animation: lp-packet-glow 3s ease-in-out infinite;
+}
+
+@keyframes lp-packet-glow {
+  0%, 100% { opacity: 0.3; filter: blur(0px); }
+  50% { opacity: 0.7; filter: blur(0.5px); }
+}
+
+/* Node appear/disappear */
+.lp-node-appear {
+  animation: lp-node-fade 5s ease-in-out infinite;
+}
+
+@keyframes lp-node-fade {
+  0%, 100% { opacity: 0.1; transform: scale(0.8); }
+  50% { opacity: 0.35; transform: scale(1); }
+}
+
+/* Hero enhanced network activity */
+.lp-hero-network-line {
+  stroke-dasharray: 3 8;
+  opacity: 0.12;
+}
+
+.lp-hero-network-line-active {
+  animation: lp-network-pulse 6s ease-in-out infinite;
+}
+
+@keyframes lp-network-pulse {
+  0%, 100% { opacity: 0.08; stroke-dashoffset: 0; }
+  50% { opacity: 0.2; stroke-dashoffset: -22; }
+}
+
+/* Section background subtle grid */
+.lp-section-grid-bg {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.015) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: lp-grid-breathe 16s ease-in-out infinite alternate;
+}
+
+@keyframes lp-grid-breathe {
+  from { opacity: 0.5; }
+  to { opacity: 0.8; }
+}
+
+/* Capability card subtle border animation on hover */
+.lp-card-border-glow {
+  position: relative;
+}
+
+.lp-card-border-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, transparent 40%, rgba(249, 115, 22, 0.15) 50%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.lp-card-hover:hover .lp-card-border-glow::before {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   CONNECTED SYSTEM ANIMATION LANGUAGE
+   ========================================================================== */
+
+/* Process pipeline vertical connector */
+.lp-pipeline-connector {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--border-subtle) 10%, var(--border-subtle) 90%, transparent);
+  transform: translateX(-50%);
+  z-index: 0;
+}
+
+/* Pipeline signal packet */
+.lp-pipeline-packet {
+  position: absolute;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-energy);
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+  z-index: 2;
+}
+
+/* Pipeline node activation ring */
+.lp-pipeline-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-energy);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  z-index: 1;
+}
+
+.lp-pipeline-ring.is-active {
+  animation: lp-pipeline-ring-expand 0.8s ease-out forwards;
+}
+
+@keyframes lp-pipeline-ring-expand {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+/* Card connecting line (horizontal between cards) */
+.lp-card-connector {
+  position: absolute;
+  top: 50%;
+  right: -24px;
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-subtle), var(--accent-energy), var(--border-subtle));
+  opacity: 0.3;
+  z-index: 0;
+}
+
+/* Card connector signal dot */
+.lp-card-connector-dot {
+  position: absolute;
+  top: 50%;
+  right: -24px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-energy);
+  transform: translateY(-50%);
+  opacity: 0;
+}
+
+/* Capability card internal visual */
+.lp-cap-visual {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.06;
+}
+
+/* Orbital ring around important nodes */
+.lp-orbital-ring {
+  animation: lp-orbital-spin 40s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes lp-orbital-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.lp-orbital-ring-reverse {
+  animation: lp-orbital-spin-reverse 55s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes lp-orbital-spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* Security shield pulse */
+.lp-shield-pulse {
+  animation: lp-shield-breathe 4s ease-in-out infinite;
+}
+
+@keyframes lp-shield-breathe {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Platform flow vertical signal */
+.lp-platform-flow-signal {
+  animation: lp-flow-travel 3s ease-in-out infinite;
+}
+
+@keyframes lp-flow-travel {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Connected card hover lift */
+.lp-connected-card {
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lp-connected-card:hover {
+  transform: translateY(-3px);
+  z-index: 2;
+}
+
+/* Step activation glow */
+.lp-step-glow {
+  transition: box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.lp-step-glow.is-active {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.12);
+  border-color: rgba(249, 115, 22, 0.4) !important;
+}
+
+/* Hero orbital background */
+.lp-hero-orbital {
+  position: absolute;
+  border-radius: 50%;
+  border: 0.5px solid var(--border-subtle);
+  pointer-events: none;
+}
+
+/* Convergence lines for CTA */
+.lp-convergence-line {
+  stroke-dasharray: 4 8;
+  opacity: 0.15;
+}
+
+/* Use case step signal */
+@keyframes lp-usecase-signal {
+  0% { left: 0%; opacity: 0; }
+  5% { opacity: 0.8; }
+  95% { opacity: 0.8; }
+  100% { left: 100%; opacity: 0; }
+}
+
+/* ==========================================================================
+   DATA ROUTING WINDOW — Minimal intelligence processing interface
+   ========================================================================== */
+.lp-data-routing {
+  position: relative;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.lp-data-routing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(249,115,22,0.02), transparent);
+  pointer-events: none;
+}
+
+.lp-routing-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.lp-routing-row:last-child {
+  border-bottom: none;
+}
+
+.lp-routing-row.is-active {
+  background: rgba(249,115,22,0.03);
+}
+
+.lp-routing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-emphasis);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+  flex-shrink: 0;
+}
+
+.lp-routing-dot.is-active {
+  background: var(--accent-energy);
+  box-shadow: 0 0 8px rgba(249,115,22,0.3);
+}
+
+.lp-routing-dot.is-complete {
+  background: var(--accent-emerald);
+}
+
+.lp-routing-line {
+  position: absolute;
+  left: 19px;
+  width: 1px;
+  background: var(--border-subtle);
+  transition: background 0.4s ease;
+}
+
+.lp-routing-line.is-active {
+  background: var(--accent-energy);
+}
+
+.lp-routing-signal {
+  position: absolute;
+  left: 18px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accent-energy);
+  opacity: 0;
+  box-shadow: 0 0 6px rgba(249,115,22,0.4);
+}
+
+/* ==========================================================================
+   RADIAL INTELLIGENCE NETWORK — Central hub with orbital nodes
+   ========================================================================== */
+.lp-radial-network {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.lp-radial-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.lp-radial-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+  transition: opacity 0.5s ease;
+}
+
+.lp-radial-node-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.4s ease;
+}
+
+.lp-radial-node.is-active .lp-radial-node-icon {
+  border-color: var(--accent-energy);
+  color: var(--accent-energy);
+  box-shadow: 0 0 12px rgba(249,115,22,0.15);
+}
+
+.lp-radial-node-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.4s ease;
+  white-space: nowrap;
+}
+
+.lp-radial-node.is-active .lp-radial-node-label {
+  color: var(--accent-energy);
+}
+
+.lp-radial-orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 0.5px solid var(--border-subtle);
+  pointer-events: none;
+}
+
+.lp-radial-connection {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 0 0;
+  height: 0.5px;
+  background: var(--border-subtle);
+  pointer-events: none;
+  transition: background 0.4s ease, opacity 0.4s ease;
+}
+
+.lp-radial-connection.is-active {
+  background: var(--accent-energy);
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   SECTION SIGNAL CONTINUITY — Vertical connectors between sections
+   ========================================================================== */
+.lp-section-continuity {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  overflow: hidden;
+}
+
+.lp-section-continuity::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--border-subtle), transparent);
+  transform: translateX(-50%);
+}
+
+.lp-section-continuity-signal {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-energy);
+  transform: translateX(-50%);
+  opacity: 0;
+}
+
+/* ==========================================================================
+   GRID INTERSECTION ACTIVATION
+   ========================================================================== */
+.lp-grid-intersection {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+}
+
+.lp-grid-intersection::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accent-energy);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.lp-grid-intersection.is-active::before {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0.4;
+}
+
+.lp-grid-intersection::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+  background: var(--accent-energy);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.lp-grid-intersection.is-active::after {
+  width: 20px;
+  height: 1px;
+  opacity: 0.15;
+  animation: lp-intersection-burst 0.8s ease-out forwards;
+}
+
+@keyframes lp-intersection-burst {
+  0% { width: 1px; opacity: 0.3; }
+  100% { width: 24px; opacity: 0; }
+}
+
+/* ==========================================================================
+   ENHANCED CARD HOVER — Premium micro-interactions
+   ========================================================================== */
+.lp-card-premium-hover {
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+
+.lp-card-premium-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(249,115,22,0.04), transparent 40%);
+  pointer-events: none;
+}
+
+.lp-card-premium-hover:hover::after {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   STATUS TEXT CROSSFADE
+   ========================================================================== */
+.lp-status-text {
+  position: relative;
+  display: inline-block;
+  height: 1.2em;
+  overflow: hidden;
+}
+
+.lp-status-text span {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.lp-status-text span.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   USE CASE NETWORK VISUAL
+   ========================================================================== */
+.lp-usecase-network {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+}
+
+.lp-usecase-node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+}
+
+.lp-usecase-node-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-emphasis);
+  transition: all 0.4s ease;
+  flex-shrink: 0;
+}
+
+.lp-usecase-node.is-active .lp-usecase-node-dot {
+  background: var(--accent-energy);
+  box-shadow: 0 0 8px rgba(249,115,22,0.3);
+}
+
+.lp-usecase-node-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.lp-usecase-node.is-active .lp-usecase-node-label {
+  color: var(--accent-energy);
+}
+
+/* ==========================================================================
+   ENHANCED HERO — Signal processing status
+   ========================================================================== */
+.lp-hero-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  transition: all 0.5s ease;
+}
+
+.lp-hero-status.is-active {
+  border-color: rgba(249,115,22,0.3);
+  color: var(--accent-energy);
+}
+
+.lp-hero-status-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background 0.4s ease;
+}
+
+.lp-hero-status.is-active .lp-hero-status-dot {
+  background: var(--accent-energy);
+  animation: lp-status-blink 2s ease-in-out infinite;
+}
+
+@keyframes lp-status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ==========================================================================
+   CONVERGENCE PATH — Visual connection between CTA and content
+   ========================================================================== */
+.lp-convergence-path {
+  stroke-dasharray: 3 6;
+  opacity: 0.1;
+  animation: lp-dash-flow 8s linear infinite;
+}
+
+/* ==========================================================================
+   FLOWING WAVE ANIMATION SYSTEM — ORBIT Intelligence Flow
+   ========================================================================== */
+
+/* Wave field container */
+.lp-wave-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Individual wave path base */
+.lp-wave-path {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 0.8;
+  opacity: 0.12;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Orange accent wave */
+.lp-wave-path-accent {
+  fill: none;
+  stroke: var(--accent-energy);
+  stroke-width: 0.6;
+  opacity: 0.08;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Wave path with flowing dash */
+.lp-wave-flowing {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 0.6;
+  stroke-dasharray: 4 12;
+  opacity: 0.1;
+  vector-effect: non-scaling-stroke;
+  animation: lp-wave-dash-flow 12s linear infinite;
+}
+
+@keyframes lp-wave-dash-flow {
+  to { stroke-dashoffset: -64; }
+}
+
+/* Wave highlight — small bright segment traveling along a path */
+.lp-wave-highlight {
+  fill: none;
+  stroke: var(--accent-energy);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Wave highlight animation — travel along path */
+.lp-wave-travel-1 {
+  stroke-dasharray: 30 700;
+  animation: lp-wave-travel-a 8s ease-in-out infinite;
+}
+
+.lp-wave-travel-2 {
+  stroke-dasharray: 25 800;
+  animation: lp-wave-travel-b 11s ease-in-out infinite 2s;
+}
+
+.lp-wave-travel-3 {
+  stroke-dasharray: 20 600;
+  animation: lp-wave-travel-c 9s ease-in-out infinite 4s;
+}
+
+@keyframes lp-wave-travel-a {
+  0% { stroke-dashoffset: 730; opacity: 0; }
+  5% { opacity: 0.5; }
+  90% { opacity: 0.5; }
+  100% { stroke-dashoffset: -730; opacity: 0; }
+}
+
+@keyframes lp-wave-travel-b {
+  0% { stroke-dashoffset: 825; opacity: 0; }
+  5% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { stroke-dashoffset: -825; opacity: 0; }
+}
+
+@keyframes lp-wave-travel-c {
+  0% { stroke-dashoffset: 620; opacity: 0; }
+  5% { opacity: 0.45; }
+  90% { opacity: 0.45; }
+  100% { stroke-dashoffset: -620; opacity: 0; }
+}
+
+/* Wave group — multiple lines together */
+.lp-wave-group {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Wave breathe — subtle opacity pulse for background waves */
+.lp-wave-breathe {
+  animation: lp-wave-breathe-kf 6s ease-in-out infinite;
+}
+
+@keyframes lp-wave-breathe-kf {
+  0%, 100% { opacity: 0.06; }
+  50% { opacity: 0.14; }
+}
+
+/* Wave horizontal drift */
+.lp-wave-drift-h {
+  animation: lp-wave-drift-h-kf 20s linear infinite;
+}
+
+@keyframes lp-wave-drift-h-kf {
+  from { transform: translateX(0); }
+  to { transform: translateX(-40px); }
+}
+
+/* Wave vertical drift */
+.lp-wave-drift-v {
+  animation: lp-wave-drift-v-kf 25s linear infinite;
+}
+
+@keyframes lp-wave-drift-v-kf {
+  from { transform: translateY(0); }
+  to { transform: translateY(-30px); }
+}
+
+/* Process connector wave — horizontal between cards */
+.lp-process-wave-connector {
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Platform flow wave */
+.lp-platform-wave {
+  position: absolute;
+  left: 50%;
+  width: 1px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* CTA convergence paths */
+.lp-cta-convergence {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Signal dot on wave */
+.lp-wave-signal-dot {
+  r: 2;
+  fill: var(--accent-energy);
+  opacity: 0;
+}
+
+/* Section transition wave — horizontal line between sections */
+.lp-section-wave-transition {
+  position: relative;
+  width: 100%;
+  height: 32px;
+  overflow: hidden;
+}
+
+.lp-section-wave-transition svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Wave node activation pulse */
+.lp-wave-node-pulse {
+  animation: lp-wave-node-pulse-kf 2s ease-out infinite;
+}
+
+@keyframes lp-wave-node-pulse-kf {
+  0% { r: 2; opacity: 0.6; }
+  100% { r: 8; opacity: 0; }
+}
+
+/* Wave convergence point */
+.lp-wave-convergence {
+  position: relative;
+}
+
+.lp-wave-convergence-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-energy);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.lp-wave-convergence-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 0.5px solid var(--accent-energy);
+  transform: translate(-50%, -50%);
+  animation: lp-convergence-ring-expand 3s ease-out infinite;
+}
+
+@keyframes lp-convergence-ring-expand {
+  0% { width: 6px; height: 6px; opacity: 0.5; }
+  100% { width: 40px; height: 40px; opacity: 0; }
+}
+
+/* Use case route wave */
+.lp-usecase-route-wave {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 0.5;
+  opacity: 0.15;
+}
+
+.lp-usecase-route-active {
+  stroke: var(--accent-energy);
+  opacity: 0.3;
+  stroke-width: 0.8;
+}
+
+/* Wave intersection cross — small activation at grid crossings */
+.lp-wave-intersection {
+  stroke: var(--accent-energy);
+  stroke-width: 0.3;
+  opacity: 0;
+}
+
+.lp-wave-intersection.is-active {
+  animation: lp-wave-intersection-flash 0.6s ease-out forwards;
+}
+
+@keyframes lp-wave-intersection-flash {
+  0% { opacity: 0.4; stroke-width: 0.3; }
+  100% { opacity: 0; stroke-width: 1.5; }
+}
+
+/* Hero wave layer — positioned behind content */
+.lp-hero-wave-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* Process wave — behind process cards */
+.lp-process-wave-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Platform wave layer */
+.lp-platform-wave-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* CTA wave layer */
+.lp-cta-wave-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Section signal falling animation */
+@keyframes lp-section-signal-fall {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ==========================================================================
+   ORBIT DASHBOARD — Command Center Visual System
+   Scoped to .dashboard-root to avoid affecting other pages
+   ========================================================================== */
+
+.dashboard-root {
+  position: relative;
+  min-height: 100%;
+  background: #000000;
+  overflow: hidden;
+}
+
+/* Dashboard background grid */
+.db-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse at 55% 45%, black 25%, transparent 65%);
+}
+
+/* Dashboard radar background */
+.db-radar {
+  position: fixed;
+  top: 50%;
+  right: 15%;
+  width: 500px;
+  height: 500px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+}
+
+.db-radar-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 0.5px solid rgba(255,255,255,0.3);
+  transform: translate(-50%, -50%);
+}
+
+.db-radar-sweep {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50%;
+  height: 0.5px;
+  transform-origin: left center;
+  background: linear-gradient(90deg, rgba(249,115,22,0.4), transparent);
+  animation: db-radar-sweep-kf 8s linear infinite;
+}
+
+@keyframes db-radar-sweep-kf {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Dashboard signal waves */
+.db-signal-wave {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.db-signal-wave path {
+  fill: none;
+  stroke: rgba(255,255,255,0.04);
+  stroke-width: 0.8;
+}
+
+.db-signal-wave .db-wave-accent {
+  stroke: rgba(249,115,22,0.08);
+  stroke-width: 0.6;
+  stroke-dasharray: 4 20;
+  animation: db-wave-dash-kf 15s linear infinite;
+}
+
+@keyframes db-wave-dash-kf {
+  to { stroke-dashoffset: -96; }
+}
+
+/* Wave traveling highlight */
+.db-wave-highlight {
+  fill: none;
+  stroke: rgba(249,115,22,0.18);
+  stroke-width: 0.8;
+  stroke-linecap: round;
+  stroke-dasharray: 16 800;
+  animation: db-wave-travel-kf 12s ease-in-out infinite;
+}
+
+@keyframes db-wave-travel-kf {
+  0% { stroke-dashoffset: 820; opacity: 0; }
+  5% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { stroke-dashoffset: -820; opacity: 0; }
+}
+
+/* Dashboard globe container */
+.db-globe-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Globe outer ring */
+.db-globe-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 0.5px solid rgba(255,255,255,0.06);
+  transform: translate(-50%, -50%);
+}
+
+.db-globe-ring-accent {
+  border-color: rgba(249,115,22,0.08);
+}
+
+/* Globe rotation */
+.db-globe-rotate {
+  animation: db-globe-rotate-kf 120s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes db-globe-rotate-kf {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.db-globe-rotate-reverse {
+  animation: db-globe-rotate-reverse-kf 160s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes db-globe-rotate-reverse-kf {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* Globe node pulse */
+.db-node-pulse {
+  animation: db-node-pulse-kf 3s ease-in-out infinite;
+}
+
+@keyframes db-node-pulse-kf {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Globe signal packet */
+.db-signal-packet {
+  animation: db-signal-packet-kf 4s ease-in-out infinite;
+}
+
+@keyframes db-signal-packet-kf {
+  0% { offset-distance: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* Dashboard card base */
+.db-card {
+  background: #060606;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.db-card:hover {
+  border-color: #222222;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Dashboard status dot */
+.db-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.db-status-dot-operative {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16,185,129,0.3);
+}
+
+.db-status-dot-warning {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245,158,11,0.3);
+}
+
+.db-status-dot-alert {
+  background: #f97316;
+  box-shadow: 0 0 6px rgba(249,115,22,0.3);
+}
+
+/* Dashboard metric counter */
+.db-metric-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Dashboard section label */
+.db-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #555555;
+  font-family: ui-monospace, monospace;
+}
+
+/* Dashboard operational strip */
+.db-operational-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 14px;
+  background: #030303;
+  border: 1px solid #1a1a1a;
+  border-radius: 5px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  overflow-x: auto;
+}
+
+.db-operational-strip-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: #666666;
+}
+
+.db-operational-strip-item.is-active {
+  color: #999999;
+}
+
+/* Dashboard module card */
+.db-module-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: #040404;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.db-module-card:hover {
+  border-color: #222222;
+  background: #080808;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Dashboard scan line */
+.db-scan-line {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(249,115,22,0.04), transparent);
+  pointer-events: none;
+  z-index: 0;
+  animation: db-scan-line-kf 14s linear infinite;
+}
+
+@keyframes db-scan-line-kf {
+  0% { top: -1px; }
+  100% { top: 100%; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .db-radar-sweep { animation: none; }
+  .db-wave-highlight { animation: none; opacity: 0; }
+  .db-globe-rotate, .db-globe-rotate-reverse { animation: none; }
+  .db-node-pulse { animation: none; }
+  .db-signal-packet { animation: none; }
+  .db-scan-line { animation: none; }
+  .db-signal-wave .db-wave-accent { animation: none; }
+  .db-module-card:hover, .db-card:hover { transform: none; }
+}
+
+/* ==========================================================================
+   ORBIT AUTH PAGE — Scoped Login/Signup Styles
+   ========================================================================== */
+
+/* Right Panel — White Theme */
+.orbit-auth-panel {
+  --auth-bg: #ffffff;
+  --auth-surface: #fafafa;
+  --auth-text: #0b0b0d;
+  --auth-text-secondary: #3a3a42;
+  --auth-text-muted: #555560;
+  --auth-border: #e8e8ea;
+  --auth-border-focus: #f97316;
+  --auth-accent: #f97316;
+  --auth-accent-hover: #ea580c;
+  --auth-error: #b91c1c;
+  --auth-success: #047857;
+  background-color: var(--auth-bg);
+  color: var(--auth-text);
+}
+
+/* Entrance animations */
+@keyframes orbit-auth-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.orbit-auth-entrance {
+  opacity: 0;
+  animation: orbit-auth-fade-up 0.5s ease-out forwards;
+}
+
+.orbit-auth-entrance-delay-1 { animation-delay: 0.1s; }
+.orbit-auth-entrance-delay-2 { animation-delay: 0.2s; }
+.orbit-auth-entrance-delay-3 { animation-delay: 0.25s; }
+.orbit-auth-entrance-delay-4 { animation-delay: 0.3s; }
+.orbit-auth-entrance-delay-5 { animation-delay: 0.35s; }
+.orbit-auth-entrance-delay-6 { animation-delay: 0.4s; }
+
+/* Brand logo */
+.orbit-auth-logo {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.orbit-auth-logo:hover {
+  transform: scale(1.05);
+}
+
+/* Version badge */
+.orbit-auth-badge {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--auth-text-muted);
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orbit-auth-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--auth-accent);
+  animation: orbit-auth-badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes orbit-auth-badge-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Tab segmented control */
+.orbit-auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: 10px;
+}
+
+.orbit-auth-tab {
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--auth-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.orbit-auth-tab:hover:not(.orbit-auth-tab-active) {
+  color: var(--auth-text);
+}
+
+.orbit-auth-tab-active {
+  background: var(--auth-bg);
+  color: var(--auth-accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Form inputs */
+.orbit-auth-input-group {
+  position: relative;
+}
+
+.orbit-auth-input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--auth-bg);
+  border: 1px solid var(--auth-border);
+  border-radius: 10px;
+  color: var(--auth-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.orbit-auth-input::placeholder {
+  color: var(--auth-text-muted);
+  opacity: 0.6;
+}
+
+.orbit-auth-input:hover {
+  border-color: #d1d1d5;
+}
+
+.orbit-auth-input:focus {
+  border-color: var(--auth-accent);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.orbit-auth-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--auth-text-muted);
+  transition: color 0.2s ease;
+  pointer-events: none;
+}
+
+.orbit-auth-input:focus ~ .orbit-auth-input-icon,
+.orbit-auth-input-group:focus-within .orbit-auth-input-icon {
+  color: var(--auth-accent);
+}
+
+.orbit-auth-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--auth-text-secondary);
+  margin-bottom: 6px;
+}
+
+/* Password visibility toggle */
+.orbit-auth-eye {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--auth-text-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+
+.orbit-auth-eye:hover {
+  color: var(--auth-accent);
+}
+
+/* Custom checkbox */
+.orbit-auth-checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--auth-border);
+  border-radius: 4px;
+  background: var(--auth-bg);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.orbit-auth-checkbox:hover {
+  border-color: var(--auth-accent);
+}
+
+.orbit-auth-checkbox:checked {
+  background: var(--auth-accent);
+  border-color: var(--auth-accent);
+}
+
+.orbit-auth-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.orbit-auth-checkbox:focus-visible {
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+/* CTA Button */
+.orbit-auth-cta {
+  width: 100%;
+  padding: 13px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: var(--auth-accent);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.orbit-auth-cta:hover:not(:disabled) {
+  background: var(--auth-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.orbit-auth-cta:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.2);
+}
+
+.orbit-auth-cta:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.orbit-auth-cta-arrow {
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.orbit-auth-cta:hover .orbit-auth-cta-arrow {
+  transform: translateX(3px);
+}
+
+/* Links */
+.orbit-auth-link {
+  color: var(--auth-accent);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: inherit;
+  padding: 0;
+}
+
+.orbit-auth-link:hover {
+  color: var(--auth-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Error message */
+.orbit-auth-error {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(185, 28, 28, 0.2);
+  background: rgba(185, 28, 28, 0.04);
+  color: var(--auth-error);
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  animation: orbit-auth-fade-up 0.3s ease-out;
+}
+
+/* Warning message */
+.orbit-auth-warning {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  background: rgba(180, 83, 9, 0.04);
+  color: #92400e;
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  animation: orbit-auth-fade-up 0.3s ease-out;
+}
+
+/* Trust footer */
+.orbit-auth-trust {
+  font-size: 11px;
+  color: var(--auth-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Globe container */
+.orbit-auth-globe {
+  background: #06080d;
+  position: relative;
+  overflow: hidden;
+}
+
+.orbit-auth-globe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(30, 41, 59, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 41, 59, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.orbit-auth-globe::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(6, 8, 13, 0.4) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Globe ambient glow */
+.orbit-auth-globe-glow {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+  animation: orbit-auth-glow-breathe 10s ease-in-out infinite alternate;
+}
+
+@keyframes orbit-auth-glow-breathe {
+  from { opacity: 0.6; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1.03); }
+}
+
+/* Globe signal packets */
+.orbit-auth-signal {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--auth-accent);
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+  pointer-events: none;
+}
+
+/* Back button */
+.orbit-auth-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.orbit-auth-back:hover {
+  color: white;
+  border-color: rgba(249, 115, 22, 0.5);
+}
+
+/* Technical annotation */
+.orbit-auth-annotation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orbit-auth-annotation-label {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.orbit-auth-annotation-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(56, 189, 248, 0.8);
+}
+
+.orbit-auth-annotation-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.9);
+  animation: orbit-auth-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes orbit-auth-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* Orbital indicator */
+.orbit-auth-orbital-indicator {
+  opacity: 0.7;
+}
+
+.orbit-auth-orbital-node {
+  animation: orbit-auth-orbital-pulse 3s ease-in-out infinite;
+}
+
+.orbit-auth-orbital-node:nth-child(2) { animation-delay: 0.5s; }
+.orbit-auth-orbital-node:nth-child(3) { animation-delay: 1s; }
+.orbit-auth-orbital-node:nth-child(4) { animation-delay: 1.5s; }
+.orbit-auth-orbital-node:nth-child(5) { animation-delay: 2s; }
+
+@keyframes orbit-auth-orbital-pulse {
+  0%, 100% { opacity: 0.6; r: 2; }
+  50% { opacity: 1; r: 2.5; }
+}
+
+/* Spinner */
+.orbit-auth-spinner {
+  animation: orbit-auth-spin 1s linear infinite;
+}
+
+@keyframes orbit-auth-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-auth-entrance {
+    opacity: 1;
+    animation: none;
+  }
+  .orbit-auth-badge-dot {
+    animation: none;
+  }
+  .orbit-auth-globe-glow {
+    animation: none;
+  }
+  .orbit-auth-cta:hover:not(:disabled) {
+    transform: none;
+  }
+  .orbit-auth-cta:hover .orbit-auth-cta-arrow {
+    transform: none;
+  }
+  .orbit-auth-logo:hover {
+    transform: none;
+  }
+  .orbit-auth-annotation-dot {
+    animation: none;
+  }
+  .orbit-auth-orbital-node {
+    animation: none;
+  }
 }

@@ -16,16 +16,16 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 text-center rounded-xl border border-red-500/30 bg-red-500/5 dark:bg-red-950/20 ${className}`}
+      className={`flex flex-col items-center justify-center p-8 text-center rounded-xl border border-red-500/20 bg-[#0a0505] ${className}`}
     >
-      <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-3">
+      <div className="w-10 h-10 rounded-full bg-red-500/15 text-red-500 flex items-center justify-center mb-3">
         <AlertCircle className="w-5 h-5" />
       </div>
 
-      <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">
+      <h4 className="text-sm font-semibold text-red-400">
         {title}
       </h4>
-      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-sm">
+      <p className="text-xs text-[#666666] mt-1 max-w-sm">
         {message}
       </p>
 

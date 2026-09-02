@@ -4,7 +4,6 @@ import { LandingPage } from './pages/LandingPage';
 import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { NetworkPage } from './pages/NetworkPage';
-import { ProcurementPage } from './pages/ProcurementPage';
 import { ReservesPage } from './pages/ReservesPage';
 import { AssistantPage } from './pages/AssistantPage';
 import { AppShell } from './components/layout/AppShell';
@@ -66,8 +65,6 @@ function MainRouter() {
               return <DashboardPage onNavigate={navigate} />;
             case '/app/network':
               return <NetworkPage />;
-            case '/app/procurement':
-              return <ProcurementPage />;
             case '/app/reserves':
               return <ReservesPage />;
             case '/app/assistant':

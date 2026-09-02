@@ -27,26 +27,26 @@ export const UserMenu: React.FC = () => {
         id="user-menu-button"
         type="button"
         onClick={() => setIsOpen((open) => !open)}
-        className="flex items-center gap-2.5 p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white/80 dark:bg-slate-900/80 transition-colors cursor-pointer"
+        className="flex items-center gap-2.5 p-1.5 rounded-lg border border-[#252525] hover:border-[#333333] bg-[#080808] transition-colors cursor-pointer"
         aria-expanded={isOpen}
       >
         <div className="w-7 h-7 rounded-md bg-gradient-to-tr from-orange-600 to-amber-400 text-white flex items-center justify-center text-xs font-bold font-mono">
           {userLabel.charAt(0).toUpperCase()}
         </div>
         <div className="hidden md:flex flex-col text-left">
-          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1 max-w-[150px]">
+          <span className="text-xs font-semibold text-[#EDEDED] line-clamp-1 max-w-[150px]">
             {userLabel}
           </span>
-          <span className="text-xs text-slate-500 font-mono tracking-tight">Active session</span>
+          <span className="text-[10px] text-[#666666] font-mono tracking-tight">Active session</span>
         </div>
-        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-[#666666]" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="px-3 py-2.5 border-b border-slate-100 dark:border-slate-800/80 mb-1">
-            <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{userLabel}</p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate mt-0.5">
+        <div className="absolute right-0 mt-2 w-64 rounded-xl border border-[#252525] bg-[#0a0a0a] shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="px-3 py-2.5 border-b border-[#1a1a1a] mb-1">
+            <p className="text-xs font-bold text-[#EDEDED] line-clamp-1">{userLabel}</p>
+            <p className="text-[11px] text-[#666666] font-mono truncate mt-0.5">
               {user.email || 'Email unavailable'}
             </p>
           </div>

@@ -7,7 +7,6 @@ import {
   Network,
   GitBranch,
   TrendingUp,
-  ShoppingCart,
   Database,
   CheckCircle2,
   Bot,
@@ -51,7 +50,6 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Logistics',
     items: [
-      navigationItem('procurement', ShoppingCart),
       navigationItem('reserves', Database)
     ]
   },
@@ -68,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, colla
 
   return (
     <aside
-      className={`relative flex flex-col h-full border-r border-[#222222] bg-[#0D0D0D] text-[#E5E7EB] transition-all duration-200 z-30 ${
+      className={`relative flex flex-col h-full border-r border-[#1a1a1a] bg-[#000000] text-[#E5E7EB] transition-all duration-200 z-30 ${
         collapsed ? 'w-16' : 'w-64'
       }`}
     >
@@ -93,15 +91,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, colla
                     type="button"
                     onClick={() => onNavigate(item.path)}
                     title={item.title}
-                    className={`w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors cursor-pointer text-left ${
+                    className={`orbit-nav-item w-full flex items-center px-3 py-2.5 text-sm rounded-lg cursor-pointer text-left ${
                       isActive
-                        ? 'bg-[#1A1A1A] text-white border border-[#333333] font-medium'
-                        : 'text-[#999999] hover:text-white hover:bg-[#151515] border border-transparent'
+                        ? 'is-active bg-[rgba(249,115,22,0.06)] text-white border border-[rgba(249,115,22,0.15)] font-medium'
+                        : 'text-[#999999] hover:text-white border border-transparent'
                     }`}
                   >
                     <Icon
-                      className={`w-4 h-4 flex-shrink-0 mr-3 transition-opacity ${
-                        isActive ? 'text-orange-400 opacity-100' : 'opacity-60 group-hover:opacity-80'
+                      className={`orbit-nav-icon w-4 h-4 flex-shrink-0 mr-3 ${
+                        isActive ? 'text-orange-400' : 'text-[#666666]'
                       }`}
                     />
                       {!collapsed && (
@@ -118,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, colla
       </nav>
 
       {!collapsed && (
-        <div className="p-4 border-t border-[#222222] bg-[#0F0F0F]">
+        <div className="p-4 border-t border-[#1a1a1a] bg-[#000000]">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-600 to-amber-400 flex items-center justify-center text-xs font-bold text-white shadow-xs">
               {(user?.displayName || user?.email || 'O').charAt(0).toUpperCase()}
@@ -135,12 +133,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, colla
         </div>
       )}
 
-      <div className="p-2 border-t border-[#222222] flex justify-end bg-[#0D0D0D]">
+      <div className="p-2 border-t border-[#1a1a1a] flex justify-end bg-[#000000]">
         <button
           id="sidebar-collapse-button"
           type="button"
           onClick={onToggleCollapse}
-          className="p-1.5 rounded-md text-[#666666] hover:text-[#EDEDED] hover:bg-[#1A1A1A] transition-colors w-full flex items-center justify-center cursor-pointer"
+          className="p-1.5 rounded-md text-[#666666] hover:text-[#EDEDED] hover:bg-[#0a0a0a] transition-colors w-full flex items-center justify-center cursor-pointer"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? (
