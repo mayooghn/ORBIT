@@ -21,247 +21,13 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// tests/phase2-data-layer.test.ts
+// tests/orbit-assessment-orchestrator.test.ts
 var import_strict = __toESM(require("node:assert/strict"), 1);
 var import_node_http = require("node:http");
-var import_node_fs4 = require("node:fs");
-var import_node_path4 = __toESM(require("node:path"), 1);
-var import_node_os = require("node:os");
 var import_node_test = __toESM(require("node:test"), 1);
-
-// server.ts
-var import_express = __toESM(require("express"), 1);
-var import_node_fs3 = require("node:fs");
-var import_node_path3 = __toESM(require("node:path"), 1);
-var import_node_process = require("node:process");
-var import_vite = require("vite");
-
-// src/services/dataIngestion/googleNews.ts
-var import_node_crypto = require("node:crypto");
-var ENERGY_MONITORING_QUERIES = [
-  '"crude oil" export disruption',
-  '"oil exports" sanctions',
-  '"oil imports" disruption',
-  '"Strait of Hormuz" oil',
-  '"Persian Gulf" oil tanker',
-  '"Red Sea" oil shipping',
-  '"oil tanker" attack',
-  "oil pipeline disruption",
-  "oil refinery outage",
-  "OPEC geopolitical disruption",
-  '"Saudi Arabia" oil exports',
-  '"Iran" oil sanctions',
-  '"Russia" oil sanctions',
-  '"Iraq" oil exports',
-  '"United Arab Emirates" oil exports',
-  '"Venezuela" oil sanctions',
-  '"Nigeria" oil disruption'
-];
-var GOOGLE_NEWS_QUERIES = ENERGY_MONITORING_QUERIES;
-var GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss/search";
-var REQUEST_TIMEOUT_MS = 1e4;
-var ingestionStatus = "NOT_CONNECTED";
-function getNewsIngestionStatus() {
-  return ingestionStatus;
-}
-function buildFeedUrl(query) {
-  const params = new URLSearchParams({
-    q: query,
-    hl: "en-US",
-    gl: "US",
-    ceid: "US:en"
-  });
-  return `${GOOGLE_NEWS_RSS_URL}?${params.toString()}`;
-}
-function decodeXmlEntities(value2) {
-  return value2.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16))).replace(/&#([0-9]+);/g, (_, decimal) => String.fromCodePoint(Number.parseInt(decimal, 10))).replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
-}
-function cleanText(value2) {
-  if (!value2) return "";
-  let cleaned = decodeXmlEntities(value2);
-  cleaned = cleaned.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, "$1");
-  cleaned = cleaned.replace(/<[^>]*>/g, " ");
-  cleaned = decodeXmlEntities(cleaned);
-  return cleaned.replace(/\s+/g, " ").trim();
-}
-function extractTag(block, tagName) {
-  const tagPattern = new RegExp(`<${tagName}\\b[^>]*>([\\s\\S]*?)<\\/${tagName}>`, "i");
-  return tagPattern.exec(block)?.[1];
-}
-function extractAttribute(block, tagName, attributeName) {
-  const tagPattern = new RegExp(`<${tagName}\\b[^>]*\\b${attributeName}=["']([^"']+)["'][^>]*\\/?\\s*>`, "i");
-  return tagPattern.exec(block)?.[1];
-}
-function extractFeedEntries(xml) {
-  return [...xml.matchAll(/<(item|entry)\b[^>]*>([\s\S]*?)<\/\1>/gi)].map((match) => match[2]);
-}
-function normalizeUrl(value2) {
-  try {
-    const url = new URL(value2);
-    if (url.protocol !== "http:" && url.protocol !== "https:") return void 0;
-    url.hash = "";
-    return url.toString();
-  } catch {
-    return void 0;
-  }
-}
-function canonicalArticleUrlForDedup(value2) {
-  try {
-    const url = new URL(value2);
-    const redirectedUrl = url.hostname.toLowerCase() === "news.google.com" ? url.searchParams.get("url") || url.searchParams.get("u") : void 0;
-    if (redirectedUrl) return canonicalArticleUrlForDedup(decodeURIComponent(redirectedUrl));
-    url.hash = "";
-    for (const key of [...url.searchParams.keys()]) {
-      if (/^(?:utm_|oc$|ved$|usg$|ref$|source$|cmpid$|gclid$|fbclid$|output$)/i.test(key)) url.searchParams.delete(key);
-    }
-    url.hostname = url.hostname.toLowerCase();
-    url.port = url.port === "80" && url.protocol === "http:" || url.port === "443" && url.protocol === "https:" ? "" : url.port;
-    return url.toString().replace(/\/$/, "");
-  } catch {
-    return value2.trim().toLowerCase();
-  }
-}
-var normalizedStoryTitle = (title) => title.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-function parsePublishedAt(value2) {
-  const publishedText = cleanText(value2);
-  if (!publishedText) return "";
-  const timestamp = Date.parse(publishedText);
-  return Number.isNaN(timestamp) ? "" : new Date(timestamp).toISOString();
-}
-function stableArticleId(url, title) {
-  const identity = `${canonicalArticleUrlForDedup(url)}
-${normalizedStoryTitle(title)}`;
-  const digest = (0, import_node_crypto.createHash)("sha256").update(identity).digest("hex").slice(0, 24);
-  return `news-${digest}`;
-}
-function sourceFromTitle(title) {
-  const match = title.match(/^(.+?)\s+-\s+([^\-]+)$/);
-  if (!match) return { title, source: "" };
-  return {
-    title: match[1].trim(),
-    source: match[2].trim()
-  };
-}
-function parseItem(itemXml, query, retrievedAt, sourceType, feedUrl) {
-  const rawTitle = cleanText(extractTag(itemXml, "title"));
-  const rawLink = cleanText(extractTag(itemXml, "link")) || cleanText(extractAttribute(itemXml, "link", "href"));
-  const url = normalizeUrl(rawLink);
-  const rawPublishedAt = extractTag(itemXml, "pubDate") ?? extractTag(itemXml, "published") ?? extractTag(itemXml, "updated");
-  const publishedAt = parsePublishedAt(rawPublishedAt);
-  if (!rawTitle || !url) return null;
-  if (cleanText(rawPublishedAt) && !publishedAt) return null;
-  const parsedTitle = sourceFromTitle(rawTitle);
-  const explicitSource = cleanText(extractTag(itemXml, "source"));
-  const description = cleanText(extractTag(itemXml, "description") ?? extractTag(itemXml, "summary") ?? extractTag(itemXml, "content"));
-  const article = {
-    id: stableArticleId(url, parsedTitle.title),
-    title: parsedTitle.title,
-    url,
-    source: explicitSource || parsedTitle.source,
-    publishedAt,
-    retrievedAt,
-    query,
-    sourceType,
-    ...feedUrl ? { feedUrl } : {}
-  };
-  if (description) article.description = description;
-  return article;
-}
-function parseRssFeed(xml, query = "", retrievedAt = (/* @__PURE__ */ new Date()).toISOString(), sourceType = "google_news", feedUrl) {
-  return extractFeedEntries(xml).map((itemXml) => parseItem(itemXml, query, retrievedAt, sourceType, feedUrl)).filter((article) => article !== null);
-}
-async function fetchRssUrl(url) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
-        "User-Agent": "ORBIT/Phase2 GoogleNewsIngestion"
-      },
-      signal: controller.signal
-    });
-    if (!response.ok) {
-      throw new Error(`RSS feed returned HTTP ${response.status}`);
-    }
-    return await response.text();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-var fetchFeed = async (query) => fetchRssUrl(buildFeedUrl(query));
-async function fetchGoogleNews(options = {}) {
-  const retrievedAt = (/* @__PURE__ */ new Date()).toISOString();
-  const googleQueries = options.queries?.length ? [...options.queries] : options.feedUrls?.length ? [] : [...GOOGLE_NEWS_QUERIES];
-  const feeds = [
-    ...googleQueries.map((query) => ({ label: query, sourceType: "google_news", fetch: () => fetchFeed(query) })),
-    ...(options.feedUrls || []).map((url) => ({ label: url, sourceType: "direct_rss", fetch: () => fetchRssUrl(url) }))
-  ];
-  const results = await Promise.allSettled(
-    feeds.map(async (feed) => ({
-      query: feed.label,
-      xml: await feed.fetch()
-    }))
-  );
-  const articlesByKey = /* @__PURE__ */ new Map();
-  const seenArticleKeys = /* @__PURE__ */ new Set();
-  const successfulSourceTypes = /* @__PURE__ */ new Set();
-  const failedFeeds = [];
-  let successfulFeeds = 0;
-  results.forEach((result, index) => {
-    const query = feeds[index].label;
-    if (result.status === "rejected") {
-      console.warn(`[ORBIT News] Feed failed for "${query}":`, result.reason);
-      failedFeeds.push(query);
-      return;
-    }
-    successfulFeeds += 1;
-    successfulSourceTypes.add(feeds[index].sourceType);
-    try {
-      for (const article of parseRssFeed(result.value.xml, query, retrievedAt, feeds[index].sourceType, feeds[index].sourceType === "direct_rss" ? query : void 0)) {
-        const urlKey = `url:${canonicalArticleUrlForDedup(article.url)}`;
-        const publishedKey = article.publishedAt ? article.publishedAt.slice(0, 16) : "undated";
-        const storyKey = `story:${normalizedStoryTitle(article.title)}:${publishedKey}`;
-        if (seenArticleKeys.has(urlKey) || seenArticleKeys.has(storyKey)) continue;
-        seenArticleKeys.add(urlKey);
-        seenArticleKeys.add(storyKey);
-        articlesByKey.set(urlKey, article);
-      }
-    } catch (error) {
-      console.warn(`[ORBIT News] Feed parsing failed for "${query}":`, error);
-      failedFeeds.push(query);
-    }
-  });
-  const articles = [...articlesByKey.values()].sort((a, b) => {
-    const left = a.publishedAt ? Date.parse(a.publishedAt) : 0;
-    const right = b.publishedAt ? Date.parse(b.publishedAt) : 0;
-    return right - left;
-  });
-  if (successfulFeeds === 0) {
-    ingestionStatus = "ERROR";
-    return {
-      status: "ERROR",
-      source: "Google News RSS",
-      retrievedAt,
-      count: 0,
-      articles: [],
-      sources: [],
-      failedFeeds
-    };
-  }
-  ingestionStatus = "READY";
-  const sources = [...successfulSourceTypes];
-  const source = sources.length === 2 ? "Google News + Direct RSS" : sources[0] === "direct_rss" ? "Direct RSS" : "Google News RSS";
-  return {
-    status: "AVAILABLE",
-    source,
-    retrievedAt,
-    count: articles.length,
-    articles,
-    sources,
-    ...failedFeeds.length ? { failedFeeds } : {}
-  };
-}
+var import_node_fs4 = require("node:fs");
+var import_node_os = require("node:os");
+var import_node_path4 = require("node:path");
 
 // src/dataLayer/database.ts
 var import_node_fs = require("node:fs");
@@ -738,9 +504,9 @@ var PHASE2_DATA_TABLES = [
 // src/dataLayer/database.ts
 var defaultPhase2DbPath = () => process.env.ORBIT_DB_PATH || import_node_path.default.join(process.cwd(), "data", "orbit.db");
 var openPhase2Database = (options = {}) => {
-  const dbPath = options.dbPath || defaultPhase2DbPath();
-  (0, import_node_fs.mkdirSync)(import_node_path.default.dirname(dbPath), { recursive: true });
-  const database2 = new import_node_sqlite.DatabaseSync(dbPath, {
+  const dbPath2 = options.dbPath || defaultPhase2DbPath();
+  (0, import_node_fs.mkdirSync)(import_node_path.default.dirname(dbPath2), { recursive: true });
+  const database2 = new import_node_sqlite.DatabaseSync(dbPath2, {
     enableForeignKeyConstraints: true,
     timeout: 5e3
   });
@@ -753,7 +519,7 @@ var openPhase2Database = (options = {}) => {
 };
 
 // src/dataLayer/importer.ts
-var import_node_crypto2 = require("node:crypto");
+var import_node_crypto = require("node:crypto");
 var import_node_fs2 = require("node:fs");
 var import_node_path2 = __toESM(require("node:path"), 1);
 var getProcessedDir = () => {
@@ -763,7 +529,7 @@ var getProcessedDir = () => {
 };
 var DEFAULT_PROCESSED_DIR = getProcessedDir();
 var stableId = (prefix, identity) => {
-  const digest = (0, import_node_crypto2.createHash)("sha256").update(identity, "utf8").digest("hex").slice(0, 20);
+  const digest = (0, import_node_crypto.createHash)("sha256").update(identity, "utf8").digest("hex").slice(0, 20);
   return `${prefix}-${digest}`;
 };
 var value = (row, field) => (row[field] ?? "").trim();
@@ -823,8 +589,8 @@ var parseCsv = (text2) => {
     (cells) => Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]))
   );
 };
-var readCsv = (processedDir2, fileName) => {
-  const filePath = import_node_path2.default.join(processedDir2, fileName);
+var readCsv = (processedDir, fileName) => {
+  const filePath = import_node_path2.default.join(processedDir, fileName);
   if (!(0, import_node_fs2.existsSync)(filePath)) throw new Error(`Processed dataset not found: ${filePath}`);
   return parseCsv((0, import_node_fs2.readFileSync)(filePath, "utf8"));
 };
@@ -1030,10 +796,10 @@ var insertStrategicReserves = (database2, countryIds, sourceIds) => {
   }
   return facilities.length;
 };
-var insertShippingLanes = (database2, processedDir2, rows, sourceIds) => {
+var insertShippingLanes = (database2, processedDir, rows, sourceIds) => {
   const statement = database2.prepare(`INSERT INTO shipping_lanes (shipping_lane_id, source_feature_id, source_object_id, feature_name, lane_category, geometry_type, line_part_count, coordinate_point_count, geometry_valid, geometry_bounds_lon_lat, source_geometry_crs_status, data_source_id, source_feature_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const geometryStatement = database2.prepare(`INSERT INTO shipping_lane_geometries (shipping_lane_geometry_id, shipping_lane_id, geometry_type, geometry_json, source_geometry_crs_status, geometry_status) VALUES (?, ?, ?, ?, ?, ?)`);
-  const geoJsonPath = import_node_path2.default.join(processedDir2, "shipping_lanes_v1.geojson");
+  const geoJsonPath = import_node_path2.default.join(processedDir, "shipping_lanes_v1.geojson");
   if (!(0, import_node_fs2.existsSync)(geoJsonPath)) throw new Error(`Processed shipping-lane GeoJSON not found: ${geoJsonPath}`);
   const geoJson = JSON.parse((0, import_node_fs2.readFileSync)(geoJsonPath, "utf8"));
   const features = geoJson.features || [];
@@ -1052,32 +818,32 @@ var insertShippingLanes = (database2, processedDir2, rows, sourceIds) => {
     geometryStatement.run(stableId("shipping-lane-geometry", id), id, value(row, "geometry_type"), geometryJson, value(row, "source_geometry_crs_status"), "AVAILABLE");
   }
 };
-var insertFacts = (database2, processedDir2, sourceIds, periodIds, countryIds, productIds) => {
+var insertFacts = (database2, processedDir, sourceIds, periodIds, countryIds, productIds) => {
   const counts = {};
-  const supplierRows = readCsv(processedDir2, "supplier_imports.csv");
+  const supplierRows = readCsv(processedDir, "supplier_imports.csv");
   const supplierStatement = database2.prepare(`INSERT INTO supplier_imports (supplier_import_id, financial_period_id, country_id, quantity_tonnes, quantity_unit, source_country_name, source_country_normalized_name, country_code, source_product_code, source_product_description, product_id, source_quantity_unit, source_trade_value_source_units, trade_value_unit_status, data_source_id, source_row_number, country_mapping_status, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of supplierRows) {
     const sourceDataset = value(row, "source_dataset");
     supplierStatement.run(stableId("supplier-import", `${sourceDataset}:${value(row, "source_row_number")}`), periodIds.get(value(row, "financial_year")), nullable(row, "country_id"), requiredNumber(row, "quantity_tonnes"), value(row, "quantity_unit"), value(row, "source_country_name"), value(row, "source_country_normalized_name"), value(row, "country_code"), value(row, "source_product_code"), value(row, "source_product_description"), value(row, "product_id"), value(row, "source_quantity_unit"), numberValue(row, "source_trade_value_source_units"), "UNDOCUMENTED", sourceIds.get(sourceDataset), requiredNumber(row, "source_row_number"), value(row, "country_mapping_status"), value(row, "validation_status"));
   }
   counts.supplier_imports = supplierRows.length;
-  const crudeRows = readCsv(processedDir2, "crude_import_totals.csv");
+  const crudeRows = readCsv(processedDir, "crude_import_totals.csv");
   const crudeStatement = database2.prepare(`INSERT INTO crude_import_totals (crude_import_total_id, financial_period_id, quantity_thousand_metric_tonnes, quantity_unit, source_financial_year, data_source_id, source_row_number, validation_status, time_series_scope) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of crudeRows) crudeStatement.run(stableId("crude-import-total", `${value(row, "source_dataset")}:${value(row, "source_row_number")}`), periodIds.get(value(row, "financial_year")), requiredNumber(row, "quantity_thousand_metric_tonnes"), value(row, "quantity_unit"), value(row, "source_financial_year"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), value(row, "validation_status"), value(row, "time_series_scope"));
   counts.crude_import_totals = crudeRows.length;
-  const consumptionRows = readCsv(processedDir2, "petroleum_consumption.csv");
+  const consumptionRows = readCsv(processedDir, "petroleum_consumption.csv");
   const consumptionStatement = database2.prepare(`INSERT INTO petroleum_consumption (petroleum_consumption_id, product_id, financial_period_id, source_product_name, calendar_year, month_number, month_name, consumption_metric_tonnes, consumption_unit, data_source_id, source_row_number, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of consumptionRows) consumptionStatement.run(stableId("petroleum-consumption", `${value(row, "source_dataset")}:${value(row, "source_row_number")}`), value(row, "product_id"), periodIds.get(value(row, "financial_year")), value(row, "source_product_name"), requiredNumber(row, "calendar_year"), requiredNumber(row, "month_number"), value(row, "month_name"), requiredNumber(row, "consumption_metric_tonnes"), value(row, "consumption_unit"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), value(row, "validation_status"));
   counts.petroleum_consumption = consumptionRows.length;
-  const globalRows = readCsv(processedDir2, "global_oil_snapshot.csv");
+  const globalRows = readCsv(processedDir, "global_oil_snapshot.csv");
   const globalStatement = database2.prepare(`INSERT INTO global_oil_snapshots (global_oil_snapshot_id, country_id, canonical_country_name, source_country_name, source_rank, rank, source_proven_reserves_barrels, proven_reserves_barrels, source_production_barrels_per_day, production_barrels_per_day, source_consumption_barrels_per_day, consumption_barrels_per_day, source_exports_barrels_per_day, exports_barrels_per_day, source_imports_barrels_per_day, imports_barrels_per_day, as_of_date, data_source_id, source_row_number, missing_metric_count, validation_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of globalRows) globalStatement.run(value(row, "global_oil_snapshot_id"), value(row, "country_id"), value(row, "canonical_country_name"), value(row, "source_country_name"), nullable(row, "source_rank"), numberValue(row, "rank"), nullable(row, "source_proven_reserves_barrels"), numberValue(row, "proven_reserves_barrels"), nullable(row, "source_production_barrels_per_day"), numberValue(row, "production_barrels_per_day"), nullable(row, "source_consumption_barrels_per_day"), numberValue(row, "consumption_barrels_per_day"), nullable(row, "source_exports_barrels_per_day"), numberValue(row, "exports_barrels_per_day"), nullable(row, "source_imports_barrels_per_day"), numberValue(row, "imports_barrels_per_day"), nullable(row, "as_of_date"), sourceIds.get(value(row, "source_dataset")), requiredNumber(row, "source_row_number"), requiredNumber(row, "missing_metric_count"), value(row, "validation_status"));
   counts.global_oil_snapshots = globalRows.length;
-  const activityFilePath = import_node_path2.default.join(processedDir2, "daily_port_activity.csv");
+  const activityFilePath = import_node_path2.default.join(processedDir, "daily_port_activity.csv");
   if ((0, import_node_fs2.existsSync)(activityFilePath)) {
-    const activityRows = readCsv(processedDir2, "daily_port_activity.csv");
+    const activityRows = readCsv(processedDir, "daily_port_activity.csv");
     const identityIds = /* @__PURE__ */ new Map();
-    for (const row of readCsv(processedDir2, "port_source_mapping.csv")) {
+    for (const row of readCsv(processedDir, "port_source_mapping.csv")) {
       identityIds.set(`${value(row, "source_dataset")}|${value(row, "source_record_key")}`, stableId("port-source", `${value(row, "source_dataset")}|${value(row, "source_record_key")}`));
     }
     const activityFields = ["portcalls_container", "portcalls_dry_bulk", "portcalls_general_cargo", "portcalls_roro", "portcalls_tanker", "portcalls_cargo", "portcalls", "import_container", "import_dry_bulk", "import_general_cargo", "import_roro", "import_tanker", "import_cargo", "import", "export_container", "export_dry_bulk", "export_general_cargo", "export_roro", "export_tanker", "export_cargo", "export"];
@@ -1093,21 +859,21 @@ var insertFacts = (database2, processedDir2, sourceIds, periodIds, countryIds, p
   }
   return counts;
 };
-var insertQuality = (database2, processedDir2, sourceIds) => {
+var insertQuality = (database2, processedDir, sourceIds) => {
   const counts = {};
-  const summaryRows = readCsv(processedDir2, "data_quality_summary.csv");
+  const summaryRows = readCsv(processedDir, "data_quality_summary.csv");
   const summaryStatement = database2.prepare(`INSERT INTO data_quality_summaries (dataset, processed_file, source_dataset, input_row_count, output_row_count, excluded_row_count, null_count_by_important_field, duplicate_count, invalid_value_count, unresolved_mapping_count, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of summaryRows) summaryStatement.run(value(row, "dataset"), value(row, "processed_file"), value(row, "source_dataset"), requiredNumber(row, "input_row_count"), requiredNumber(row, "output_row_count"), requiredNumber(row, "excluded_row_count"), readJson(value(row, "null_count_by_important_field")), requiredNumber(row, "duplicate_count"), requiredNumber(row, "invalid_value_count"), requiredNumber(row, "unresolved_mapping_count"), value(row, "notes"));
   counts.data_quality_summaries = summaryRows.length;
-  const issueRows = readCsv(processedDir2, "data_quality_issues.csv");
+  const issueRows = readCsv(processedDir, "data_quality_issues.csv");
   const issueStatement = database2.prepare(`INSERT INTO data_quality_issues (data_quality_issue_id, data_source_id, source_dataset, source_row_number, source_record_key, issue_type, field_name, severity, issue_status, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of issueRows) issueStatement.run(stableId("quality-issue", JSON.stringify(row)), sourceIds.get(value(row, "source_dataset")), value(row, "source_dataset"), numberValue(row, "source_row_number"), value(row, "source_record_key"), value(row, "issue_type"), value(row, "field_name"), value(row, "severity"), value(row, "issue_status"), value(row, "description"));
   counts.data_quality_issues = issueRows.length;
   return counts;
 };
-var insertManualReview = (database2, processedDir2, sourceIds) => {
-  const countryRows = readCsv(import_node_path2.default.join(processedDir2, "manual_review"), "country_manual_review.csv");
-  const portRows = readCsv(import_node_path2.default.join(processedDir2, "manual_review"), "port_manual_review.csv");
+var insertManualReview = (database2, processedDir, sourceIds) => {
+  const countryRows = readCsv(import_node_path2.default.join(processedDir, "manual_review"), "country_manual_review.csv");
+  const portRows = readCsv(import_node_path2.default.join(processedDir, "manual_review"), "port_manual_review.csv");
   const statement = database2.prepare(`INSERT INTO manual_review_records (manual_review_id, review_type, data_source_id, source_dataset, source_record_key, source_name, candidate_name, source_identifier, mapping_status, review_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   for (const row of countryRows) statement.run(stableId("manual-country", JSON.stringify(row)), "COUNTRY", sourceIds.get(value(row, "source_dataset")), value(row, "source_dataset"), null, value(row, "source_name"), null, nullable(row, "country_code"), "MANUAL_REVIEW", value(row, "review_reason"));
   for (const row of portRows) statement.run(stableId("manual-port", JSON.stringify(row)), "PORT", sourceIds.get(value(row, "source_dataset")), value(row, "source_dataset"), value(row, "source_record_key"), value(row, "source_port_name"), nullable(row, "candidate_canonical_port_name"), nullable(row, "source_identifier"), "MANUAL_REVIEW", value(row, "reason"));
@@ -1174,7 +940,7 @@ var importPhase2Data = (options = {}) => {
 };
 
 // src/dataLayer/repository.ts
-var import_node_crypto3 = require("node:crypto");
+var import_node_crypto2 = require("node:crypto");
 var pageValues = (options = {}) => ({
   page: Math.max(1, Math.floor(options.page || 1)),
   pageSize: Math.min(1e3, Math.max(1, Math.floor(options.pageSize || 50)))
@@ -1425,7 +1191,7 @@ var Phase2Repository = class {
     }
     const excluded = options.excludedCountry?.trim().toLowerCase();
     const rows = this.database.prepare(`
-      SELECT 
+      SELECT
         s.country_id,
         s.source_country_name,
         COALESCE(c.canonical_name, s.source_country_normalized_name, s.source_country_name) AS canonical_name,
@@ -1518,7 +1284,7 @@ var Phase2Repository = class {
     return rows.map((row) => JSON.parse(row.payload_json));
   }
   saveStrategicReserveOptimization(input, result) {
-    const optimizationId = `reserve-optimization-${(0, import_node_crypto3.randomUUID)()}`;
+    const optimizationId = `reserve-optimization-${(0, import_node_crypto2.randomUUID)()}`;
     this.database.prepare(`
       INSERT INTO strategic_reserve_optimization_runs
         (optimization_id, requested_at, request_json, result_json)
@@ -1560,7 +1326,7 @@ var Phase2Repository = class {
 };
 
 // src/digitalTwin/fromPhase2.ts
-var import_node_crypto4 = require("node:crypto");
+var import_node_crypto3 = require("node:crypto");
 
 // src/digitalTwin/model.ts
 var DIGITAL_TWIN_NODE_TYPES = [
@@ -2224,7 +1990,7 @@ var number = (row, field) => {
   const value2 = row[field];
   return typeof value2 === "number" && Number.isFinite(value2) ? value2 : void 0;
 };
-var stableIdentity = (value2) => (0, import_node_crypto4.createHash)("sha256").update(value2, "utf8").digest("hex").slice(0, 20);
+var stableIdentity = (value2) => (0, import_node_crypto3.createHash)("sha256").update(value2, "utf8").digest("hex").slice(0, 20);
 var sourceReference = (table, id) => ({ table, id });
 var addNode = (model, input) => {
   model.addNode(input);
@@ -2564,6 +2330,240 @@ var createDigitalTwinRuntime = (repository2) => {
   return { stateEngine, impactAnalyzer: new DigitalTwinImpactAnalyzer(stateEngine) };
 };
 
+// server.ts
+var import_express = __toESM(require("express"), 1);
+var import_node_fs3 = require("node:fs");
+var import_node_path3 = __toESM(require("node:path"), 1);
+var import_node_process = require("node:process");
+var import_vite = require("vite");
+
+// src/services/dataIngestion/googleNews.ts
+var import_node_crypto4 = require("node:crypto");
+var ENERGY_MONITORING_QUERIES = [
+  '"crude oil" export disruption',
+  '"oil exports" sanctions',
+  '"oil imports" disruption',
+  '"Strait of Hormuz" oil',
+  '"Persian Gulf" oil tanker',
+  '"Red Sea" oil shipping',
+  '"oil tanker" attack',
+  "oil pipeline disruption",
+  "oil refinery outage",
+  "OPEC geopolitical disruption",
+  '"Saudi Arabia" oil exports',
+  '"Iran" oil sanctions',
+  '"Russia" oil sanctions',
+  '"Iraq" oil exports',
+  '"United Arab Emirates" oil exports',
+  '"Venezuela" oil sanctions',
+  '"Nigeria" oil disruption'
+];
+var GOOGLE_NEWS_QUERIES = ENERGY_MONITORING_QUERIES;
+var GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss/search";
+var REQUEST_TIMEOUT_MS = 1e4;
+var ingestionStatus = "NOT_CONNECTED";
+function getNewsIngestionStatus() {
+  return ingestionStatus;
+}
+function buildFeedUrl(query) {
+  const params = new URLSearchParams({
+    q: query,
+    hl: "en-US",
+    gl: "US",
+    ceid: "US:en"
+  });
+  return `${GOOGLE_NEWS_RSS_URL}?${params.toString()}`;
+}
+function decodeXmlEntities(value2) {
+  return value2.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16))).replace(/&#([0-9]+);/g, (_, decimal) => String.fromCodePoint(Number.parseInt(decimal, 10))).replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ");
+}
+function cleanText(value2) {
+  if (!value2) return "";
+  let cleaned = decodeXmlEntities(value2);
+  cleaned = cleaned.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, "$1");
+  cleaned = cleaned.replace(/<[^>]*>/g, " ");
+  cleaned = decodeXmlEntities(cleaned);
+  return cleaned.replace(/\s+/g, " ").trim();
+}
+function extractTag(block, tagName) {
+  const tagPattern = new RegExp(`<${tagName}\\b[^>]*>([\\s\\S]*?)<\\/${tagName}>`, "i");
+  return tagPattern.exec(block)?.[1];
+}
+function extractAttribute(block, tagName, attributeName) {
+  const tagPattern = new RegExp(`<${tagName}\\b[^>]*\\b${attributeName}=["']([^"']+)["'][^>]*\\/?\\s*>`, "i");
+  return tagPattern.exec(block)?.[1];
+}
+function extractFeedEntries(xml) {
+  return [...xml.matchAll(/<(item|entry)\b[^>]*>([\s\S]*?)<\/\1>/gi)].map((match) => match[2]);
+}
+function normalizeUrl(value2) {
+  try {
+    const url = new URL(value2);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return void 0;
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return void 0;
+  }
+}
+function canonicalArticleUrlForDedup(value2) {
+  try {
+    const url = new URL(value2);
+    const redirectedUrl = url.hostname.toLowerCase() === "news.google.com" ? url.searchParams.get("url") || url.searchParams.get("u") : void 0;
+    if (redirectedUrl) return canonicalArticleUrlForDedup(decodeURIComponent(redirectedUrl));
+    url.hash = "";
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^(?:utm_|oc$|ved$|usg$|ref$|source$|cmpid$|gclid$|fbclid$|output$)/i.test(key)) url.searchParams.delete(key);
+    }
+    url.hostname = url.hostname.toLowerCase();
+    url.port = url.port === "80" && url.protocol === "http:" || url.port === "443" && url.protocol === "https:" ? "" : url.port;
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return value2.trim().toLowerCase();
+  }
+}
+var normalizedStoryTitle = (title) => title.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+function parsePublishedAt(value2) {
+  const publishedText = cleanText(value2);
+  if (!publishedText) return "";
+  const timestamp = Date.parse(publishedText);
+  return Number.isNaN(timestamp) ? "" : new Date(timestamp).toISOString();
+}
+function stableArticleId(url, title) {
+  const identity = `${canonicalArticleUrlForDedup(url)}
+${normalizedStoryTitle(title)}`;
+  const digest = (0, import_node_crypto4.createHash)("sha256").update(identity).digest("hex").slice(0, 24);
+  return `news-${digest}`;
+}
+function sourceFromTitle(title) {
+  const match = title.match(/^(.+?)\s+-\s+([^\-]+)$/);
+  if (!match) return { title, source: "" };
+  return {
+    title: match[1].trim(),
+    source: match[2].trim()
+  };
+}
+function parseItem(itemXml, query, retrievedAt, sourceType, feedUrl) {
+  const rawTitle = cleanText(extractTag(itemXml, "title"));
+  const rawLink = cleanText(extractTag(itemXml, "link")) || cleanText(extractAttribute(itemXml, "link", "href"));
+  const url = normalizeUrl(rawLink);
+  const rawPublishedAt = extractTag(itemXml, "pubDate") ?? extractTag(itemXml, "published") ?? extractTag(itemXml, "updated");
+  const publishedAt = parsePublishedAt(rawPublishedAt);
+  if (!rawTitle || !url) return null;
+  if (cleanText(rawPublishedAt) && !publishedAt) return null;
+  const parsedTitle = sourceFromTitle(rawTitle);
+  const explicitSource = cleanText(extractTag(itemXml, "source"));
+  const description = cleanText(extractTag(itemXml, "description") ?? extractTag(itemXml, "summary") ?? extractTag(itemXml, "content"));
+  const article = {
+    id: stableArticleId(url, parsedTitle.title),
+    title: parsedTitle.title,
+    url,
+    source: explicitSource || parsedTitle.source,
+    publishedAt,
+    retrievedAt,
+    query,
+    sourceType,
+    ...feedUrl ? { feedUrl } : {}
+  };
+  if (description) article.description = description;
+  return article;
+}
+function parseRssFeed(xml, query = "", retrievedAt = (/* @__PURE__ */ new Date()).toISOString(), sourceType = "google_news", feedUrl) {
+  return extractFeedEntries(xml).map((itemXml) => parseItem(itemXml, query, retrievedAt, sourceType, feedUrl)).filter((article) => article !== null);
+}
+async function fetchRssUrl(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
+        "User-Agent": "ORBIT/Phase2 GoogleNewsIngestion"
+      },
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      throw new Error(`RSS feed returned HTTP ${response.status}`);
+    }
+    return await response.text();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+var fetchFeed = async (query) => fetchRssUrl(buildFeedUrl(query));
+async function fetchGoogleNews(options = {}) {
+  const retrievedAt = (/* @__PURE__ */ new Date()).toISOString();
+  const googleQueries = options.queries?.length ? [...options.queries] : options.feedUrls?.length ? [] : [...GOOGLE_NEWS_QUERIES];
+  const feeds = [
+    ...googleQueries.map((query) => ({ label: query, sourceType: "google_news", fetch: () => fetchFeed(query) })),
+    ...(options.feedUrls || []).map((url) => ({ label: url, sourceType: "direct_rss", fetch: () => fetchRssUrl(url) }))
+  ];
+  const results = await Promise.allSettled(
+    feeds.map(async (feed) => ({
+      query: feed.label,
+      xml: await feed.fetch()
+    }))
+  );
+  const articlesByKey = /* @__PURE__ */ new Map();
+  const seenArticleKeys = /* @__PURE__ */ new Set();
+  const successfulSourceTypes = /* @__PURE__ */ new Set();
+  const failedFeeds = [];
+  let successfulFeeds = 0;
+  results.forEach((result, index) => {
+    const query = feeds[index].label;
+    if (result.status === "rejected") {
+      console.warn(`[ORBIT News] Feed failed for "${query}":`, result.reason);
+      failedFeeds.push(query);
+      return;
+    }
+    successfulFeeds += 1;
+    successfulSourceTypes.add(feeds[index].sourceType);
+    try {
+      for (const article of parseRssFeed(result.value.xml, query, retrievedAt, feeds[index].sourceType, feeds[index].sourceType === "direct_rss" ? query : void 0)) {
+        const urlKey = `url:${canonicalArticleUrlForDedup(article.url)}`;
+        const publishedKey = article.publishedAt ? article.publishedAt.slice(0, 16) : "undated";
+        const storyKey = `story:${normalizedStoryTitle(article.title)}:${publishedKey}`;
+        if (seenArticleKeys.has(urlKey) || seenArticleKeys.has(storyKey)) continue;
+        seenArticleKeys.add(urlKey);
+        seenArticleKeys.add(storyKey);
+        articlesByKey.set(urlKey, article);
+      }
+    } catch (error) {
+      console.warn(`[ORBIT News] Feed parsing failed for "${query}":`, error);
+      failedFeeds.push(query);
+    }
+  });
+  const articles = [...articlesByKey.values()].sort((a, b) => {
+    const left = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+    const right = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+    return right - left;
+  });
+  if (successfulFeeds === 0) {
+    ingestionStatus = "ERROR";
+    return {
+      status: "ERROR",
+      source: "Google News RSS",
+      retrievedAt,
+      count: 0,
+      articles: [],
+      sources: [],
+      failedFeeds
+    };
+  }
+  ingestionStatus = "READY";
+  const sources = [...successfulSourceTypes];
+  const source = sources.length === 2 ? "Google News + Direct RSS" : sources[0] === "direct_rss" ? "Direct RSS" : "Google News RSS";
+  return {
+    status: "AVAILABLE",
+    source,
+    retrievedAt,
+    count: articles.length,
+    articles,
+    sources,
+    ...failedFeeds.length ? { failedFeeds } : {}
+  };
+}
+
 // src/geopoliticalEvents/model.ts
 var GEOPOLITICAL_EVENT_CATEGORIES = [
   "conflict",
@@ -2816,12 +2816,12 @@ var irrelevantResult = (classification, relevance, risk) => {
     impactReasons: [reason]
   };
 };
-var integrateGeopoliticalRiskWithDigitalTwin = (classificationValue, relevanceValue, riskValue, runtime) => {
+var integrateGeopoliticalRiskWithDigitalTwin = (classificationValue, relevanceValue, riskValue, runtime2) => {
   const classification = validateClassification(classificationValue);
   const relevance = validateRelevance(relevanceValue);
   const risk = validateRisk(riskValue);
   assertMatchingInputs(classification, relevance, risk);
-  const currentGraph = runtime.stateEngine.getCurrentTwin();
+  const currentGraph = runtime2.stateEngine.getCurrentTwin();
   const matchedNodeIds = [...risk.matchedNodeIds];
   assertGraphNodesExist(currentGraph, matchedNodeIds);
   if (!relevance.relevant || !classification.energyRelevant || !risk.energyRelevant) {
@@ -3411,12 +3411,12 @@ var deterministicRelevantExplanation = (risk, digitalTwinImpact) => {
   const impact = digitalTwinImpact.affectedNodeIds.length || digitalTwinImpact.affectedEdgeIds.length ? `Digital Twin impact covers ${digitalTwinImpact.affectedNodeIds.length} node(s) and ${digitalTwinImpact.affectedEdgeIds.length} edge(s).` : "No downstream Digital Twin nodes or edges were affected.";
   return `ORBIT retained the deterministic risk at ${risk.riskLevel} (${risk.riskScore}) after applying the validated event and network rules. ${impact}`;
 };
-var analyzeEventDeterministically = (eventValue, runtime) => {
+var analyzeEventDeterministically = (eventValue, runtime2) => {
   const event = new GeopoliticalEventIngestionStore().ingest(eventValue);
   const classification = classifyGeopoliticalEvent(event);
-  const relevance = analyzeGeopoliticalSupplyChainRelevance(event, runtime.stateEngine.getCurrentTwin(), classification);
+  const relevance = analyzeGeopoliticalSupplyChainRelevance(event, runtime2.stateEngine.getCurrentTwin(), classification);
   const risk = assessGeopoliticalRisk(event, classification, relevance);
-  const digitalTwinImpact = integrateGeopoliticalRiskWithDigitalTwin(classification, relevance, risk, runtime);
+  const digitalTwinImpact = integrateGeopoliticalRiskWithDigitalTwin(classification, relevance, risk, runtime2);
   return {
     event: clone(event),
     classification: clone(classification),
@@ -3425,10 +3425,10 @@ var analyzeEventDeterministically = (eventValue, runtime) => {
     digitalTwinImpact: clone(digitalTwinImpact)
   };
 };
-var analyzeGeopoliticalEventDeterministically = (request, eventValue, runtime) => {
+var analyzeGeopoliticalEventDeterministically = (request, eventValue, runtime2) => {
   const normalizedRequest = typeof request === "string" ? request.trim() : "";
   if (!normalizedRequest) throw new Error("request is required.");
-  const analysis = analyzeEventDeterministically(eventValue, runtime);
+  const analysis = analyzeEventDeterministically(eventValue, runtime2);
   const { classification, relevance, risk, digitalTwinImpact } = analysis;
   const explanation = !isEnergySupplyChainRelevant(classification, relevance, risk) ? deterministicExplanation(classification, relevance, risk) : deterministicRelevantExplanation(risk, digitalTwinImpact);
   return {
@@ -3438,8 +3438,8 @@ var analyzeGeopoliticalEventDeterministically = (request, eventValue, runtime) =
   };
 };
 var GeopoliticalRiskIntelligenceAgent = class {
-  constructor(runtime, llm) {
-    this.runtime = runtime;
+  constructor(runtime2, llm) {
+    this.runtime = runtime2;
     this.llm = llm;
   }
   async analyze(request, options = {}) {
@@ -3485,7 +3485,7 @@ var GeopoliticalRiskIntelligenceAgent = class {
     };
   }
 };
-var createGeopoliticalRiskIntelligenceAgent = (runtime, llm = createGroqAgentProvider()) => new GeopoliticalRiskIntelligenceAgent(runtime, llm);
+var createGeopoliticalRiskIntelligenceAgent = (runtime2, llm = createGroqAgentProvider()) => new GeopoliticalRiskIntelligenceAgent(runtime2, llm);
 
 // src/geopoliticalEvents/monitoring.ts
 var import_node_crypto6 = require("node:crypto");
@@ -5272,8 +5272,8 @@ var DEFAULT_OBJECTIVE_WEIGHTS = {
 var isRecord4 = (value2) => typeof value2 === "object" && value2 !== null;
 var isFiniteNumber = (value2) => typeof value2 === "number" && Number.isFinite(value2);
 var nonEmptyString = (value2) => typeof value2 === "string" && value2.trim().length > 0;
-var addIssue = (issues, path5, message) => {
-  issues.push({ path: path5, message });
+var addIssue = (issues, path4, message) => {
+  issues.push({ path: path4, message });
 };
 var validateProcurementRequest = (input) => {
   const issues = [];
@@ -5310,68 +5310,68 @@ var validateProcurementRequest = (input) => {
   const supplierUnit = isRecord4(supplyGap) && typeof supplyGap.unit === "string" ? supplyGap.unit : null;
   if (Array.isArray(request.suppliers)) {
     request.suppliers.forEach((supplier, index) => {
-      const path5 = `suppliers[${index}]`;
+      const path4 = `suppliers[${index}]`;
       if (!isRecord4(supplier)) {
-        addIssue(issues, path5, "Supplier must be an object.");
+        addIssue(issues, path4, "Supplier must be an object.");
         return;
       }
-      if (!nonEmptyString(supplier.supplierId)) addIssue(issues, `${path5}.supplierId`, "Supplier ID is required.");
-      if (!nonEmptyString(supplier.name)) addIssue(issues, `${path5}.name`, "Supplier name is required.");
-      if (!isFiniteNumber(supplier.capacity) || supplier.capacity < 0) addIssue(issues, `${path5}.capacity`, "Supplier capacity must be finite and non-negative.");
-      if (!nonEmptyString(supplier.capacityUnit)) addIssue(issues, `${path5}.capacityUnit`, "Supplier capacity unit is required.");
+      if (!nonEmptyString(supplier.supplierId)) addIssue(issues, `${path4}.supplierId`, "Supplier ID is required.");
+      if (!nonEmptyString(supplier.name)) addIssue(issues, `${path4}.name`, "Supplier name is required.");
+      if (!isFiniteNumber(supplier.capacity) || supplier.capacity < 0) addIssue(issues, `${path4}.capacity`, "Supplier capacity must be finite and non-negative.");
+      if (!nonEmptyString(supplier.capacityUnit)) addIssue(issues, `${path4}.capacityUnit`, "Supplier capacity unit is required.");
       if (nonEmptyString(supplier.supplierId)) {
-        if (supplierIds.has(supplier.supplierId)) addIssue(issues, `${path5}.supplierId`, "Supplier IDs must be unique.");
+        if (supplierIds.has(supplier.supplierId)) addIssue(issues, `${path4}.supplierId`, "Supplier IDs must be unique.");
         supplierIds.add(supplier.supplierId);
       }
       if (supplierUnit && nonEmptyString(supplier.capacityUnit) && supplier.capacityUnit !== supplierUnit) {
-        addIssue(issues, `${path5}.capacityUnit`, `Supplier capacity unit must match supply gap unit (${supplierUnit}).`);
+        addIssue(issues, `${path4}.capacityUnit`, `Supplier capacity unit must match supply gap unit (${supplierUnit}).`);
       }
     });
   }
   if (Array.isArray(request.routes)) {
     request.routes.forEach((route, index) => {
-      const path5 = `routes[${index}]`;
+      const path4 = `routes[${index}]`;
       if (!isRecord4(route)) {
-        addIssue(issues, path5, "Route must be an object.");
+        addIssue(issues, path4, "Route must be an object.");
         return;
       }
-      if (!nonEmptyString(route.routeId)) addIssue(issues, `${path5}.routeId`, "Route ID is required.");
-      if (!nonEmptyString(route.name)) addIssue(issues, `${path5}.name`, "Route name is required.");
-      if (!isFiniteNumber(route.capacity) || route.capacity < 0) addIssue(issues, `${path5}.capacity`, "Route capacity must be finite and non-negative.");
-      if (!nonEmptyString(route.capacityUnit)) addIssue(issues, `${path5}.capacityUnit`, "Route capacity unit is required.");
+      if (!nonEmptyString(route.routeId)) addIssue(issues, `${path4}.routeId`, "Route ID is required.");
+      if (!nonEmptyString(route.name)) addIssue(issues, `${path4}.name`, "Route name is required.");
+      if (!isFiniteNumber(route.capacity) || route.capacity < 0) addIssue(issues, `${path4}.capacity`, "Route capacity must be finite and non-negative.");
+      if (!nonEmptyString(route.capacityUnit)) addIssue(issues, `${path4}.capacityUnit`, "Route capacity unit is required.");
       if (nonEmptyString(route.routeId)) {
-        if (routeIds.has(route.routeId)) addIssue(issues, `${path5}.routeId`, "Route IDs must be unique.");
+        if (routeIds.has(route.routeId)) addIssue(issues, `${path4}.routeId`, "Route IDs must be unique.");
         routeIds.add(route.routeId);
       }
       if (supplierUnit && nonEmptyString(route.capacityUnit) && route.capacityUnit !== supplierUnit) {
-        addIssue(issues, `${path5}.capacityUnit`, `Route capacity unit must match supply gap unit (${supplierUnit}).`);
+        addIssue(issues, `${path4}.capacityUnit`, `Route capacity unit must match supply gap unit (${supplierUnit}).`);
       }
     });
   }
   let costUnit = null;
   if (Array.isArray(request.lanes)) {
     request.lanes.forEach((lane, index) => {
-      const path5 = `lanes[${index}]`;
+      const path4 = `lanes[${index}]`;
       if (!isRecord4(lane)) {
-        addIssue(issues, path5, "Lane must be an object.");
+        addIssue(issues, path4, "Lane must be an object.");
         return;
       }
-      if (!nonEmptyString(lane.laneId)) addIssue(issues, `${path5}.laneId`, "Lane ID is required.");
-      if (!nonEmptyString(lane.supplierId) || !supplierIds.has(lane.supplierId)) addIssue(issues, `${path5}.supplierId`, "Lane must reference a known supplier.");
-      if (!nonEmptyString(lane.routeId) || !routeIds.has(lane.routeId)) addIssue(issues, `${path5}.routeId`, "Lane must reference a known route.");
-      if (typeof lane.compatible !== "boolean") addIssue(issues, `${path5}.compatible`, "Lane compatibility must be boolean.");
-      if (!isFiniteNumber(lane.procurementCostPerUnit) || lane.procurementCostPerUnit < 0) addIssue(issues, `${path5}.procurementCostPerUnit`, "Procurement cost must be finite and non-negative.");
-      if (!nonEmptyString(lane.procurementCostUnit)) addIssue(issues, `${path5}.procurementCostUnit`, "Procurement cost unit is required.");
-      if (!isFiniteNumber(lane.transitTimeDays) || lane.transitTimeDays < 0) addIssue(issues, `${path5}.transitTimeDays`, "Transit time must be finite and non-negative.");
-      if (!isFiniteNumber(lane.riskScore) || lane.riskScore < 0 || lane.riskScore > 100) addIssue(issues, `${path5}.riskScore`, "Risk score must be between 0 and 100.");
-      if (!isFiniteNumber(lane.reliabilityScore) || lane.reliabilityScore < 0 || lane.reliabilityScore > 1) addIssue(issues, `${path5}.reliabilityScore`, "Reliability score must be between 0 and 1.");
+      if (!nonEmptyString(lane.laneId)) addIssue(issues, `${path4}.laneId`, "Lane ID is required.");
+      if (!nonEmptyString(lane.supplierId) || !supplierIds.has(lane.supplierId)) addIssue(issues, `${path4}.supplierId`, "Lane must reference a known supplier.");
+      if (!nonEmptyString(lane.routeId) || !routeIds.has(lane.routeId)) addIssue(issues, `${path4}.routeId`, "Lane must reference a known route.");
+      if (typeof lane.compatible !== "boolean") addIssue(issues, `${path4}.compatible`, "Lane compatibility must be boolean.");
+      if (!isFiniteNumber(lane.procurementCostPerUnit) || lane.procurementCostPerUnit < 0) addIssue(issues, `${path4}.procurementCostPerUnit`, "Procurement cost must be finite and non-negative.");
+      if (!nonEmptyString(lane.procurementCostUnit)) addIssue(issues, `${path4}.procurementCostUnit`, "Procurement cost unit is required.");
+      if (!isFiniteNumber(lane.transitTimeDays) || lane.transitTimeDays < 0) addIssue(issues, `${path4}.transitTimeDays`, "Transit time must be finite and non-negative.");
+      if (!isFiniteNumber(lane.riskScore) || lane.riskScore < 0 || lane.riskScore > 100) addIssue(issues, `${path4}.riskScore`, "Risk score must be between 0 and 100.");
+      if (!isFiniteNumber(lane.reliabilityScore) || lane.reliabilityScore < 0 || lane.reliabilityScore > 1) addIssue(issues, `${path4}.reliabilityScore`, "Reliability score must be between 0 and 1.");
       if (nonEmptyString(lane.laneId)) {
-        if (laneIds.has(lane.laneId)) addIssue(issues, `${path5}.laneId`, "Lane IDs must be unique.");
+        if (laneIds.has(lane.laneId)) addIssue(issues, `${path4}.laneId`, "Lane IDs must be unique.");
         laneIds.add(lane.laneId);
       }
       if (nonEmptyString(lane.procurementCostUnit)) {
         if (costUnit === null) costUnit = lane.procurementCostUnit;
-        else if (costUnit !== lane.procurementCostUnit) addIssue(issues, `${path5}.procurementCostUnit`, `Procurement cost unit must match ${costUnit}.`);
+        else if (costUnit !== lane.procurementCostUnit) addIssue(issues, `${path4}.procurementCostUnit`, `Procurement cost unit must match ${costUnit}.`);
       }
     });
   }
@@ -8275,154 +8275,194 @@ if (!isRunningTests) {
   });
 }
 
-// tests/phase2-data-layer.test.ts
-var processedDir = (0, import_node_fs4.existsSync)(import_node_path4.default.join(process.cwd(), "Data", "processed")) ? import_node_path4.default.join(process.cwd(), "Data", "processed") : import_node_path4.default.join(process.cwd(), "data", "processed");
-var temporaryDirectory = (0, import_node_fs4.mkdtempSync)(import_node_path4.default.join((0, import_node_os.tmpdir)(), "orbit-phase2-"));
-var databasePath = import_node_path4.default.join(temporaryDirectory, "phase2.sqlite");
-var database = openPhase2Database({ dbPath: databasePath });
+// tests/orbit-assessment-orchestrator.test.ts
+var dir = (0, import_node_fs4.mkdtempSync)((0, import_node_path4.join)((0, import_node_os.tmpdir)(), "orbit-assessment-tests-"));
+var dbPath = (0, import_node_path4.join)(dir, "check.db");
+importPhase2Data({ dbPath, processedDir: "./Data/processed" });
+var database = openPhase2Database({ dbPath });
 var repository = new Phase2Repository(database);
-var server;
-var baseUrl = "";
+var runtime = createDigitalTwinRuntime(repository);
+var stubAnalysis = {
+  request: "stub",
+  event: {
+    id: "evt-stub-hormuz",
+    title: "Strait of Hormuz blockade halts crude tanker traffic",
+    description: "Stub event for orchestrator contract tests.",
+    timestamp: "2026-01-01T00:00:00.000Z",
+    source: "orbit-test",
+    location: "Strait of Hormuz",
+    countriesInvolved: ["Iran", "Oman"],
+    category: "maritime_disruption",
+    severity: "critical"
+  },
+  classification: {
+    eventId: "evt-stub-hormuz",
+    category: "maritime_disruption",
+    severity: "critical",
+    energyRelevant: true,
+    countriesInvolved: ["Iran", "Oman"],
+    location: "Strait of Hormuz",
+    classificationReasons: ["stub"]
+  },
+  relevance: {
+    eventId: "evt-stub-hormuz",
+    relevant: true,
+    matchedNodeIds: ["chokepoint-strait-of-hormuz"],
+    matchedNodeTypes: ["chokepoint"],
+    matchedLocations: ["Strait of Hormuz"],
+    matchedCountries: [],
+    relevanceReasons: ["stub"]
+  },
+  risk: {
+    eventId: "evt-stub-hormuz",
+    riskLevel: "high",
+    riskScore: 60,
+    factors: [],
+    reasoning: ["stub"],
+    matchedNodeIds: ["chokepoint-strait-of-hormuz"],
+    energyRelevant: true
+  },
+  digitalTwinImpact: {
+    eventId: "evt-stub-hormuz",
+    relevant: true,
+    riskLevel: "high",
+    riskScore: 60,
+    matchedNodeIds: ["chokepoint-strait-of-hormuz"],
+    affectedNodeIds: ["chokepoint-strait-of-hormuz"],
+    affectedNodeNames: ["Strait of Hormuz"],
+    affectedEdgeIds: [],
+    affectedNodeTypes: ["chokepoint"],
+    affectedCapacity: { nodeTotals: [], edgeTotals: [] },
+    affectedFlow: { nodeTotals: [], edgeTotals: [] },
+    impactReasons: ["stub"]
+  },
+  explanation: "stub explanation"
+};
+var stubAgent = { analyze: async () => stubAnalysis };
+var failingAgent = {
+  analyze: async () => {
+    throw new Error("stub geopolitical failure");
+  }
+};
+var failingServer;
+var failingBaseUrl = "";
+var stubServer;
+var stubBaseUrl = "";
 (0, import_node_test.before)(async () => {
-  const firstImport = importPhase2Data({ dbPath: databasePath, processedDir });
-  import_strict.default.equal(firstImport.counts.countries, 210);
-  import_strict.default.equal(firstImport.counts.ports, 59);
-  import_strict.default.ok(firstImport.counts.daily_port_activity === 0 || firstImport.counts.daily_port_activity === 59556);
-  import_strict.default.equal(firstImport.counts.petroleum_consumption, 3888);
-  database.close();
-  database = openPhase2Database({ dbPath: databasePath });
-  repository = new Phase2Repository(database);
-  const app = createApp(repository);
-  server = (0, import_node_http.createServer)(app);
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const address = server.address();
-  if (!address || typeof address === "string") throw new Error("Test server did not bind to a TCP port.");
-  baseUrl = `http://127.0.0.1:${address.port}`;
+  const failingApp = createApp(repository, runtime, failingAgent);
+  failingServer = (0, import_node_http.createServer)(failingApp);
+  await new Promise((resolve) => failingServer.listen(0, "127.0.0.1", resolve));
+  const failingAddress = failingServer.address();
+  if (!failingAddress || typeof failingAddress === "string") throw new Error("Failing test server did not bind.");
+  failingBaseUrl = `http://127.0.0.1:${failingAddress.port}`;
+  const stubApp = createApp(repository, runtime, stubAgent);
+  stubServer = (0, import_node_http.createServer)(stubApp);
+  await new Promise((resolve) => stubServer.listen(0, "127.0.0.1", resolve));
+  const stubAddress = stubServer.address();
+  if (!stubAddress || typeof stubAddress === "string") throw new Error("Stub test server did not bind.");
+  stubBaseUrl = `http://127.0.0.1:${stubAddress.port}`;
 });
 (0, import_node_test.after)(() => {
-  server.close();
+  failingServer.closeAllConnections();
+  failingServer.close();
+  stubServer.closeAllConnections();
+  stubServer.close();
   database.close();
-  (0, import_node_fs4.rmSync)(temporaryDirectory, { recursive: true, force: true });
+  (0, import_node_fs4.rmSync)(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 });
-(0, import_node_test.default)("schema and real processed-data import are populated", () => {
-  const tables = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all();
-  const tableNames = new Set(tables.map((table) => table.name));
-  for (const requiredTable of ["countries", "ports", "refineries", "shipping_lanes", "chokepoints", "supplier_imports", "crude_import_totals", "petroleum_consumption", "daily_port_activity", "global_oil_snapshots", "financial_periods", "products", "data_sources", "data_quality_issues"]) import_strict.default.ok(tableNames.has(requiredTable), `missing table ${requiredTable}`);
-  import_strict.default.equal(repository.getStatus(), "READY");
+(0, import_node_test.default)("orchestrator: start failure -> 500 with FAILED assessment and downstream SKIPPED stages", async () => {
+  const response = await fetch(`${failingBaseUrl}/api/pipeline/run`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: "Strait of Hormuz disruption" })
+  });
+  import_strict.default.equal(response.status, 500);
+  const body = await response.json();
+  import_strict.default.equal(body.status, "ERROR");
+  import_strict.default.match(body.error, /stub geopolitical failure/);
+  import_strict.default.ok(body.assessment, "failed assessment must be attached");
+  import_strict.default.equal(body.assessment.status, "FAILED");
+  import_strict.default.equal(body.assessment.stages[0].stage, "geopoliticalAnalysis");
+  import_strict.default.equal(body.assessment.stages[0].status, "FAILED");
+  import_strict.default.ok(body.assessment.stages.slice(1).every((stage) => stage.status === "SKIPPED"));
+  import_strict.default.ok(body.assessment.errors.length > 0);
+  import_strict.default.equal(body.pipeline, void 0);
+  import_strict.default.ok(repository.getOrbitAssessment(body.assessment.assessmentId));
 });
-(0, import_node_test.default)("re-import is idempotent and does not duplicate facts", () => {
-  const secondImport = importPhase2Data({ dbPath: databasePath, processedDir });
-  import_strict.default.ok(secondImport.counts.daily_port_activity === 0 || secondImport.counts.daily_port_activity === 59556);
-  const totalPortActivity = database.prepare("SELECT COUNT(*) AS total FROM daily_port_activity").get().total;
-  import_strict.default.ok(totalPortActivity === 0 || totalPortActivity === 59556);
-  import_strict.default.equal(database.prepare("SELECT COUNT(*) AS total FROM supplier_imports").get().total, 128);
-});
-(0, import_node_test.default)("repository queries return real processed values", () => {
-  const country = repository.getCountries({ search: "Venezuela", pageSize: 10 });
-  import_strict.default.equal(country.data.length, 1);
-  import_strict.default.equal(country.data[0].canonical_name, "Venezuela");
-  const port = repository.getPorts({ search: "Sikka", pageSize: 10 });
-  import_strict.default.equal(port.data.length, 1);
-  import_strict.default.equal(port.data[0].canonical_port_name, "Sikka");
-  const facilityPort = repository.getPorts({ search: "Mundra", pageSize: 10 });
-  import_strict.default.equal(facilityPort.data.length, 1);
-  import_strict.default.equal(facilityPort.data[0].liquid_bulk_facility, "Yes");
-  import_strict.default.equal(facilityPort.data[0].oil_terminal_facility, "Yes");
-  const refinery = repository.getRefineries({ search: "Digboi", pageSize: 10 });
-  import_strict.default.equal(refinery.data.length, 1);
-  import_strict.default.equal(refinery.data[0].capacity, 650);
-  import_strict.default.equal(refinery.data[0].latitude, 27.3881);
-  const suppliers = repository.getSuppliers({ financialYear: "2014-15", country: "Saudi", pageSize: 10 });
-  import_strict.default.equal(suppliers.data.length, 1);
-  import_strict.default.equal(suppliers.data[0].quantity_tonnes, 34492347);
-  const crude = repository.getCrudeImports({ financialYear: "2014-15", pageSize: 10 });
-  import_strict.default.equal(crude.pagination.total, 40);
-  const totals = repository.getCrudeImportTotals({ financialYear: "2023-24", pageSize: 10 });
-  import_strict.default.equal(totals.data[0].quantity_thousand_metric_tonnes, 234261.5795730779);
-  const consumption = repository.getConsumption({ product: "LPG", financialYear: "2024-25", month: 4, pageSize: 10 });
-  import_strict.default.equal(consumption.data.length, 1);
-  import_strict.default.equal(consumption.data[0].consumption_metric_tonnes, 2373);
-  const globalOil = repository.getGlobalOil({ country: "Venezuela", pageSize: 10 });
-  import_strict.default.equal(globalOil.data.length, 1);
-  import_strict.default.equal(globalOil.data[0].canonical_country_name, "Venezuela");
-  import_strict.default.ok(Number(globalOil.data[0].proven_reserves_barrels) > 0);
-});
-(0, import_node_test.default)("shipping lane geometry is loaded from the processed source GeoJSON", async () => {
-  const source = JSON.parse((0, import_node_fs4.readFileSync)(import_node_path4.default.join(processedDir, "shipping_lanes_v1.geojson"), "utf8"));
-  const sourceGeometryById = new Map(source.features.map((feature) => [String(feature.id), feature.geometry]));
-  const storedGeometryRows = database.prepare("SELECT geometry_json, geometry_status FROM shipping_lane_geometries WHERE geometry_status = 'AVAILABLE'").all();
-  import_strict.default.equal(storedGeometryRows.length, source.features.length);
-  import_strict.default.ok(storedGeometryRows.every((row) => row.geometry_json));
-  const lanes = repository.getLanes({ pageSize: 10 });
-  import_strict.default.equal(lanes.data.length, source.features.length);
-  for (const lane of lanes.data) {
-    const sourceGeometry = sourceGeometryById.get(String(lane.source_feature_id));
-    import_strict.default.ok(sourceGeometry);
-    import_strict.default.deepEqual(lane.geometry, sourceGeometry);
-    import_strict.default.equal(lane.geometry.type, lane.geometry_type);
-  }
-  const response = await fetch(`${baseUrl}/api/phase2/lanes?pageSize=10`);
+(0, import_node_test.default)("orchestrator: partial failure -> 200 PARTIAL, FAILED stage, SKIPPED downstream, no legacy pipeline", async () => {
+  const response = await fetch(`${stubBaseUrl}/api/pipeline/run`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      text: "Strait of Hormuz disruption",
+      affectedNodeId: "node-does-not-exist"
+    })
+  });
   import_strict.default.equal(response.status, 200);
   const body = await response.json();
-  import_strict.default.equal(body.data.length, source.features.length);
-  import_strict.default.ok(body.data.every((lane) => lane.geometry && typeof lane.geometry === "object"));
-  import_strict.default.deepEqual(body.data[0].geometry, source.features.find((feature) => String(feature.id) === String(body.data[0].source_feature_id))?.geometry);
+  import_strict.default.equal(body.status, "AVAILABLE");
+  import_strict.default.equal(body.assessment.status, "PARTIAL");
+  const stageStatus = Object.fromEntries(
+    body.assessment.stages.map((stage) => [stage.stage, stage.status])
+  );
+  import_strict.default.equal(stageStatus.geopoliticalAnalysis, "COMPLETED");
+  import_strict.default.equal(stageStatus.networkImpactResolution, "COMPLETED");
+  import_strict.default.equal(stageStatus.scenarioSimulation, "FAILED");
+  import_strict.default.match(
+    body.assessment.stages.find((stage) => stage.stage === "scenarioSimulation").error,
+    /node-does-not-exist/
+  );
+  import_strict.default.equal(stageStatus.procurementOptimization, "SKIPPED");
+  import_strict.default.equal(stageStatus.reserveOptimization, "SKIPPED");
+  import_strict.default.ok(body.assessment.errors.length > 0);
+  import_strict.default.ok(body.assessment.summary.length > 0);
+  import_strict.default.equal(body.pipeline, void 0);
 });
-(0, import_node_test.default)("global oil endpoint returns real database records with filters", async () => {
-  const response = await fetch(`${baseUrl}/api/phase2/global-oil?country=Venezuela&pageSize=10`);
+(0, import_node_test.default)("orchestrator: happy path -> COMPLETED assessment, legacy payload, persistence, query endpoints", async () => {
+  const response = await fetch(`${stubBaseUrl}/api/pipeline/run`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: "Strait of Hormuz disruption" })
+  });
   import_strict.default.equal(response.status, 200);
   const body = await response.json();
-  import_strict.default.equal(body.pagination.total, 1);
-  import_strict.default.equal(body.data[0].canonical_country_name, "Venezuela");
-  import_strict.default.ok(Number(body.data[0].production_barrels_per_day) > 0);
+  import_strict.default.equal(body.status, "AVAILABLE");
+  const assessment = body.assessment;
+  import_strict.default.match(assessment.assessmentId, /^assessment-[0-9a-f-]{36}$/);
+  import_strict.default.equal(assessment.status, "COMPLETED");
+  import_strict.default.equal(assessment.trigger, "manual_request");
+  import_strict.default.equal(assessment.stages.length, 5);
+  import_strict.default.ok(assessment.stages.every((stage) => stage.status === "COMPLETED"));
+  import_strict.default.deepEqual(assessment.errors, []);
+  import_strict.default.equal(assessment.overallRisk, "high");
+  import_strict.default.ok(assessment.reserve.optimizationId.startsWith("reserve-optimization-"));
+  import_strict.default.ok(assessment.summary.length > 0);
+  import_strict.default.ok(assessment.recommendation && assessment.recommendation.length > 0);
+  import_strict.default.ok(body.pipeline?.stages, "legacy pipeline payload preserved");
+  import_strict.default.equal(body.pipeline.stages.reserveOptimization.optimizationId, assessment.reserve.optimizationId);
+  import_strict.default.equal(body.pipeline.stages.geopoliticalAnalysis.event.id, assessment.geopolitical.event.id);
+  const latestResponse = await fetch(`${stubBaseUrl}/api/assessments/latest`);
+  const latestBody = await latestResponse.json();
+  import_strict.default.equal(latestBody.assessment.assessmentId, assessment.assessmentId);
+  const byIdResponse = await fetch(`${stubBaseUrl}/api/assessments/${assessment.assessmentId}`);
+  import_strict.default.equal(byIdResponse.status, 200);
+  const byIdBody = await byIdResponse.json();
+  import_strict.default.equal(byIdBody.assessment.status, "COMPLETED");
+  const missingResponse = await fetch(`${stubBaseUrl}/api/assessments/assessment-does-not-exist`);
+  import_strict.default.equal(missingResponse.status, 404);
+  const listResponse = await fetch(`${stubBaseUrl}/api/assessments?limit=10`);
+  const listBody = await listResponse.json();
+  import_strict.default.equal(listBody.status, "AVAILABLE");
+  import_strict.default.ok(listBody.count >= 1);
 });
-(0, import_node_test.default)("daily activity pagination and filters are bounded", () => {
-  const page = repository.getPortActivity({ page: 2, pageSize: 25, portId: "port-21bd5d045171a73e0012", year: 2019 });
-  if (page.pagination.total > 0) {
-    import_strict.default.equal(page.data.length, 25);
-    import_strict.default.equal(page.pagination.page, 2);
-    import_strict.default.equal(page.pagination.pageSize, 25);
-    import_strict.default.ok(page.pagination.total > 25);
-    import_strict.default.ok(page.data.every((row) => row.source_year === 2019));
-  } else {
-    import_strict.default.equal(page.data.length, 0);
-    import_strict.default.equal(page.pagination.page, 2);
-    import_strict.default.equal(page.pagination.pageSize, 25);
-    import_strict.default.equal(page.pagination.total, 0);
-  }
-});
-(0, import_node_test.default)("data-quality query exposes review states and unresolved relationships", () => {
-  const quality = repository.getDataQuality({ issueType: "unresolved_port_mapping", pageSize: 10 });
-  import_strict.default.equal(quality.issues.length, 3);
-  import_strict.default.equal(quality.unresolvedRelationships.length, 5);
-  import_strict.default.equal(quality.manualReview.pagination.total, 11);
-  import_strict.default.ok(quality.summary.some((row) => row.dataset === "daily_port_activity"));
-});
-(0, import_node_test.default)("all Phase 2 API endpoints respond with structured JSON", async () => {
-  const endpoints = [
-    "/api/phase2/countries?pageSize=2",
-    "/api/phase2/ports?pageSize=2",
-    "/api/phase2/refineries?pageSize=2",
-    "/api/phase2/suppliers?pageSize=2",
-    "/api/phase2/imports/crude?pageSize=2",
-    "/api/phase2/imports/crude/totals?pageSize=2",
-    "/api/phase2/consumption?pageSize=2",
-    "/api/phase2/global-oil?pageSize=2",
-    "/api/phase2/lanes?pageSize=2",
-    "/api/phase2/chokepoints?pageSize=2",
-    "/api/phase2/port-activity?pageSize=2",
-    "/api/phase2/data-quality?pageSize=2"
-  ];
-  for (const endpoint of endpoints) {
-    const response = await fetch(`${baseUrl}${endpoint}`);
-    import_strict.default.equal(response.status, 200, endpoint);
-    const body = await response.json();
-    if (endpoint.includes("data-quality")) {
-      import_strict.default.ok(Array.isArray(body.issues));
-      import_strict.default.ok(Array.isArray(body.summary));
-    } else {
-      import_strict.default.ok(Array.isArray(body.data), endpoint);
-      import_strict.default.ok(body.pagination);
-    }
-  }
+(0, import_node_test.default)("orchestrator: input validation -> 400 when neither text nor event is provided", async () => {
+  const response = await fetch(`${stubBaseUrl}/api/pipeline/run`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({})
+  });
+  import_strict.default.equal(response.status, 400);
+  const body = await response.json();
+  import_strict.default.equal(body.status, "ERROR");
+  import_strict.default.match(body.error, /Either "text" or "event" is required/);
 });

@@ -617,6 +617,18 @@ CREATE TABLE IF NOT EXISTS strategic_reserve_optimization_runs (
   result_json TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS orbit_assessments (
+  assessment_id TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL,
+  completed_at TEXT,
+  trigger_source TEXT NOT NULL CHECK (trigger_source IN ('monitored_event', 'manual_request')),
+  monitored_event_id TEXT,
+  status TEXT NOT NULL CHECK (status IN ('COMPLETED', 'PARTIAL', 'FAILED')),
+  overall_risk TEXT CHECK (overall_risk IN ('low', 'medium', 'high', 'critical')),
+  summary TEXT NOT NULL,
+  payload_json TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_country_aliases_status ON country_aliases(mapping_status);
 CREATE INDEX IF NOT EXISTS idx_ports_name ON ports(canonical_port_name);
 CREATE INDEX IF NOT EXISTS idx_ports_status ON ports(mapping_status);
@@ -627,6 +639,8 @@ CREATE INDEX IF NOT EXISTS idx_consumption_product ON petroleum_consumption(prod
 CREATE INDEX IF NOT EXISTS idx_daily_activity_date ON daily_port_activity(activity_date);
 CREATE INDEX IF NOT EXISTS idx_daily_activity_port ON daily_port_activity(port_id);
 CREATE INDEX IF NOT EXISTS idx_quality_issue_type ON data_quality_issues(issue_type);
+CREATE INDEX IF NOT EXISTS idx_orbit_assessments_event ON orbit_assessments(monitored_event_id);
+CREATE INDEX IF NOT EXISTS idx_orbit_assessments_created ON orbit_assessments(created_at DESC);
 `;
 var PHASE2_DATA_TABLES = [
   "relationship_statuses",
@@ -1399,6 +1413,47 @@ var Phase2Repository = class {
       dataSource: "Phase 2 SQLite supplier_imports table (real import records)",
       provenance: `Derived from ${filteredRows.length} real supplier import records for FY ${targetYear} in supplier_imports (${totalAnnualImportTonnes.toLocaleString()} tonnes/yr \xF7 365 days = ${availableAlternativeDailyTonnes.toLocaleString()} tonnes/day). Commercial lane-cost data unavailable.`
     };
+  }
+  saveOrbitAssessment(assessment) {
+    this.database.prepare(`
+      INSERT INTO orbit_assessments
+        (assessment_id, created_at, completed_at, trigger_source, monitored_event_id, status, overall_risk, summary, payload_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      assessment.assessmentId,
+      assessment.createdAt,
+      assessment.completedAt ?? null,
+      assessment.trigger,
+      assessment.monitoredEventId ?? null,
+      assessment.status,
+      assessment.overallRisk ?? null,
+      assessment.summary,
+      JSON.stringify(assessment)
+    );
+    return assessment.assessmentId;
+  }
+  getOrbitAssessment(assessmentId) {
+    const row = this.database.prepare(
+      "SELECT payload_json FROM orbit_assessments WHERE assessment_id = ?"
+    ).get(assessmentId);
+    if (!row?.payload_json) return void 0;
+    return JSON.parse(row.payload_json);
+  }
+  listOrbitAssessments(options = {}) {
+    const clauses = [];
+    const parameters = [];
+    exactFilter("assessment_id", options.assessmentId, clauses, parameters);
+    exactFilter("monitored_event_id", options.monitoredEventId, clauses, parameters);
+    exactFilter("status", options.status, clauses, parameters);
+    const limit = Math.min(200, Math.max(1, Math.floor(options.limit || 20)));
+    const rows = this.database.prepare(`
+      SELECT payload_json
+      FROM orbit_assessments
+      ${where(clauses)}
+      ORDER BY created_at DESC
+      LIMIT ?
+    `).all(...parameters, limit);
+    return rows.map((row) => JSON.parse(row.payload_json));
   }
   saveStrategicReserveOptimization(input, result) {
     const optimizationId = `reserve-optimization-${(0, import_node_crypto2.randomUUID)()}`;
@@ -3560,7 +3615,6 @@ var RealScenarioProcurementDataProvider = class {
 
 // server.ts
 var import_express = __toESM(require("express"), 1);
-var import_node_crypto7 = require("node:crypto");
 var import_node_fs3 = require("node:fs");
 var import_node_path3 = __toESM(require("node:path"), 1);
 var import_node_process = require("node:process");
@@ -6382,6 +6436,295 @@ var SqliteScenarioBaselineProvider = class {
 // src/reserves/index.ts
 init_optimizer();
 
+// src/orchestrator/runOrbitAssessment.ts
+var import_node_crypto7 = require("node:crypto");
+var OrbitAssessmentInputError = class extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "OrbitAssessmentInputError";
+  }
+};
+var buildAssessmentSummary = (input) => {
+  const parts = [];
+  if (input.geopolitical) {
+    parts.push(`Event "${input.geopolitical.event.title}".`);
+    parts.push(`Risk ${input.geopolitical.risk.riskLevel.toUpperCase()} (${input.geopolitical.risk.riskScore}/100).`);
+  }
+  if (input.disruption) {
+    parts.push(`Modeled as a ${input.disruption.severity} disruption at ${input.disruption.affectedNodeId} for ${input.disruption.durationDays} day(s) at ${input.disruption.capacityReductionPercent}% capacity reduction.`);
+  }
+  if (input.scenario) {
+    parts.push(`Modeled supply gap ${input.scenario.shortage.toLocaleString()} ${input.scenario.shortageUnit}.`);
+  }
+  if (input.procurement) {
+    if (input.procurement.resolutionStatus === "UNAVAILABLE") {
+      parts.push("No real procurement alternatives were available for the affected node.");
+    } else if (input.procurement.procurement?.status === "OPTIMAL") {
+      parts.push(`Procurement plan covers ${input.procurement.procurement.totalProcured.toLocaleString()} ${input.procurement.procurement.totalProcuredUnit}.`);
+    } else if (input.procurement.procurement) {
+      parts.push(`Procurement optimization returned ${input.procurement.procurement.status}.`);
+    }
+  }
+  if (input.reserve) {
+    parts.push(`Reserve coverage ${input.reserve.result.coverageStatus}; recommended drawdown ${input.reserve.result.recommendedReserveDrawdown.toLocaleString()}.`);
+  }
+  if (parts.length === 0) {
+    return `Assessment could not be completed (${input.status}).`;
+  }
+  parts.push(`Assessment ${input.status}.`);
+  return parts.join(" ");
+};
+var buildAssessmentRecommendation = (input) => {
+  if (input.reserve) {
+    if (input.reserve.result.coverageStatus === "INFEASIBLE") {
+      return "Reserve coverage is infeasible for this disruption: secure additional alternative procurement or external supply before the shortfall window.";
+    }
+    if (input.reserve.result.coverageStatus === "PARTIALLY_COVERED" || input.reserve.result.coverageStatus === "RESERVE_BELOW_THRESHOLD") {
+      return "Reserve coverage is constrained: schedule replenishment and monitor the minimum reserve threshold during the disruption window.";
+    }
+  }
+  if (input.procurement?.resolutionStatus === "UNAVAILABLE") {
+    return "Procurement data was unavailable for the affected node: validate supplier import coverage before relying on the reserve drawdown plan.";
+  }
+  if (input.reserve && input.procurement?.procurement?.status === "OPTIMAL") {
+    return "Execute the optimized procurement plan and track the recovery timeline; the reserve drawdown stays within the safety constraint.";
+  }
+  if (input.geopolitical && (input.geopolitical.risk.riskLevel === "low" || input.geopolitical.risk.riskLevel === "medium")) {
+    return "No immediate intervention required: continue monitoring for follow-up events.";
+  }
+  return void 0;
+};
+var runOrbitAssessment = async (input, context) => {
+  const eventText = typeof input?.text === "string" && input.text.trim() ? input.text.trim() : typeof input?.request === "string" && input.request.trim() ? input.request.trim() : null;
+  if (!eventText && !input?.event) {
+    throw new OrbitAssessmentInputError('Either "text" or "event" is required to execute the pipeline.');
+  }
+  const assessmentId = `assessment-${(0, import_node_crypto7.randomUUID)()}`;
+  const createdAt = (/* @__PURE__ */ new Date()).toISOString();
+  const stages = [];
+  const errors = [];
+  const monitoredEventId = typeof input?.monitoredEventId === "string" && input.monitoredEventId.trim() ? input.monitoredEventId.trim() : void 0;
+  let trigger = "manual_request";
+  let monitoredArticle;
+  if (monitoredEventId) {
+    trigger = "monitored_event";
+    if (context.monitoring) {
+      try {
+        const candidate = context.monitoring.getEvents(200).find((event) => event.article.id === monitoredEventId);
+        if (candidate) {
+          monitoredArticle = candidate.article;
+        } else {
+          errors.push(`provenance: monitoredEventId "${monitoredEventId}" was not found in the monitoring store; trigger set to monitored_event (best-effort).`);
+        }
+      } catch {
+        errors.push("provenance: monitored-event lookup failed; trigger set to monitored_event (best-effort).");
+      }
+    }
+  }
+  const markStage = (stage, startedAt, error) => {
+    if (error !== void 0) {
+      const message = error instanceof Error ? error.message : String(error);
+      stages.push({ stage, status: "FAILED", startedAt, completedAt: (/* @__PURE__ */ new Date()).toISOString(), error: message });
+      errors.push(`${stage}: ${message}`);
+      return;
+    }
+    stages.push({ stage, status: "COMPLETED", startedAt, completedAt: (/* @__PURE__ */ new Date()).toISOString() });
+  };
+  const skipStage = (stage, reason) => {
+    stages.push({ stage, status: "SKIPPED", error: reason });
+    errors.push(`${stage}: ${reason}`);
+  };
+  let geopolitical;
+  let disruption;
+  let scenario;
+  let procurementStage;
+  let reserveStage;
+  let realProcurementState;
+  const step1StartedAt = (/* @__PURE__ */ new Date()).toISOString();
+  try {
+    geopolitical = eventText ? await context.geopoliticalRiskAgent.analyze(eventText) : analyzeGeopoliticalEventDeterministically(
+      input?.event?.title || "Pipeline Event",
+      input?.event,
+      context.digitalTwin
+    );
+    markStage("geopoliticalAnalysis", step1StartedAt);
+  } catch (error) {
+    markStage("geopoliticalAnalysis", step1StartedAt, error);
+  }
+  if (geopolitical) {
+    const step2StartedAt = (/* @__PURE__ */ new Date()).toISOString();
+    try {
+      const graph = context.digitalTwin.stateEngine.getCurrentTwin();
+      const affectedNodeId = typeof input?.affectedNodeId === "string" && input.affectedNodeId.trim() ? input.affectedNodeId.trim() : geopolitical.digitalTwinImpact.affectedNodeIds[0] || geopolitical.relevance.matchedNodeIds[0] || graph.nodes.find((n) => n.nodeType === "supplier" || n.nodeType === "shipping_route")?.nodeId || "supplier-default";
+      const severity = input?.severity === "LOW" || input?.severity === "MEDIUM" || input?.severity === "HIGH" || input?.severity === "CRITICAL" ? input.severity : geopolitical.risk.riskLevel === "critical" ? "CRITICAL" : geopolitical.risk.riskLevel === "high" ? "HIGH" : geopolitical.risk.riskLevel === "medium" ? "MEDIUM" : "LOW";
+      const durationDays = typeof input?.durationDays === "number" && input.durationDays > 0 ? input.durationDays : severity === "CRITICAL" ? 60 : severity === "HIGH" ? 30 : severity === "MEDIUM" ? 14 : 7;
+      const defaultReduction = severity === "CRITICAL" ? 80 : severity === "HIGH" ? 50 : severity === "MEDIUM" ? 30 : 15;
+      const capacityReductionPercent = typeof input?.capacityReductionPercent === "number" ? Math.min(100, Math.max(0, input.capacityReductionPercent)) : defaultReduction;
+      disruption = { affectedNodeId, severity, durationDays, capacityReductionPercent };
+      markStage("networkImpactResolution", step2StartedAt);
+    } catch (error) {
+      markStage("networkImpactResolution", step2StartedAt, error);
+    }
+  } else {
+    skipStage("networkImpactResolution", "Skipped because geopolitical analysis failed.");
+  }
+  if (geopolitical && disruption) {
+    const step3StartedAt = (/* @__PURE__ */ new Date()).toISOString();
+    try {
+      const scenarioInput = {
+        eventId: geopolitical.event.id || "pipeline-event-1",
+        durationDays: disruption.durationDays,
+        severity: disruption.severity,
+        affectedNodeId: disruption.affectedNodeId,
+        capacityReductionPercent: disruption.capacityReductionPercent
+      };
+      scenario = context.scenarioEngine.run(context.digitalTwin.stateEngine, scenarioInput);
+      markStage("scenarioSimulation", step3StartedAt);
+    } catch (error) {
+      markStage("scenarioSimulation", step3StartedAt, error);
+    }
+  } else {
+    skipStage("scenarioSimulation", "Skipped because the disruption parameters were unavailable.");
+  }
+  if (scenario && disruption) {
+    const step4StartedAt = (/* @__PURE__ */ new Date()).toISOString();
+    try {
+      realProcurementState = context.repository.getRealAlternativeProcurement({
+        excludedCountry: disruption.affectedNodeId
+      });
+      const resolution = buildProcurementRequestFromScenario(
+        scenario,
+        context.digitalTwin.stateEngine.getCurrentTwin(),
+        input?.dataSource === "demo" ? context.demoProcurementDataProvider : context.procurementDataProvider
+      );
+      let procurementResult = null;
+      let alternativeProcured = 0;
+      if (typeof input?.alternativeProcurement === "number") {
+        alternativeProcured = Math.max(0, input.alternativeProcurement);
+        if (resolution.status === "AVAILABLE" && resolution.request) {
+          procurementResult = await optimizeProcurement(resolution.request);
+        }
+      } else if (resolution.status === "AVAILABLE" && resolution.request) {
+        procurementResult = await optimizeProcurement(resolution.request);
+        if (procurementResult.status === "OPTIMAL") {
+          alternativeProcured = disruption.durationDays > 0 ? procurementResult.totalProcured / disruption.durationDays : procurementResult.totalProcured;
+        }
+      } else {
+        alternativeProcured = 0;
+      }
+      procurementStage = {
+        resolutionStatus: resolution.status,
+        source: resolution.source,
+        ...resolution.reason ? { reason: resolution.reason } : {},
+        procurement: procurementResult,
+        alternativeProcuredPerDay: alternativeProcured
+      };
+      markStage("procurementOptimization", step4StartedAt);
+    } catch (error) {
+      markStage("procurementOptimization", step4StartedAt, error);
+    }
+  } else {
+    skipStage("procurementOptimization", "Skipped because the scenario simulation result was unavailable.");
+  }
+  if (scenario && disruption) {
+    const step5StartedAt = (/* @__PURE__ */ new Date()).toISOString();
+    try {
+      const reserveState = context.repository.getCurrentStrategicReserveState();
+      const reserveInput = {
+        currentReserve: typeof input?.currentReserve === "number" ? input.currentReserve : reserveState.currentReserve,
+        demand: typeof input?.demand === "number" ? input.demand : reserveState.currentDemand,
+        supplyGap: scenario.shortage,
+        disruptionDuration: disruption.durationDays,
+        alternativeProcurement: procurementStage?.alternativeProcuredPerDay ?? 0,
+        replenishmentRate: typeof input?.replenishmentRate === "number" ? input.replenishmentRate : reserveState.defaultReplenishmentRate,
+        minimumReserveThreshold: typeof input?.minimumReserveThreshold === "number" ? input.minimumReserveThreshold : reserveState.minimumReserveThreshold
+      };
+      const reserveOptimization = optimizeStrategicReserve(reserveInput);
+      const optimizationId = context.repository.saveStrategicReserveOptimization(
+        reserveInput,
+        reserveOptimization
+      );
+      reserveStage = { input: reserveInput, result: reserveOptimization, optimizationId };
+      markStage("reserveOptimization", step5StartedAt);
+    } catch (error) {
+      markStage("reserveOptimization", step5StartedAt, error);
+    }
+  } else {
+    skipStage("reserveOptimization", "Skipped because the disruption parameters or scenario result were unavailable.");
+  }
+  const completedCount = stages.filter((stage) => stage.status === "COMPLETED").length;
+  const status = completedCount === stages.length ? "COMPLETED" : completedCount === 0 ? "FAILED" : "PARTIAL";
+  const assessment = {
+    assessmentId,
+    createdAt,
+    completedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    trigger,
+    ...monitoredEventId ? { monitoredEventId } : {},
+    ...monitoredArticle ? { article: monitoredArticle } : {},
+    ...geopolitical ? { geopolitical } : {},
+    ...disruption ? { disruption } : {},
+    ...scenario ? { scenario } : {},
+    ...procurementStage ? { procurement: procurementStage } : {},
+    ...reserveStage ? { reserve: reserveStage } : {},
+    stages,
+    status,
+    ...geopolitical ? { overallRisk: geopolitical.risk.riskLevel } : {},
+    summary: buildAssessmentSummary({
+      status,
+      geopolitical,
+      disruption,
+      scenario,
+      procurement: procurementStage,
+      reserve: reserveStage
+    }),
+    recommendation: buildAssessmentRecommendation({
+      geopolitical,
+      procurement: procurementStage,
+      reserve: reserveStage
+    }),
+    errors
+  };
+  try {
+    context.repository.saveOrbitAssessment(assessment);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push(`persistence: ${message}`);
+    assessment.errors = errors;
+  }
+  if (!geopolitical) {
+    return { assessment, startFailed: true, firstError: errors[0] || "Pipeline execution failed." };
+  }
+  return {
+    assessment,
+    startFailed: false,
+    ...status === "COMPLETED" && procurementStage && reserveStage && realProcurementState ? {
+      legacyPipeline: {
+        pipelineId: `pipeline-${(0, import_node_crypto7.randomUUID)()}`,
+        completedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        stages: {
+          geopoliticalAnalysis: geopolitical,
+          scenarioSimulation: scenario,
+          procurementAlternatives: {
+            resolutionStatus: procurementStage.resolutionStatus,
+            source: "Phase 2 SQLite (supplier_imports table)",
+            commercialCostStatus: "Commercial lane-cost data unavailable",
+            isCommercialCostAvailable: false,
+            availableAlternativeDailyTonnes: realProcurementState.availableAlternativeDailyTonnes,
+            alternativeSuppliersCount: realProcurementState.supplierCount,
+            topAlternativeSuppliers: realProcurementState.suppliers.slice(0, 5),
+            procurement: procurementStage.procurement
+          },
+          reserveOptimization: {
+            optimizationId: reserveStage.optimizationId,
+            input: reserveStage.input,
+            result: reserveStage.result
+          }
+        }
+      }
+    } : {}
+  };
+};
+
 // server.ts
 var envLocalPath = import_node_path3.default.resolve(process.cwd(), ".env.local");
 if ((0, import_node_fs3.existsSync)(envLocalPath)) (0, import_node_process.loadEnvFile)(envLocalPath);
@@ -7115,101 +7458,42 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
   app.post(
     "/api/pipeline/run",
     async (request, response) => {
-      const body = request.body;
-      const eventText = typeof body?.text === "string" && body.text.trim() ? body.text.trim() : typeof body?.request === "string" && body.request.trim() ? body.request.trim() : null;
-      if (!eventText && !body?.event) {
-        response.status(400).json({
-          status: "ERROR",
-          error: 'Either "text" or "event" is required to execute the pipeline.'
-        });
-        return;
-      }
       try {
-        const agentAnalysis = eventText ? await geopoliticalRiskAgent.analyze(eventText) : analyzeGeopoliticalEventDeterministically(
-          body?.event?.title || "Pipeline Event",
-          body?.event,
-          digitalTwin
-        );
-        const graph = digitalTwin.stateEngine.getCurrentTwin();
-        const affectedNodeId = typeof body?.affectedNodeId === "string" && body.affectedNodeId.trim() ? body.affectedNodeId.trim() : agentAnalysis.digitalTwinImpact.affectedNodeIds[0] || agentAnalysis.relevance.matchedNodeIds[0] || graph.nodes.find((n) => n.nodeType === "supplier" || n.nodeType === "shipping_route")?.nodeId || "supplier-default";
-        const severity = body?.severity === "LOW" || body?.severity === "MEDIUM" || body?.severity === "HIGH" || body?.severity === "CRITICAL" ? body.severity : agentAnalysis.risk.riskLevel === "critical" ? "CRITICAL" : agentAnalysis.risk.riskLevel === "high" ? "HIGH" : agentAnalysis.risk.riskLevel === "medium" ? "MEDIUM" : "LOW";
-        const durationDays = typeof body?.durationDays === "number" && body.durationDays > 0 ? body.durationDays : severity === "CRITICAL" ? 60 : severity === "HIGH" ? 30 : severity === "MEDIUM" ? 14 : 7;
-        const defaultReduction = severity === "CRITICAL" ? 80 : severity === "HIGH" ? 50 : severity === "MEDIUM" ? 30 : 15;
-        const capacityReductionPercent = typeof body?.capacityReductionPercent === "number" ? Math.min(100, Math.max(0, body.capacityReductionPercent)) : defaultReduction;
-        const scenarioInput = {
-          eventId: agentAnalysis.event.id || "pipeline-event-1",
-          durationDays,
-          severity,
-          affectedNodeId,
-          capacityReductionPercent
-        };
-        const scenario = scenarioEngine.run(digitalTwin.stateEngine, scenarioInput);
-        const realProcurementState = repository2.getRealAlternativeProcurement({
-          excludedCountry: affectedNodeId
-        });
-        const resolution = buildProcurementRequestFromScenario(
-          scenario,
-          digitalTwin.stateEngine.getCurrentTwin(),
-          body?.dataSource === "demo" ? demoProcurementDataProvider : procurementDataProvider
-        );
-        let procurementResult = null;
-        let alternativeProcured = 0;
-        if (typeof body?.alternativeProcurement === "number") {
-          alternativeProcured = Math.max(0, body.alternativeProcurement);
-          if (resolution.status === "AVAILABLE" && resolution.request) {
-            procurementResult = await optimizeProcurement(resolution.request);
+        const outcome = await runOrbitAssessment(
+          request.body,
+          {
+            repository: repository2,
+            digitalTwin,
+            geopoliticalRiskAgent,
+            monitoring,
+            scenarioEngine,
+            procurementDataProvider,
+            demoProcurementDataProvider
           }
-        } else if (resolution.status === "AVAILABLE" && resolution.request) {
-          procurementResult = await optimizeProcurement(resolution.request);
-          if (procurementResult.status === "OPTIMAL") {
-            alternativeProcured = durationDays > 0 ? procurementResult.totalProcured / durationDays : procurementResult.totalProcured;
-          }
-        } else {
-          alternativeProcured = 0;
+        );
+        if (outcome.startFailed) {
+          console.error("[ORBIT Pipeline] Execution failed:", outcome.firstError || "Pipeline execution failed.");
+          response.status(500).json({
+            status: "ERROR",
+            error: outcome.firstError || "Pipeline execution failed.",
+            assessment: outcome.assessment
+          });
+          return;
         }
-        const reserveState = repository2.getCurrentStrategicReserveState();
-        const reserveInput = {
-          currentReserve: typeof body?.currentReserve === "number" ? body.currentReserve : reserveState.currentReserve,
-          demand: typeof body?.demand === "number" ? body.demand : reserveState.currentDemand,
-          supplyGap: scenario.shortage,
-          disruptionDuration: durationDays,
-          alternativeProcurement: alternativeProcured,
-          replenishmentRate: typeof body?.replenishmentRate === "number" ? body.replenishmentRate : reserveState.defaultReplenishmentRate,
-          minimumReserveThreshold: typeof body?.minimumReserveThreshold === "number" ? body.minimumReserveThreshold : reserveState.minimumReserveThreshold
-        };
-        const reserveOptimization = optimizeStrategicReserve(reserveInput);
-        const optimizationId = repository2.saveStrategicReserveOptimization(
-          reserveInput,
-          reserveOptimization
-        );
         response.json({
           status: "AVAILABLE",
-          pipeline: {
-            pipelineId: `pipeline-${(0, import_node_crypto7.randomUUID)()}`,
-            completedAt: (/* @__PURE__ */ new Date()).toISOString(),
-            stages: {
-              geopoliticalAnalysis: agentAnalysis,
-              scenarioSimulation: scenario,
-              procurementAlternatives: {
-                resolutionStatus: resolution.status,
-                source: "Phase 2 SQLite (supplier_imports table)",
-                commercialCostStatus: "Commercial lane-cost data unavailable",
-                isCommercialCostAvailable: false,
-                availableAlternativeDailyTonnes: realProcurementState.availableAlternativeDailyTonnes,
-                alternativeSuppliersCount: realProcurementState.supplierCount,
-                topAlternativeSuppliers: realProcurementState.suppliers.slice(0, 5),
-                procurement: procurementResult
-              },
-              reserveOptimization: {
-                optimizationId,
-                input: reserveInput,
-                result: reserveOptimization
-              }
-            }
-          }
+          assessment: outcome.assessment,
+          ...outcome.legacyPipeline ? { pipeline: outcome.legacyPipeline } : {}
         });
       } catch (error) {
-        console.error("[ORBIT Pipeline] Execution failed:", error);
+        if (error instanceof OrbitAssessmentInputError) {
+          response.status(400).json({
+            status: "ERROR",
+            error: error.message
+          });
+          return;
+        }
+        console.error("[ORBIT Pipeline] Unexpected failure:", error);
         response.status(500).json({
           status: "ERROR",
           error: error instanceof Error ? error.message : "Pipeline execution failed."
@@ -7217,6 +7501,58 @@ var createApp = (repository2, digitalTwin = createDigitalTwinRuntime(repository2
       }
     }
   );
+  app.get("/api/assessments", (request, response) => {
+    try {
+      const limit = queryInteger(request, "limit", 20, 1, 200) || 20;
+      const monitoredEventId = queryText(request, "monitoredEventId");
+      const statusText = queryText(request, "status");
+      const status = statusText === "COMPLETED" || statusText === "PARTIAL" || statusText === "FAILED" ? statusText : void 0;
+      const assessments = repository2.listOrbitAssessments({
+        limit,
+        ...monitoredEventId ? { monitoredEventId } : {},
+        ...status ? { status } : {}
+      });
+      response.json({
+        status: "AVAILABLE",
+        count: assessments.length,
+        assessments
+      });
+    } catch (error) {
+      response.status(500).json({
+        status: "ERROR",
+        error: error instanceof Error ? error.message : "Failed to list orbit assessments."
+      });
+    }
+  });
+  app.get("/api/assessments/latest", (_request, response) => {
+    try {
+      const [assessment] = repository2.listOrbitAssessments({ limit: 1 });
+      response.json({ status: "AVAILABLE", ...assessment ? { assessment } : {} });
+    } catch (error) {
+      response.status(500).json({
+        status: "ERROR",
+        error: error instanceof Error ? error.message : "Failed to retrieve the latest orbit assessment."
+      });
+    }
+  });
+  app.get("/api/assessments/:assessmentId", (request, response) => {
+    try {
+      const assessment = repository2.getOrbitAssessment(request.params.assessmentId);
+      if (!assessment) {
+        response.status(404).json({
+          status: "ERROR",
+          error: `Orbit assessment not found: ${request.params.assessmentId}`
+        });
+        return;
+      }
+      response.json({ status: "AVAILABLE", assessment });
+    } catch (error) {
+      response.status(500).json({
+        status: "ERROR",
+        error: error instanceof Error ? error.message : "Failed to retrieve orbit assessment."
+      });
+    }
+  });
   app.post(
     "/api/scenarios/procurement",
     async (request, response) => {

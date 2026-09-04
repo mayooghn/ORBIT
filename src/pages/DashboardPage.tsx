@@ -1,6 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StatusBadge } from '../components/common/StatusBadge';
-import { getModuleServiceStatus } from '../services/moduleServices';
+import { deriveModuleServiceStatuses, type ModuleServiceConnectionStatus } from '../services/moduleServices';
+import {
+  checkBackendHealth,
+  fetchLatestOrbitAssessment,
+  fetchMonitoringStatus,
+  fetchOrbitAssessments,
+  fetchStrategicReserveState,
+  type HealthApiResponse,
+  type MonitoringStatusResponse,
+} from '../services/api';
+import type { OrbitAssessment } from '../types/orbitAssessment';
+import type { StrategicReserveState } from '../reserves/model';
 import {
   Activity,
   Bot,
@@ -307,7 +318,14 @@ const DashboardGlobe: React.FC = () => {
 /* ==========================================================================
    DASHBOARD STATUS STRIP — Compact operational bar
    ========================================================================== */
-const DashboardStatusStrip: React.FC = () => {
+const DashboardStatusStrip: React.FC<{
+  loaded: boolean;
+  backendAvailable: boolean;
+  networkStatus: ModuleServiceConnectionStatus;
+  signals: number | null;
+  affectedAssets: number;
+  elevated: number | null;
+}> = ({ loaded, backendAvailable, networkStatus, signals, affectedAssets, elevated }) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -319,25 +337,25 @@ const DashboardStatusStrip: React.FC = () => {
 
   return (
     <div className="db-operational-strip">
-      <div className="db-operational-strip-item is-active">
-        <span className="db-status-dot db-status-dot-operative" />
-        <span>SYSTEM OPERATIONAL</span>
+      <div className={`db-operational-strip-item ${loaded && backendAvailable ? 'is-active' : ''}`}>
+        <span className={`db-status-dot ${loaded && backendAvailable ? 'db-status-dot-operative' : 'db-status-dot-alert'}`} />
+        <span>{!loaded ? 'SYSTEM SYNCING' : backendAvailable ? 'SYSTEM OPERATIONAL' : 'SYSTEM OFFLINE'}</span>
       </div>
-      <div className="db-operational-strip-item is-active">
-        <span className="db-status-dot db-status-dot-operative" />
-        <span>NETWORK STABLE</span>
+      <div className={`db-operational-strip-item ${loaded && networkStatus === 'READY' ? 'is-active' : ''}`}>
+        <span className={`db-status-dot ${loaded && networkStatus === 'READY' ? 'db-status-dot-operative' : 'db-status-dot-alert'}`} />
+        <span>{!loaded ? 'NETWORK SYNCING' : networkStatus === 'READY' ? 'NETWORK STABLE' : networkStatus === 'UNKNOWN' ? 'NETWORK UNKNOWN' : 'NETWORK OFFLINE'}</span>
       </div>
       <div className="db-operational-strip-item">
         <Activity className="w-3 h-3 text-[#555]" />
-        <span>28 SIGNALS</span>
+        <span>{signals === null ? '— SIGNALS' : `${signals} SIGNALS`}</span>
       </div>
       <div className="db-operational-strip-item">
         <Database className="w-3 h-3 text-[#555]" />
-        <span>45 ASSETS</span>
+        <span>{affectedAssets} AFFECTED</span>
       </div>
       <div className="db-operational-strip-item">
         <AlertTriangle className="w-3 h-3 text-amber-500/60" />
-        <span>2 ELEVATED</span>
+        <span>{elevated === null ? '— ELEVATED' : `${elevated} ELEVATED`}</span>
       </div>
       <div className="db-operational-strip-item ml-auto">
         <span className="text-[#444]">{utc}</span>
@@ -349,10 +367,97 @@ const DashboardStatusStrip: React.FC = () => {
 /* ==========================================================================
    MAIN DASHBOARD PAGE
    ========================================================================== */
+interface OrbitOverview {
+  loaded: boolean;
+  health: HealthApiResponse | null;
+  monitoring: MonitoringStatusResponse['monitoring'] | null;
+  reserveState: StrategicReserveState | null;
+  latestAssessment: OrbitAssessment | null;
+  assessmentsAvailable: boolean;
+  recentAssessments: OrbitAssessment[];
+}
+
+const INITIAL_OVERVIEW: OrbitOverview = {
+  loaded: false,
+  health: null,
+  monitoring: null,
+  reserveState: null,
+  latestAssessment: null,
+  assessmentsAvailable: false,
+  recentAssessments: [],
+};
+
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
-  const corridor = getModuleServiceStatus('corridor');
-  const reserve = getModuleServiceStatus('reserve');
-  const assistant = getModuleServiceStatus('assistant');
+  const [overview, setOverview] = useState<OrbitOverview>(INITIAL_OVERVIEW);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // One-shot load on page entry — no polling loop (monitoring refresh has its
+    // own server-side cycle and the Assistant page owns live monitoring polling).
+    const load = async (): Promise<void> => {
+      const [health, monitoringStatus, reserveState, assessmentList, latest] = await Promise.allSettled([
+        checkBackendHealth(),
+        fetchMonitoringStatus(),
+        fetchStrategicReserveState(),
+        fetchOrbitAssessments(50),
+        fetchLatestOrbitAssessment(),
+      ]);
+
+      if (cancelled) return;
+
+      setOverview({
+        loaded: true,
+        health: health.status === 'fulfilled' ? health.value : null,
+        monitoring: monitoringStatus.status === 'fulfilled' ? monitoringStatus.value.monitoring ?? null : null,
+        reserveState: reserveState.status === 'fulfilled' ? reserveState.value ?? null : null,
+        latestAssessment: latest.status === 'fulfilled' ? latest.value : null,
+        assessmentsAvailable: assessmentList.status === 'fulfilled',
+        recentAssessments: assessmentList.status === 'fulfilled' ? assessmentList.value : [],
+      });
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const backendAvailable = overview.health?.status === 'AVAILABLE';
+  const dataLayerCapability = overview.health?.capabilities?.phase2DataLayer ?? 'UNKNOWN';
+  const moduleStatuses = deriveModuleServiceStatuses({
+    health: overview.health,
+    monitoring: overview.monitoring,
+    reserveStateAvailable: Boolean(overview.reserveState),
+    latestAssessment: overview.latestAssessment,
+  });
+  const corridor = moduleStatuses.corridor;
+  const reserve = moduleStatuses.reserve;
+  const assistant = moduleStatuses.assistant;
+
+  // Command Overview metrics — derived only from real fetched data.
+  const dayAgoMs = Date.now() - 24 * 60 * 60 * 1000;
+  const activeDisruptions = overview.recentAssessments.filter((assessment) => {
+    const createdAtMs = Date.parse(assessment.createdAt);
+    return (
+      Number.isFinite(createdAtMs) &&
+      createdAtMs >= dayAgoMs &&
+      (assessment.overallRisk === 'high' || assessment.overallRisk === 'critical')
+    );
+  }).length;
+  const criticalAlerts = overview.monitoring?.criticalAlerts ?? null;
+  const highAlerts = overview.monitoring?.highRiskAlerts ?? null;
+  const riskAlerts = criticalAlerts === null && highAlerts === null ? null : (criticalAlerts ?? 0) + (highAlerts ?? 0);
+  const scenariosRun = overview.recentAssessments.filter((assessment) =>
+    assessment.stages.some((stage) => stage.stage === 'scenarioSimulation' && stage.status === 'COMPLETED'),
+  ).length;
+  const reserveCoverage = overview.latestAssessment?.reserve?.result.coverageStatus ?? null;
+  const riskLevel = overview.latestAssessment?.overallRisk?.toUpperCase() ?? null;
+  const latestStatus = overview.latestAssessment?.status ?? null;
+  const affectedAssets: string[] = overview.latestAssessment?.geopolitical?.digitalTwinImpact?.affectedNodeNames?.filter((name) => Boolean(name && name.trim()))
+    ?? overview.latestAssessment?.geopolitical?.digitalTwinImpact?.affectedNodeIds
+    ?? [];
 
   return (
     <div className="dashboard-root">
@@ -360,7 +465,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       <div className="relative z-10 space-y-4">
         {/* Top status strip */}
-        <DashboardStatusStrip />
+        <DashboardStatusStrip
+          loaded={overview.loaded}
+          backendAvailable={backendAvailable}
+          networkStatus={corridor.status}
+          signals={overview.monitoring?.detectedEvents ?? null}
+          affectedAssets={affectedAssets.length}
+          elevated={riskAlerts}
+        />
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -369,7 +481,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#EDEDED]">
                 Command Center
               </h1>
-              <StatusBadge level="NOT_CONNECTED" label="STANDBY" size="sm" />
+              <StatusBadge
+                level={!overview.loaded ? 'UNKNOWN' : backendAvailable ? 'AVAILABLE' : 'NOT_CONNECTED'}
+                label={!overview.loaded ? 'SYNCING' : backendAvailable ? 'LIVE' : 'STANDBY'}
+                size="sm"
+              />
             </div>
             <p className="text-xs text-[#666] mt-1">
               Global energy intelligence — live network monitoring
@@ -394,12 +510,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 <Database className="w-3 h-3 text-amber-400/50" />
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-[#EDEDED] db-metric-value">—</span>
-                <span className="text-[11px] text-[#555] font-mono">days</span>
+                <span className="text-2xl font-bold text-[#EDEDED] db-metric-value">
+                  {overview.latestAssessment?.reserve
+                    ? overview.latestAssessment.reserve.input.currentReserve.toLocaleString()
+                    : overview.reserveState
+                      ? overview.reserveState.currentReserve.toLocaleString()
+                      : '—'}
+                </span>
+                <span className="text-[11px] text-[#555] font-mono">{overview.reserveState?.unit ?? 'units'}</span>
               </div>
               <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#555] font-mono">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-500/50" />
-                <span>Awaiting telemetry</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${overview.latestAssessment?.reserve || overview.reserveState ? 'bg-emerald-500/50' : 'bg-amber-500/50'}`} />
+                <span>
+                  {overview.latestAssessment?.reserve
+                    ? `Coverage ${overview.latestAssessment.reserve.result.coverageStatus} · threshold ${overview.latestAssessment.reserve.input.minimumReserveThreshold.toLocaleString()}`
+                    : overview.reserveState
+                      ? 'Reserve telemetry connected'
+                      : 'Reserve data unavailable'}
+                </span>
               </div>
             </div>
 
@@ -410,12 +538,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 <Activity className="w-3 h-3 text-amber-400/50" />
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-[#EDEDED] db-metric-value">0</span>
+                <span className="text-2xl font-bold text-[#EDEDED] db-metric-value">
+                  {overview.monitoring ? overview.monitoring.detectedEvents ?? 0 : '—'}
+                </span>
                 <span className="text-[11px] text-[#555] font-mono">events</span>
               </div>
               <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#555] font-mono">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
-                <span>No verified events</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${overview.monitoring ? 'bg-emerald-500/50' : 'bg-amber-500/50'}`} />
+                <span>{overview.monitoring ? 'Monitoring feed connected' : 'Monitoring unavailable'}</span>
               </div>
             </div>
 
@@ -426,11 +556,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 <TrendingUp className="w-3 h-3 text-emerald-400/50" />
               </div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-lg font-bold text-emerald-400/80 db-metric-value">LOW</span>
+                <span className={`text-lg font-bold db-metric-value ${riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'text-orange-400/80' : riskLevel ? 'text-emerald-400/80' : 'text-[#888]'}`}>
+                  {riskLevel ?? '—'}
+                </span>
               </div>
               <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#555] font-mono">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
-                <span>Within normal parameters</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'bg-orange-500/50' : riskLevel ? 'bg-emerald-500/50' : 'bg-[#333]'}`} />
+                <span>
+                  {overview.latestAssessment
+                    ? `Latest assessment ${overview.latestAssessment.status.toLowerCase()}`
+                    : overview.loaded
+                      ? 'No assessments recorded yet'
+                      : 'Syncing…'}
+                </span>
               </div>
             </div>
           </div>
@@ -465,10 +603,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <span className="db-status-dot db-status-dot-alert" style={{ width: 4, height: 4 }} />
+                    <span
+                      className={`db-status-dot ${dataLayerCapability === 'READY' ? 'db-status-dot-operative' : dataLayerCapability === 'UNKNOWN' ? 'db-status-dot-alert' : 'db-status-dot-alert'}`}
+                      style={{ width: 4, height: 4 }}
+                    />
                     <span className="text-[11px] text-[#777] font-mono">Operational data</span>
                   </div>
-                  <span className="text-[11px] text-orange-400/70 font-mono">OFFLINE</span>
+                  <span className={`text-[11px] font-mono ${dataLayerCapability === 'READY' ? 'text-emerald-400/70' : dataLayerCapability === 'UNKNOWN' ? 'text-[#888]' : 'text-orange-400/70'}`}>
+                    {dataLayerCapability === 'READY' ? 'READY' : dataLayerCapability === 'UNKNOWN' ? 'UNKNOWN' : 'OFFLINE'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -482,11 +625,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-[#777] font-mono">Corridors</span>
-                  <span className="text-[11px] text-orange-400/70 font-mono">NOT CONNECTED</span>
+                  <span className={`text-[11px] font-mono ${corridor.status === 'READY' ? 'text-emerald-400/70' : corridor.status === 'UNKNOWN' ? 'text-[#888]' : 'text-orange-400/70'}`}>
+                    {corridor.status === 'READY' ? 'CONNECTED' : corridor.status === 'UNKNOWN' ? 'UNKNOWN' : 'NOT CONNECTED'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-[#777] font-mono">Topology</span>
-                  <span className="text-[11px] text-orange-400/70 font-mono">NOT CONNECTED</span>
+                  <span className={`text-[11px] font-mono ${corridor.status === 'READY' ? 'text-emerald-400/70' : corridor.status === 'UNKNOWN' ? 'text-[#888]' : 'text-orange-400/70'}`}>
+                    {corridor.status === 'READY' ? 'CONNECTED' : corridor.status === 'UNKNOWN' ? 'UNKNOWN' : 'NOT CONNECTED'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -538,8 +685,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
                 <p className="text-[11px] text-[#555] leading-relaxed mt-1">{desc}</p>
                 <div className="mt-2 flex items-center gap-1.5">
-                  <span className="db-status-dot db-status-dot-alert" style={{ width: 4, height: 4 }} />
-                  <span className="text-[11px] text-orange-400/60 font-mono">NOT CONNECTED</span>
+                  <span
+                    className={`db-status-dot ${status === 'READY' ? 'db-status-dot-operative' : status === 'UNKNOWN' ? 'db-status-dot-alert' : 'db-status-dot-alert'}`}
+                    style={{ width: 4, height: 4 }}
+                  />
+                  <span className={`text-[11px] font-mono ${status === 'READY' ? 'text-emerald-400/60' : status === 'UNKNOWN' ? 'text-[#888]' : 'text-orange-400/60'}`}>
+                    {status === 'READY' ? 'CONNECTED' : status === 'UNKNOWN' ? 'UNKNOWN' : 'NOT CONNECTED'}
+                  </span>
                 </div>
               </button>
             ))}
@@ -554,21 +706,84 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">0</div>
+              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">
+                {!overview.loaded || !overview.assessmentsAvailable ? '—' : activeDisruptions}
+              </div>
               <div className="text-[11px] text-[#555] font-mono mt-0.5">Active Disruptions</div>
+              <div className="text-[10px] text-[#555] font-mono mt-0.5">
+                {!overview.loaded ? 'Syncing…' : !overview.assessmentsAvailable ? 'History unavailable' : activeDisruptions === 0 ? 'No active disruptions' : 'High/critical · last 24h'}
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">0</div>
+              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">{riskAlerts ?? '—'}</div>
               <div className="text-[11px] text-[#555] font-mono mt-0.5">Risk Alerts</div>
+              <div className="text-[10px] text-[#555] font-mono mt-0.5">
+                {riskAlerts === null ? 'Monitoring unavailable' : `${criticalAlerts ?? 0} critical · ${highAlerts ?? 0} high`}
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">—</div>
+              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">{overview.loaded ? reserveCoverage ?? '—' : '—'}</div>
               <div className="text-[11px] text-[#555] font-mono mt-0.5">Reserve Status</div>
+              <div className="text-[10px] text-[#555] font-mono mt-0.5">
+                {!overview.loaded ? 'Syncing…' : reserveCoverage ? 'From latest assessment' : 'Reserve data unavailable'}
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">0</div>
+              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">
+                {!overview.loaded || !overview.assessmentsAvailable ? '—' : scenariosRun}
+              </div>
               <div className="text-[11px] text-[#555] font-mono mt-0.5">Scenarios Run</div>
+              <div className="text-[10px] text-[#555] font-mono mt-0.5">
+                {!overview.loaded ? 'Syncing…' : !overview.assessmentsAvailable ? 'History unavailable' : 'Assessments with completed simulation'}
+              </div>
             </div>
+          </div>
+
+          {/* Latest unified assessment — real data from GET /api/assessments/latest */}
+          <div className="mt-4 pt-3 border-t border-[#1c2230]">
+            {!overview.loaded ? (
+              <div className="text-[11px] text-[#555] font-mono">Syncing live intelligence…</div>
+            ) : !overview.latestAssessment ? (
+              <div className="text-[11px] text-[#555] font-mono">No assessments recorded yet — run one from the Geopolitical Risk Agent.</div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[11px] font-mono font-semibold ${riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'text-orange-400/80' : 'text-emerald-400/80'}`}>
+                      {riskLevel ?? 'UNKNOWN RISK'}
+                    </span>
+                    <span className={`text-[11px] font-mono ${latestStatus === 'COMPLETED' ? 'text-emerald-400/70' : latestStatus === 'PARTIAL' ? 'text-amber-400/70' : 'text-orange-400/70'}`}>
+                      {latestStatus ?? 'UNKNOWN'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#555] font-mono">
+                    {overview.latestAssessment.completedAt ? `${overview.latestAssessment.completedAt.slice(0, 19).replace('T', ' ')} UTC` : '—'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#999] leading-relaxed">{overview.latestAssessment.summary}</p>
+                {overview.latestAssessment.recommendation && (
+                  <p className="text-[11px] text-orange-400/70 leading-relaxed">{overview.latestAssessment.recommendation}</p>
+                )}
+                <div className="text-[10px] text-[#555] font-mono break-all">{overview.latestAssessment.assessmentId}</div>
+                {affectedAssets.length > 0 ? (
+                  <div>
+                    <div className="text-[10px] text-[#666] font-mono uppercase tracking-wider mb-1">Affected assets</div>
+                    <div className="flex flex-wrap gap-1">
+                      {affectedAssets.slice(0, 6).map((asset) => (
+                        <span key={asset} className="px-1.5 py-0.5 rounded bg-[#161b28] border border-[#232a3a] text-[10px] text-[#aaa] font-mono">
+                          {asset}
+                        </span>
+                      ))}
+                      {affectedAssets.length > 6 && (
+                        <span className="text-[10px] text-[#555] font-mono">+{affectedAssets.length - 6} more</span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-[10px] text-[#555] font-mono">No affected Digital Twin assets reported for this assessment.</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

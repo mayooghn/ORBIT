@@ -15,6 +15,9 @@ import type {
   RealAlternativeProcurementState,
   ProcurementProvenance,
 } from '../reserves/model';
+import type { OrbitAssessment, OrbitAssessmentResponse } from '../types/orbitAssessment';
+
+export type { OrbitAssessment, OrbitAssessmentResponse } from '../types/orbitAssessment';
 
 export type ServerHealthStatus = 'AVAILABLE' | 'UNAVAILABLE';
 export type CapabilityStatus = 'READY' | 'NOT_CONNECTED' | 'UNKNOWN';
@@ -290,6 +293,8 @@ export interface PipelineExecutionResponse {
       };
     };
   };
+  /** Phase 2 unified assessment payload (supersedes `pipeline` once the UI migrates). */
+  assessment?: OrbitAssessment;
   error?: string;
 }
 
@@ -633,6 +638,89 @@ export async function runPipelineOptimization(
   }
 
   return body.pipeline;
+}
+
+export interface OrbitAssessmentRunParams {
+  text?: string;
+  request?: string;
+  event?: unknown;
+  monitoredEventId?: string;
+  affectedNodeId?: string;
+  durationDays?: number;
+  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  capacityReductionPercent?: number;
+  currentReserve?: number;
+  demand?: number;
+  minimumReserveThreshold?: number;
+  replenishmentRate?: number;
+  alternativeProcurement?: number;
+  dataSource?: 'sqlite' | 'demo';
+}
+
+/** Runs the end-to-end pipeline over HTTP and returns the unified, persisted assessment. */
+export async function requestOrbitAssessment(params: OrbitAssessmentRunParams): Promise<OrbitAssessment> {
+  const body = await requestJson<OrbitAssessmentResponse>('/api/pipeline/run', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!body.assessment) {
+    throw new Error(body.error || 'End-to-end assessment execution failed.');
+  }
+
+  return body.assessment;
+}
+
+/** Fetches a single persisted assessment by its stable id. */
+export async function fetchOrbitAssessment(assessmentId: string): Promise<OrbitAssessment> {
+  const body = await requestJson<OrbitAssessmentResponse>(
+    `/api/assessments/${encodeURIComponent(assessmentId)}`,
+    {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    },
+  );
+
+  if (!body.assessment) {
+    throw new Error(body.error || 'Failed to retrieve orbit assessment.');
+  }
+
+  return body.assessment;
+}
+
+/** Returns the most recent assessment, or null when none has been recorded yet. */
+export async function fetchLatestOrbitAssessment(): Promise<OrbitAssessment | null> {
+  const body = await requestJson<OrbitAssessmentResponse>('/api/assessments/latest', {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  });
+
+  return body.assessment ?? null;
+}
+
+export interface OrbitAssessmentListResponse {
+  status: 'AVAILABLE' | 'ERROR';
+  count?: number;
+  assessments?: OrbitAssessment[];
+  error?: string;
+}
+
+/** Lists recent assessments (newest first) from GET /api/assessments. */
+export async function fetchOrbitAssessments(limit = 20): Promise<OrbitAssessment[]> {
+  const body = await requestJson<OrbitAssessmentListResponse>(`/api/assessments?limit=${limit}`, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  });
+
+  if (body.status !== 'AVAILABLE' || !body.assessments) {
+    throw new Error(body.error || 'Failed to retrieve orbit assessments.');
+  }
+
+  return body.assessments;
 }
 
 export async function fetchDigitalTwinNodeState(nodeId: string): Promise<DigitalTwinNodeState> {

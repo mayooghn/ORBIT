@@ -408,6 +408,18 @@ CREATE TABLE IF NOT EXISTS strategic_reserve_optimization_runs (
   result_json TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS orbit_assessments (
+  assessment_id TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL,
+  completed_at TEXT,
+  trigger_source TEXT NOT NULL CHECK (trigger_source IN ('monitored_event', 'manual_request')),
+  monitored_event_id TEXT,
+  status TEXT NOT NULL CHECK (status IN ('COMPLETED', 'PARTIAL', 'FAILED')),
+  overall_risk TEXT CHECK (overall_risk IN ('low', 'medium', 'high', 'critical')),
+  summary TEXT NOT NULL,
+  payload_json TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_country_aliases_status ON country_aliases(mapping_status);
 CREATE INDEX IF NOT EXISTS idx_ports_name ON ports(canonical_port_name);
 CREATE INDEX IF NOT EXISTS idx_ports_status ON ports(mapping_status);
@@ -418,6 +430,8 @@ CREATE INDEX IF NOT EXISTS idx_consumption_product ON petroleum_consumption(prod
 CREATE INDEX IF NOT EXISTS idx_daily_activity_date ON daily_port_activity(activity_date);
 CREATE INDEX IF NOT EXISTS idx_daily_activity_port ON daily_port_activity(port_id);
 CREATE INDEX IF NOT EXISTS idx_quality_issue_type ON data_quality_issues(issue_type);
+CREATE INDEX IF NOT EXISTS idx_orbit_assessments_event ON orbit_assessments(monitored_event_id);
+CREATE INDEX IF NOT EXISTS idx_orbit_assessments_created ON orbit_assessments(created_at DESC);
 `;
 
 export const PHASE2_DATA_TABLES = [

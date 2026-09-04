@@ -1,5 +1,4 @@
 import express, { type Express, type Request, type Response } from 'express';
-import { randomUUID } from 'node:crypto';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { loadEnvFile } from 'node:process';
@@ -26,7 +25,6 @@ import type {
   SupplierQuery,
 } from './src/dataLayer/repository';
 import {
-  analyzeGeopoliticalEventDeterministically,
   createGeopoliticalRiskIntelligenceAgent,
   type GeopoliticalRiskAgent,
 } from './src/geopoliticalEvents/agent';
@@ -67,6 +65,11 @@ import {
   validateStrategicReserveInput,
   type StrategicReserveOptimizationInput,
 } from './src/reserves';
+import {
+  OrbitAssessmentInputError,
+  runOrbitAssessment,
+  type OrbitAssessmentInput,
+} from './src/orchestrator/runOrbitAssessment';
 
 
 const queryText = (
@@ -1208,152 +1211,48 @@ export const createApp = (
   app.post(
     '/api/pipeline/run',
     async (request, response) => {
-      const body = request.body as Record<string, unknown> | undefined;
-      const eventText = typeof body?.text === 'string' && body.text.trim()
-        ? body.text.trim()
-        : typeof body?.request === 'string' && body.request.trim()
-          ? body.request.trim()
-          : null;
-
-      if (!eventText && !body?.event) {
-        response.status(400).json({
-          status: 'ERROR',
-          error: 'Either "text" or "event" is required to execute the pipeline.',
-        });
-        return;
-      }
-
+      // Thin HTTP adapter: input validation, orchestration, and persistence
+      // live in the reusable runOrbitAssessment service (src/orchestrator).
       try {
-        // Step 1: Geopolitical Event & Risk Analysis
-        const agentAnalysis = eventText
-          ? await geopoliticalRiskAgent.analyze(eventText)
-          : analyzeGeopoliticalEventDeterministically(
-              (body?.event as { title?: string })?.title || 'Pipeline Event',
-              body?.event,
-              digitalTwin,
-            );
-
-        // Step 2: Supply-Chain Impact Identification
-        const graph = digitalTwin.stateEngine.getCurrentTwin();
-        const affectedNodeId =
-          typeof body?.affectedNodeId === 'string' && body.affectedNodeId.trim()
-            ? body.affectedNodeId.trim()
-            : agentAnalysis.digitalTwinImpact.affectedNodeIds[0] ||
-              agentAnalysis.relevance.matchedNodeIds[0] ||
-              graph.nodes.find((n) => n.nodeType === 'supplier' || n.nodeType === 'shipping_route')?.nodeId ||
-              'supplier-default';
-
-        const severity = (
-          body?.severity === 'LOW' || body?.severity === 'MEDIUM' || body?.severity === 'HIGH' || body?.severity === 'CRITICAL'
-            ? body.severity
-            : agentAnalysis.risk.riskLevel === 'critical'
-              ? 'CRITICAL'
-              : agentAnalysis.risk.riskLevel === 'high'
-                ? 'HIGH'
-                : agentAnalysis.risk.riskLevel === 'medium'
-                  ? 'MEDIUM'
-                  : 'LOW'
-        ) as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-
-        const durationDays = typeof body?.durationDays === 'number' && body.durationDays > 0
-          ? body.durationDays
-          : severity === 'CRITICAL' ? 60 : severity === 'HIGH' ? 30 : severity === 'MEDIUM' ? 14 : 7;
-
-        const defaultReduction = severity === 'CRITICAL' ? 80 : severity === 'HIGH' ? 50 : severity === 'MEDIUM' ? 30 : 15;
-        const capacityReductionPercent = typeof body?.capacityReductionPercent === 'number'
-          ? Math.min(100, Math.max(0, body.capacityReductionPercent))
-          : defaultReduction;
-
-        // Step 3: Scenario Simulation (Supply Gap)
-        const scenarioInput: ScenarioInput = {
-          eventId: agentAnalysis.event.id || 'pipeline-event-1',
-          durationDays,
-          severity,
-          affectedNodeId,
-          capacityReductionPercent,
-        };
-
-        const scenario = scenarioEngine.run(digitalTwin.stateEngine, scenarioInput);
-
-        // Step 4: Real Procurement Alternatives from SQLite Data Layer
-        const realProcurementState = repository.getRealAlternativeProcurement({
-          excludedCountry: affectedNodeId,
-        });
-
-        const resolution = buildProcurementRequestFromScenario(
-          scenario,
-          digitalTwin.stateEngine.getCurrentTwin(),
-          body?.dataSource === 'demo' ? demoProcurementDataProvider : procurementDataProvider,
+        const outcome = await runOrbitAssessment(
+          request.body as OrbitAssessmentInput,
+          {
+            repository,
+            digitalTwin,
+            geopoliticalRiskAgent,
+            monitoring,
+            scenarioEngine,
+            procurementDataProvider,
+            demoProcurementDataProvider,
+          },
         );
 
-        let procurementResult: ProcurementResult | null = null;
-        let alternativeProcured = 0;
-
-        if (typeof body?.alternativeProcurement === 'number') {
-          // Preserve manually supplied alternativeProcurement overrides exactly as they are
-          alternativeProcured = Math.max(0, body.alternativeProcurement);
-          if (resolution.status === 'AVAILABLE' && resolution.request) {
-            procurementResult = await optimizeProcurement(resolution.request);
-          }
-        } else if (resolution.status === 'AVAILABLE' && resolution.request) {
-          procurementResult = await optimizeProcurement(resolution.request);
-          if (procurementResult.status === 'OPTIMAL') {
-            // Convert procurementResult.totalProcured from cumulative tonnes to tonnes/day
-            // Only perform this conversion for the automatically generated procurement result
-            alternativeProcured = durationDays > 0
-              ? procurementResult.totalProcured / durationDays
-              : procurementResult.totalProcured;
-          }
-        } else {
-          alternativeProcured = 0;
+        if (outcome.startFailed) {
+          // The pipeline could not start; keep the legacy HTTP error contract.
+          console.error('[ORBIT Pipeline] Execution failed:', outcome.firstError || 'Pipeline execution failed.');
+          response.status(500).json({
+            status: 'ERROR',
+            error: outcome.firstError || 'Pipeline execution failed.',
+            assessment: outcome.assessment,
+          });
+          return;
         }
-
-        // Step 5: Strategic Reserve Optimization
-        const reserveState = repository.getCurrentStrategicReserveState();
-        const reserveInput: StrategicReserveOptimizationInput = {
-          currentReserve: typeof body?.currentReserve === 'number' ? body.currentReserve : reserveState.currentReserve,
-          demand: typeof body?.demand === 'number' ? body.demand : reserveState.currentDemand,
-          supplyGap: scenario.shortage,
-          disruptionDuration: durationDays,
-          alternativeProcurement: alternativeProcured,
-          replenishmentRate: typeof body?.replenishmentRate === 'number' ? body.replenishmentRate : reserveState.defaultReplenishmentRate,
-          minimumReserveThreshold: typeof body?.minimumReserveThreshold === 'number' ? body.minimumReserveThreshold : reserveState.minimumReserveThreshold,
-        };
-
-        const reserveOptimization = optimizeStrategicReserve(reserveInput);
-        const optimizationId = repository.saveStrategicReserveOptimization(
-          reserveInput,
-          reserveOptimization,
-        );
 
         response.json({
           status: 'AVAILABLE',
-          pipeline: {
-            pipelineId: `pipeline-${randomUUID()}`,
-            completedAt: new Date().toISOString(),
-            stages: {
-              geopoliticalAnalysis: agentAnalysis,
-              scenarioSimulation: scenario,
-              procurementAlternatives: {
-                resolutionStatus: resolution.status,
-                source: 'Phase 2 SQLite (supplier_imports table)',
-                commercialCostStatus: 'Commercial lane-cost data unavailable',
-                isCommercialCostAvailable: false,
-                availableAlternativeDailyTonnes: realProcurementState.availableAlternativeDailyTonnes,
-                alternativeSuppliersCount: realProcurementState.supplierCount,
-                topAlternativeSuppliers: realProcurementState.suppliers.slice(0, 5),
-                procurement: procurementResult,
-              },
-              reserveOptimization: {
-                optimizationId,
-                input: reserveInput,
-                result: reserveOptimization,
-              },
-            },
-          },
+          assessment: outcome.assessment,
+          ...(outcome.legacyPipeline ? { pipeline: outcome.legacyPipeline } : {}),
         });
       } catch (error) {
-        console.error('[ORBIT Pipeline] Execution failed:', error);
+        if (error instanceof OrbitAssessmentInputError) {
+          response.status(400).json({
+            status: 'ERROR',
+            error: error.message,
+          });
+          return;
+        }
+
+        console.error('[ORBIT Pipeline] Unexpected failure:', error);
         response.status(500).json({
           status: 'ERROR',
           error: error instanceof Error ? error.message : 'Pipeline execution failed.',
@@ -1361,6 +1260,70 @@ export const createApp = (
       }
     },
   );
+
+  // ============================================================
+  // PHASE 8 ORBIT ASSESSMENT QUERY API
+  // ============================================================
+
+  app.get('/api/assessments', (request, response) => {
+    try {
+      const limit = queryInteger(request, 'limit', 20, 1, 200) || 20;
+      const monitoredEventId = queryText(request, 'monitoredEventId');
+      const statusText = queryText(request, 'status');
+      const status =
+        statusText === 'COMPLETED' || statusText === 'PARTIAL' || statusText === 'FAILED'
+          ? statusText
+          : undefined;
+
+      const assessments = repository.listOrbitAssessments({
+        limit,
+        ...(monitoredEventId ? { monitoredEventId } : {}),
+        ...(status ? { status } : {}),
+      });
+
+      response.json({
+        status: 'AVAILABLE',
+        count: assessments.length,
+        assessments,
+      });
+    } catch (error) {
+      response.status(500).json({
+        status: 'ERROR',
+        error: error instanceof Error ? error.message : 'Failed to list orbit assessments.',
+      });
+    }
+  });
+
+  app.get('/api/assessments/latest', (_request, response) => {
+    try {
+      const [assessment] = repository.listOrbitAssessments({ limit: 1 });
+      response.json({ status: 'AVAILABLE', ...(assessment ? { assessment } : {}) });
+    } catch (error) {
+      response.status(500).json({
+        status: 'ERROR',
+        error: error instanceof Error ? error.message : 'Failed to retrieve the latest orbit assessment.',
+      });
+    }
+  });
+
+  app.get('/api/assessments/:assessmentId', (request, response) => {
+    try {
+      const assessment = repository.getOrbitAssessment(request.params.assessmentId);
+      if (!assessment) {
+        response.status(404).json({
+          status: 'ERROR',
+          error: `Orbit assessment not found: ${request.params.assessmentId}`,
+        });
+        return;
+      }
+      response.json({ status: 'AVAILABLE', assessment });
+    } catch (error) {
+      response.status(500).json({
+        status: 'ERROR',
+        error: error instanceof Error ? error.message : 'Failed to retrieve orbit assessment.',
+      });
+    }
+  });
 
   // ============================================================
   // PHASE 7 SCENARIO-TO-PROCUREMENT INTEGRATION

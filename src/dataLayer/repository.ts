@@ -8,6 +8,16 @@ import type {
   RealAlternativeProcurementState,
   RealAlternativeSupplier,
 } from '../reserves';
+import type { OrbitAssessment, OrbitAssessmentStatus } from '../types/orbitAssessment';
+
+export interface OrbitAssessmentListOptions {
+  /** Exact primary-key filter. */
+  assessmentId?: string;
+  /** Correlation filter on `orbit_assessments.monitored_event_id`. */
+  monitoredEventId?: string;
+  status?: OrbitAssessmentStatus;
+  limit?: number;
+}
 
 type QueryValue = string | number | null;
 type DataRow = Record<string, unknown>;
@@ -429,6 +439,55 @@ export class Phase2Repository {
       dataSource: 'Phase 2 SQLite supplier_imports table (real import records)',
       provenance: `Derived from ${filteredRows.length} real supplier import records for FY ${targetYear} in supplier_imports (${totalAnnualImportTonnes.toLocaleString()} tonnes/yr ÷ 365 days = ${availableAlternativeDailyTonnes.toLocaleString()} tonnes/day). Commercial lane-cost data unavailable.`,
     };
+  }
+
+  saveOrbitAssessment(assessment: OrbitAssessment): string {
+    this.database.prepare(`
+      INSERT INTO orbit_assessments
+        (assessment_id, created_at, completed_at, trigger_source, monitored_event_id, status, overall_risk, summary, payload_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      assessment.assessmentId,
+      assessment.createdAt,
+      assessment.completedAt ?? null,
+      assessment.trigger,
+      assessment.monitoredEventId ?? null,
+      assessment.status,
+      assessment.overallRisk ?? null,
+      assessment.summary,
+      JSON.stringify(assessment),
+    );
+    return assessment.assessmentId;
+  }
+
+  getOrbitAssessment(assessmentId: string): OrbitAssessment | undefined {
+    const row = this.database.prepare(
+      'SELECT payload_json FROM orbit_assessments WHERE assessment_id = ?',
+    ).get(assessmentId) as { payload_json?: string } | undefined;
+
+    if (!row?.payload_json) return undefined;
+    return JSON.parse(row.payload_json) as OrbitAssessment;
+  }
+
+  listOrbitAssessments(options: OrbitAssessmentListOptions = {}): OrbitAssessment[] {
+    const clauses: string[] = [];
+    const parameters: QueryValue[] = [];
+
+    exactFilter('assessment_id', options.assessmentId, clauses, parameters);
+    exactFilter('monitored_event_id', options.monitoredEventId, clauses, parameters);
+    exactFilter('status', options.status, clauses, parameters);
+
+    const limit = Math.min(200, Math.max(1, Math.floor(options.limit || 20)));
+
+    const rows = this.database.prepare(`
+      SELECT payload_json
+      FROM orbit_assessments
+      ${where(clauses)}
+      ORDER BY created_at DESC
+      LIMIT ?
+    `).all(...parameters, limit) as unknown as Array<{ payload_json: string }>;
+
+    return rows.map((row) => JSON.parse(row.payload_json) as OrbitAssessment);
   }
 
   saveStrategicReserveOptimization(
