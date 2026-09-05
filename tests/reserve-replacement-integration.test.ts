@@ -6,6 +6,7 @@ import { importPhase2Data } from '../src/dataLayer/importer';
 import { Phase2Repository } from '../src/dataLayer/repository';
 import { createDigitalTwinRuntime } from '../src/digitalTwin/runtime';
 import { RealScenarioProcurementDataProvider } from '../src/procurement';
+import type { GeopoliticalRiskAgent } from '../src/geopoliticalEvents/agent';
 import { createApp } from '../server';
 
 const dbPath = defaultPhase2DbPath();
@@ -15,11 +16,26 @@ const repository = new Phase2Repository(database);
 const runtime = createDigitalTwinRuntime(repository);
 const realDataProvider = new RealScenarioProcurementDataProvider(repository);
 
+const stubAgent: GeopoliticalRiskAgent = {
+  analyze: async (input) => {
+    const affectedNodeId = 'chokepoint-strait-of-hormuz';
+    return {
+      request: typeof input === 'string' ? input : JSON.stringify(input),
+      event: { id: 'evt-test-hormuz', title: 'Strait of Hormuz disruption', description: 'Test event.', timestamp: '2026-01-01T00:00:00.000Z', source: 'test', location: 'Strait of Hormuz', countriesInvolved: ['Iran', 'Oman'], category: 'maritime_disruption', severity: 'critical' },
+      classification: { eventId: 'evt-test-hormuz', category: 'maritime_disruption', severity: 'critical', energyRelevant: true, countriesInvolved: ['Iran', 'Oman'], location: 'Strait of Hormuz', classificationReasons: ['test'] },
+      relevance: { eventId: 'evt-test-hormuz', relevant: true, matchedNodeIds: [affectedNodeId], matchedNodeTypes: ['chokepoint'], matchedLocations: ['Strait of Hormuz'], matchedCountries: [], relevanceReasons: ['test'] },
+      risk: { eventId: 'evt-test-hormuz', riskLevel: 'high', riskScore: 60, factors: [], reasoning: ['test'], matchedNodeIds: [affectedNodeId], energyRelevant: true },
+      digitalTwinImpact: { eventId: 'evt-test-hormuz', relevant: true, riskLevel: 'high', riskScore: 60, matchedNodeIds: [affectedNodeId], affectedNodeIds: [affectedNodeId], affectedNodeNames: ['Strait of Hormuz'], affectedEdgeIds: [], affectedNodeTypes: ['chokepoint'], affectedCapacity: { nodeTotals: [], edgeTotals: [] }, affectedFlow: { nodeTotals: [], edgeTotals: [] }, impactReasons: ['test'] },
+      explanation: 'Test stub.',
+    };
+  },
+};
+
 let server: Server;
 let baseUrl = '';
 
 before(async () => {
-  const app = createApp(repository, runtime, undefined, undefined, realDataProvider);
+  const app = createApp(repository, runtime, stubAgent, undefined, realDataProvider);
   server = createServer(app);
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const address = server.address();
@@ -32,7 +48,7 @@ after(() => {
   database.close();
 });
 
-test('Integration: /api/pipeline/run with 30-day scenario where Replacement Supply returns a cumulative quantity and confirms the Reserve Optimizer receives the correct daily equivalent', async () => {
+test('Integration: /api/pipeline/run with 30-day scenario confirms the Reserve Optimizer receives the correct inputs without procurement stage', async () => {
   const durationDays = 30;
   const response = await fetch(`${baseUrl}/api/pipeline/run`, {
     method: 'POST',
@@ -50,29 +66,18 @@ test('Integration: /api/pipeline/run with 30-day scenario where Replacement Supp
   const body = await response.json() as any;
 
   assert.equal(body.status, 'AVAILABLE');
-  const stages = body.pipeline?.stages;
-  assert.ok(stages, 'Pipeline stages should be present');
-
-  const procurementStage = stages.procurementAlternatives;
-  assert.ok(procurementStage, 'Procurement alternatives stage should be present');
+  assert.ok(body.assessment, 'OrbitAssessment should be present');
+  assert.equal(body.assessment.status, 'COMPLETED');
   
-  const procurementResult = procurementStage.procurement;
-  const reserveInput = stages.reserveOptimization?.input;
-  
-  if (procurementResult && procurementResult.status === 'OPTIMAL') {
-    const totalProcured = procurementResult.totalProcured;
-    const expectedDailyEquivalent = totalProcured / durationDays;
-    
-    assert.equal(reserveInput.alternativeProcurement, expectedDailyEquivalent);
-    console.log(`Verified automatic conversion: Cumulative ${totalProcured} tonnes over ${durationDays} days successfully normalized to daily equivalent ${reserveInput.alternativeProcurement} tonnes/day.`);
-  } else {
-    // If no optimal plan is generated automatically, check that alternativeProcurement defaults to 0
-    assert.equal(reserveInput.alternativeProcurement, 0);
-    console.log('No optimal plan found automatically, alternativeProcurement defaulted to 0.');
-  }
+  const reserveResult = body.assessment.reserve;
+  assert.ok(reserveResult, 'Reserve optimization should be present in assessment');
+  assert.equal(reserveResult.input.disruptionDuration, durationDays);
+  assert.equal(reserveResult.input.alternativeProcurement, 0);
+  assert.equal(typeof reserveResult.input.supplyGap, 'number');
+  console.log(`Verified streamlined assessment: disruptionDuration=${durationDays}, alternativeProcurement=0, supplyGap=${reserveResult.input.supplyGap}`);
 });
 
-test('Integration: /api/pipeline/run with manually supplied alternativeProcurement preserves override exactly as-is', async () => {
+test('Integration: /api/pipeline/run enforces alternativeProcurement = 0 per exact architecture specification', async () => {
   const manualOverride = 15000;
   const response = await fetch(`${baseUrl}/api/pipeline/run`, {
     method: 'POST',
@@ -91,12 +96,11 @@ test('Integration: /api/pipeline/run with manually supplied alternativeProcureme
   const body = await response.json() as any;
 
   assert.equal(body.status, 'AVAILABLE');
-  const stages = body.pipeline?.stages;
-  assert.ok(stages, 'Pipeline stages should be present');
-
-  const reserveInput = stages.reserveOptimization?.input;
-  assert.equal(reserveInput.alternativeProcurement, manualOverride);
-  console.log(`Verified manual override: alternativeProcurement override preserved exactly as manually supplied: ${manualOverride} tonnes/day.`);
+  assert.ok(body.assessment, 'OrbitAssessment should be present');
+  const reserveInput = body.assessment.reserve?.input;
+  assert.ok(reserveInput, 'Reserve input should be present');
+  assert.equal(reserveInput.alternativeProcurement, 0);
+  console.log(`Verified exact specification: alternativeProcurement is 0.`);
 });
 
 test('Integration Case A: Partial external replacement', () => {

@@ -141,13 +141,12 @@ test('orchestrator: start failure -> 500 with FAILED assessment and downstream S
   assert.ok(repository.getOrbitAssessment(body.assessment.assessmentId));
 });
 
-test('orchestrator: partial failure -> 200 PARTIAL, FAILED stage, SKIPPED downstream, no legacy pipeline', async () => {
+test('orchestrator: partial failure when duration is missing -> 200 PARTIAL, FAILED stage, no legacy pipeline', async () => {
   const response = await fetch(`${stubBaseUrl}/api/pipeline/run`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       text: 'Strait of Hormuz disruption',
-      affectedNodeId: 'node-does-not-exist',
     }),
   });
 
@@ -160,13 +159,11 @@ test('orchestrator: partial failure -> 200 PARTIAL, FAILED stage, SKIPPED downst
   );
   assert.equal(stageStatus.geopoliticalAnalysis, 'COMPLETED');
   assert.equal(stageStatus.networkImpactResolution, 'COMPLETED');
-  assert.equal(stageStatus.scenarioSimulation, 'FAILED');
+  assert.equal(stageStatus.reserveOptimization, 'FAILED');
   assert.match(
-    body.assessment.stages.find((stage: any) => stage.stage === 'scenarioSimulation').error,
-    /node-does-not-exist/,
+    body.assessment.stages.find((stage: any) => stage.stage === 'reserveOptimization').error,
+    /duration/i,
   );
-  assert.equal(stageStatus.procurementOptimization, 'SKIPPED');
-  assert.equal(stageStatus.reserveOptimization, 'SKIPPED');
   assert.ok(body.assessment.errors.length > 0);
   assert.ok(body.assessment.summary.length > 0);
   assert.equal(body.pipeline, undefined);
@@ -176,7 +173,7 @@ test('orchestrator: happy path -> COMPLETED assessment, legacy payload, persiste
   const response = await fetch(`${stubBaseUrl}/api/pipeline/run`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ text: 'Strait of Hormuz disruption' }),
+    body: JSON.stringify({ text: 'Strait of Hormuz disruption', durationDays: 10 }),
   });
 
   assert.equal(response.status, 200);
@@ -186,7 +183,7 @@ test('orchestrator: happy path -> COMPLETED assessment, legacy payload, persiste
   assert.match(assessment.assessmentId, /^assessment-[0-9a-f-]{36}$/);
   assert.equal(assessment.status, 'COMPLETED');
   assert.equal(assessment.trigger, 'manual_request');
-  assert.equal(assessment.stages.length, 5);
+  assert.equal(assessment.stages.length, 3);
   assert.ok(assessment.stages.every((stage: any) => stage.status === 'COMPLETED'));
   assert.deepEqual(assessment.errors, []);
   assert.equal(assessment.overallRisk, 'high');

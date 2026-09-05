@@ -1,14 +1,14 @@
 /**
- * ORBIT unified assessment orchestrator (Phase 3).
+ * ORBIT unified assessment orchestrator.
  *
  * `runOrbitAssessment` is the single reusable orchestration entry point for the
- * locked pipeline: event intake/validation -> geopolitical analysis (existing
- * agent) -> network impact resolution -> scenario simulation (existing engine)
- * -> procurement optimization (existing GLPK flow) -> strategic reserve
- * optimization (existing optimizer) -> unified OrbitAssessment -> persistence.
+ * architecture: event intake/validation -> existing geopolitical analysis ->
+ * existing geopolitical -> Digital Twin integration -> existing Strategic Reserve
+ * state retrieval -> existing optimizeStrategicReserve() -> unified OrbitAssessment ->
+ * persistence.
  *
  * This module CALLS the existing calculation engines and never recreates
- * geopolitical, Digital Twin, scenario, procurement, or reserve mathematics.
+ * geopolitical, Digital Twin, or reserve mathematics.
  * It contains no HTTP concerns; `server.ts` adapts the outcome to responses.
  */
 
@@ -20,19 +20,13 @@ import {
   type GeopoliticalRiskAgent,
   type GeopoliticalRiskAgentResponse,
 } from '../geopoliticalEvents/agent';
-import type { GeopoliticalMonitoringService, MonitoringArticle } from '../geopoliticalEvents/monitoring';
-import type { ScenarioInput, ScenarioResult } from '../scenarios/model';
-import type { ScenarioEngine } from '../scenarios/scenario-engine';
 import {
-  buildProcurementRequestFromScenario,
-  optimizeProcurement,
-  type ScenarioProcurementDataProvider,
-} from '../procurement';
-import type { ProcurementResult } from '../procurement/model';
+  integrateGeopoliticalRiskWithDigitalTwin,
+  type GeopoliticalRiskDigitalTwinIntegration,
+} from '../geopoliticalEvents/digitalTwinIntegration';
+import type { GeopoliticalMonitoringService, MonitoringArticle } from '../geopoliticalEvents/monitoring';
 import {
   optimizeStrategicReserve,
-  type RealAlternativeProcurementState,
-  type RealAlternativeSupplier,
   type StrategicReserveOptimizationInput,
   type StrategicReserveOptimizationResult,
 } from '../reserves';
@@ -40,7 +34,6 @@ import type {
   OrbitAssessment,
   OrbitAssessmentDisruptionParameters,
   OrbitAssessmentId,
-  OrbitAssessmentProcurementStage,
   OrbitAssessmentReserveStage,
   OrbitAssessmentStageKey,
   OrbitAssessmentStageRecord,
@@ -59,6 +52,7 @@ export interface OrbitAssessmentInput {
   durationDays?: number;
   severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   capacityReductionPercent?: number;
+  supplyGap?: number;
   alternativeProcurement?: number;
   currentReserve?: number;
   demand?: number;
@@ -73,9 +67,7 @@ export interface OrbitAssessmentContext {
   digitalTwin: DigitalTwinRuntime;
   geopoliticalRiskAgent: GeopoliticalRiskAgent;
   monitoring?: GeopoliticalMonitoringService;
-  scenarioEngine: ScenarioEngine;
-  procurementDataProvider: ScenarioProcurementDataProvider;
-  demoProcurementDataProvider: ScenarioProcurementDataProvider;
+  [key: string]: unknown;
 }
 
 /** Thrown when the caller supplied neither `text`/`request` nor a structured `event`. */
@@ -92,17 +84,6 @@ export interface OrbitAssessmentLegacyPipeline {
   completedAt: string;
   stages: {
     geopoliticalAnalysis: GeopoliticalRiskAgentResponse;
-    scenarioSimulation: ScenarioResult;
-    procurementAlternatives: {
-      resolutionStatus: string;
-      source: string;
-      commercialCostStatus: string;
-      isCommercialCostAvailable: boolean;
-      availableAlternativeDailyTonnes: number;
-      alternativeSuppliersCount: number;
-      topAlternativeSuppliers: RealAlternativeSupplier[];
-      procurement: ProcurementResult | null;
-    };
     reserveOptimization: {
       optimizationId?: string;
       input: StrategicReserveOptimizationInput;
@@ -124,8 +105,6 @@ interface AssessmentSummaryInputs {
   status: OrbitAssessmentStatus;
   geopolitical?: GeopoliticalRiskAgentResponse;
   disruption?: OrbitAssessmentDisruptionParameters;
-  scenario?: ScenarioResult;
-  procurement?: OrbitAssessmentProcurementStage;
   reserve?: OrbitAssessmentReserveStage;
 }
 
@@ -138,19 +117,8 @@ const buildAssessmentSummary = (input: AssessmentSummaryInputs): string => {
     parts.push(`Risk ${input.geopolitical.risk.riskLevel.toUpperCase()} (${input.geopolitical.risk.riskScore}/100).`);
   }
   if (input.disruption) {
-    parts.push(`Modeled as a ${input.disruption.severity} disruption at ${input.disruption.affectedNodeId} for ${input.disruption.durationDays} day(s) at ${input.disruption.capacityReductionPercent}% capacity reduction.`);
-  }
-  if (input.scenario) {
-    parts.push(`Modeled supply gap ${input.scenario.shortage.toLocaleString()} ${input.scenario.shortageUnit}.`);
-  }
-  if (input.procurement) {
-    if (input.procurement.resolutionStatus === 'UNAVAILABLE') {
-      parts.push('No real procurement alternatives were available for the affected node.');
-    } else if (input.procurement.procurement?.status === 'OPTIMAL') {
-      parts.push(`Procurement plan covers ${input.procurement.procurement.totalProcured.toLocaleString()} ${input.procurement.procurement.totalProcuredUnit}.`);
-    } else if (input.procurement.procurement) {
-      parts.push(`Procurement optimization returned ${input.procurement.procurement.status}.`);
-    }
+    const durText = input.disruption.durationDays > 0 ? ` for ${input.disruption.durationDays} day(s)` : '';
+    parts.push(`Modeled as a ${input.disruption.severity} disruption at ${input.disruption.affectedNodeId}${durText} at ${input.disruption.capacityReductionPercent}% capacity reduction.`);
   }
   if (input.reserve) {
     parts.push(`Reserve coverage ${input.reserve.result.coverageStatus}; recommended drawdown ${input.reserve.result.recommendedReserveDrawdown.toLocaleString()}.`);
@@ -164,15 +132,14 @@ const buildAssessmentSummary = (input: AssessmentSummaryInputs): string => {
   return parts.join(' ');
 };
 
-/** Rule-based recommendation (no ML) derived from the existing stage results. */
+/** Rule-based recommendation derived from the existing stage results. */
 const buildAssessmentRecommendation = (input: {
   geopolitical?: GeopoliticalRiskAgentResponse;
-  procurement?: OrbitAssessmentProcurementStage;
   reserve?: OrbitAssessmentReserveStage;
 }): string | undefined => {
   if (input.reserve) {
     if (input.reserve.result.coverageStatus === 'INFEASIBLE') {
-      return 'Reserve coverage is infeasible for this disruption: secure additional alternative procurement or external supply before the shortfall window.';
+      return 'Reserve coverage is infeasible for this disruption: secure additional external supply before the shortfall window.';
     }
     if (
       input.reserve.result.coverageStatus === 'PARTIALLY_COVERED' ||
@@ -180,21 +147,40 @@ const buildAssessmentRecommendation = (input: {
     ) {
       return 'Reserve coverage is constrained: schedule replenishment and monitor the minimum reserve threshold during the disruption window.';
     }
-  }
-
-  if (input.procurement?.resolutionStatus === 'UNAVAILABLE') {
-    return 'Procurement data was unavailable for the affected node: validate supplier import coverage before relying on the reserve drawdown plan.';
-  }
-
-  if (input.reserve && input.procurement?.procurement?.status === 'OPTIMAL') {
-    return 'Execute the optimized procurement plan and track the recovery timeline; the reserve drawdown stays within the safety constraint.';
+    if (input.reserve.result.coverageStatus === 'FULLY_COVERED') {
+      return 'Reserve coverage is sufficient: execute the recommended reserve drawdown within the safety constraint.';
+    }
+    if (input.reserve.result.coverageStatus === 'NO_EFFECTIVE_GAP') {
+      return 'No effective supply gap detected: strategic reserves remain intact without requiring drawdown.';
+    }
   }
 
   if (input.geopolitical && (input.geopolitical.risk.riskLevel === 'low' || input.geopolitical.risk.riskLevel === 'medium')) {
     return 'No immediate intervention required: continue monitoring for follow-up events.';
   }
 
-  return undefined;
+  return 'Maintain standard reserve monitoring: review operational posture as conditions develop.';
+};
+
+/**
+ * Derives a numeric supply gap from Digital Twin affected-flow measurements.
+ * Returns a number, NOT the raw affectedFlow object.
+ */
+const deriveNumericSupplyGap = (impact?: GeopoliticalRiskDigitalTwinIntegration): number => {
+  if (!impact?.affectedFlow) return 0;
+  const nodeTotal = (impact.affectedFlow.nodeTotals || []).reduce(
+    (acc, m) => acc + (typeof m?.value === 'number' && Number.isFinite(m.value) ? m.value : 0),
+    0,
+  );
+  if (nodeTotal > 0) return nodeTotal;
+
+  const edgeTotal = (impact.affectedFlow.edgeTotals || []).reduce(
+    (acc, m) => acc + (typeof m?.value === 'number' && Number.isFinite(m.value) ? m.value : 0),
+    0,
+  );
+  if (edgeTotal > 0) return edgeTotal;
+
+  return 0;
 };
 
 /**
@@ -266,13 +252,22 @@ export const runOrbitAssessment = async (
   };
 
   let geopolitical: GeopoliticalRiskAgentResponse | undefined;
+  let digitalTwinImpact: GeopoliticalRiskDigitalTwinIntegration | undefined;
   let disruption: OrbitAssessmentDisruptionParameters | undefined;
-  let scenario: ScenarioResult | undefined;
-  let procurementStage: OrbitAssessmentProcurementStage | undefined;
   let reserveStage: OrbitAssessmentReserveStage | undefined;
-  let realProcurementState: RealAlternativeProcurementState | undefined;
 
-  // Step 1: Geopolitical Event & Risk Analysis
+  // Disruption duration: comes strictly from event.durationDays (or input durationDays)
+  const rawDuration =
+    (input?.event as { durationDays?: unknown })?.durationDays ??
+    input?.durationDays ??
+    (geopolitical?.event as { durationDays?: unknown })?.durationDays;
+
+  const durationDays =
+    typeof rawDuration === 'number' && Number.isFinite(rawDuration) && rawDuration > 0
+      ? Math.floor(rawDuration)
+      : undefined;
+
+  // Step 1: Geopolitical Event & Risk Analysis (Existing GeopoliticalRiskAgent analysis)
   const step1StartedAt = new Date().toISOString();
   try {
     geopolitical = eventText
@@ -287,15 +282,22 @@ export const runOrbitAssessment = async (
     markStage('geopoliticalAnalysis', step1StartedAt, error);
   }
 
-  // Step 2: Supply-Chain Impact Identification
+  // Step 2: Geopolitical -> Digital Twin Integration (Existing digital twin integration)
   if (geopolitical) {
     const step2StartedAt = new Date().toISOString();
     try {
+      digitalTwinImpact = geopolitical.digitalTwinImpact ?? integrateGeopoliticalRiskWithDigitalTwin(
+        geopolitical.classification,
+        geopolitical.relevance,
+        geopolitical.risk,
+        context.digitalTwin,
+      );
+
       const graph = context.digitalTwin.stateEngine.getCurrentTwin();
       const affectedNodeId =
         typeof input?.affectedNodeId === 'string' && input.affectedNodeId.trim()
           ? input.affectedNodeId.trim()
-          : geopolitical.digitalTwinImpact.affectedNodeIds[0] ||
+          : digitalTwinImpact.affectedNodeIds[0] ||
             geopolitical.relevance.matchedNodeIds[0] ||
             graph.nodes.find((n) => n.nodeType === 'supplier' || n.nodeType === 'shipping_route')?.nodeId ||
             'supplier-default';
@@ -312,16 +314,18 @@ export const runOrbitAssessment = async (
                 : 'LOW'
       ) as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
-      const durationDays = typeof input?.durationDays === 'number' && input.durationDays > 0
-        ? input.durationDays
-        : severity === 'CRITICAL' ? 60 : severity === 'HIGH' ? 30 : severity === 'MEDIUM' ? 14 : 7;
-
       const defaultReduction = severity === 'CRITICAL' ? 80 : severity === 'HIGH' ? 50 : severity === 'MEDIUM' ? 30 : 15;
       const capacityReductionPercent = typeof input?.capacityReductionPercent === 'number'
         ? Math.min(100, Math.max(0, input.capacityReductionPercent))
         : defaultReduction;
 
-      disruption = { affectedNodeId, severity, durationDays, capacityReductionPercent };
+      disruption = {
+        affectedNodeId,
+        severity,
+        durationDays: durationDays ?? 0,
+        capacityReductionPercent,
+      };
+
       markStage('networkImpactResolution', step2StartedAt);
     } catch (error) {
       markStage('networkImpactResolution', step2StartedAt, error);
@@ -330,93 +334,49 @@ export const runOrbitAssessment = async (
     skipStage('networkImpactResolution', 'Skipped because geopolitical analysis failed.');
   }
 
-  // Step 3: Scenario Simulation (Supply Gap)
+  // Step 3: Strategic Reserve Optimization
   if (geopolitical && disruption) {
     const step3StartedAt = new Date().toISOString();
     try {
-      const scenarioInput: ScenarioInput = {
-        eventId: geopolitical.event.id || 'pipeline-event-1',
-        durationDays: disruption.durationDays,
-        severity: disruption.severity,
-        affectedNodeId: disruption.affectedNodeId,
-        capacityReductionPercent: disruption.capacityReductionPercent,
-      };
+      // 4. Existing Strategic Reserve state retrieval
+      const reserveState = context.repository.getCurrentStrategicReserveState();
 
-      scenario = context.scenarioEngine.run(context.digitalTwin.stateEngine, scenarioInput);
-      markStage('scenarioSimulation', step3StartedAt);
-    } catch (error) {
-      markStage('scenarioSimulation', step3StartedAt, error);
-    }
-  } else {
-    skipStage('scenarioSimulation', 'Skipped because the disruption parameters were unavailable.');
-  }
-
-  // Step 4: Real Procurement Alternatives from SQLite Data Layer
-  if (scenario && disruption) {
-    const step4StartedAt = new Date().toISOString();
-    try {
-      realProcurementState = context.repository.getRealAlternativeProcurement({
-        excludedCountry: disruption.affectedNodeId,
-      });
-
-      const resolution = buildProcurementRequestFromScenario(
-        scenario,
-        context.digitalTwin.stateEngine.getCurrentTwin(),
-        input?.dataSource === 'demo' ? context.demoProcurementDataProvider : context.procurementDataProvider,
-      );
-
-      let procurementResult: ProcurementResult | null = null;
-      let alternativeProcured = 0;
-
-      if (typeof input?.alternativeProcurement === 'number') {
-        // Preserve manually supplied alternativeProcurement overrides exactly as they are
-        alternativeProcured = Math.max(0, input.alternativeProcurement);
-        if (resolution.status === 'AVAILABLE' && resolution.request) {
-          procurementResult = await optimizeProcurement(resolution.request);
-        }
-      } else if (resolution.status === 'AVAILABLE' && resolution.request) {
-        procurementResult = await optimizeProcurement(resolution.request);
-        if (procurementResult.status === 'OPTIMAL') {
-          // Convert procurementResult.totalProcured from cumulative tonnes to tonnes/day
-          // Only perform this conversion for the automatically generated procurement result
-          alternativeProcured = disruption.durationDays > 0
-            ? procurementResult.totalProcured / disruption.durationDays
-            : procurementResult.totalProcured;
-        }
-      } else {
-        alternativeProcured = 0;
+      // Check duration: NEVER invent duration defaults such as 30 or 60 days.
+      // If durationDays is missing/invalid, preserve honest partial-failure behavior.
+      if (durationDays === undefined) {
+        throw new Error(
+          'Disruption duration (event.durationDays) is missing or invalid; reserve optimization cannot be performed without an explicit duration.',
+        );
       }
 
-      procurementStage = {
-        resolutionStatus: resolution.status,
-        source: resolution.source,
-        ...(resolution.reason ? { reason: resolution.reason } : {}),
-        procurement: procurementResult,
-        alternativeProcuredPerDay: alternativeProcured,
-      };
-      markStage('procurementOptimization', step4StartedAt);
-    } catch (error) {
-      markStage('procurementOptimization', step4StartedAt, error);
-    }
-  } else {
-    skipStage('procurementOptimization', 'Skipped because the scenario simulation result was unavailable.');
-  }
+      // supplyGap = NUMERIC value derived from Digital Twin affected-flow measurements, NOT raw object
+      const derivedGap = deriveNumericSupplyGap(digitalTwinImpact);
+      const supplyGap = derivedGap > 0
+        ? derivedGap
+        : (typeof input?.supplyGap === 'number' && Number.isFinite(input.supplyGap) && input.supplyGap >= 0
+          ? input.supplyGap
+          : 0);
 
-  // Step 5: Strategic Reserve Optimization
-  if (scenario && disruption) {
-    const step5StartedAt = new Date().toISOString();
-    try {
-      const reserveState = context.repository.getCurrentStrategicReserveState();
+      // Reserve inputs MUST be:
+      // currentReserve = StrategicReserveState.currentReserve
+      // demand = StrategicReserveState.currentDemand
+      // replenishmentRate = StrategicReserveState.defaultReplenishmentRate
+      // minimumReserveThreshold = StrategicReserveState.minimumReserveThreshold
+      // disruptionDuration = event.durationDays ONLY
+      // alternativeProcurement = 0
+      // supplyGap = NUMERIC value derived from Digital Twin affected-flow measurements
       const reserveInput: StrategicReserveOptimizationInput = {
-        currentReserve: typeof input?.currentReserve === 'number' ? input.currentReserve : reserveState.currentReserve,
-        demand: typeof input?.demand === 'number' ? input.demand : reserveState.currentDemand,
-        supplyGap: scenario.shortage,
-        disruptionDuration: disruption.durationDays,
-        alternativeProcurement: procurementStage?.alternativeProcuredPerDay ?? 0,
-        replenishmentRate: typeof input?.replenishmentRate === 'number' ? input.replenishmentRate : reserveState.defaultReplenishmentRate,
-        minimumReserveThreshold: typeof input?.minimumReserveThreshold === 'number' ? input.minimumReserveThreshold : reserveState.minimumReserveThreshold,
+        currentReserve: reserveState.currentReserve,
+        demand: reserveState.currentDemand,
+        supplyGap,
+        availableSupply: Math.max(0, reserveState.currentDemand - supplyGap),
+        disruptionDuration: durationDays,
+        alternativeProcurement: 0,
+        replenishmentRate: reserveState.defaultReplenishmentRate,
+        minimumReserveThreshold: reserveState.minimumReserveThreshold,
       };
 
+      // 5. Existing optimizeStrategicReserve()
       const reserveOptimization = optimizeStrategicReserve(reserveInput);
       const optimizationId = context.repository.saveStrategicReserveOptimization(
         reserveInput,
@@ -424,15 +384,15 @@ export const runOrbitAssessment = async (
       );
 
       reserveStage = { input: reserveInput, result: reserveOptimization, optimizationId };
-      markStage('reserveOptimization', step5StartedAt);
+      markStage('reserveOptimization', step3StartedAt);
     } catch (error) {
-      markStage('reserveOptimization', step5StartedAt, error);
+      markStage('reserveOptimization', step3StartedAt, error);
     }
   } else {
-    skipStage('reserveOptimization', 'Skipped because the disruption parameters or scenario result were unavailable.');
+    skipStage('reserveOptimization', 'Skipped because upstream analysis was unavailable.');
   }
 
-  // Aggregate: derive the unified status from the stage ledger (never a fake success).
+  // Step 6: Unified OrbitAssessment creation
   const completedCount = stages.filter((stage) => stage.status === 'COMPLETED').length;
   const status: OrbitAssessmentStatus =
     completedCount === stages.length ? 'COMPLETED' : completedCount === 0 ? 'FAILED' : 'PARTIAL';
@@ -446,8 +406,6 @@ export const runOrbitAssessment = async (
     ...(monitoredArticle ? { article: monitoredArticle } : {}),
     ...(geopolitical ? { geopolitical } : {}),
     ...(disruption ? { disruption } : {}),
-    ...(scenario ? { scenario } : {}),
-    ...(procurementStage ? { procurement: procurementStage } : {}),
     ...(reserveStage ? { reserve: reserveStage } : {}),
     stages,
     status,
@@ -456,19 +414,16 @@ export const runOrbitAssessment = async (
       status,
       geopolitical,
       disruption,
-      scenario,
-      procurement: procurementStage,
       reserve: reserveStage,
     }),
     recommendation: buildAssessmentRecommendation({
       geopolitical,
-      procurement: procurementStage,
       reserve: reserveStage,
     }),
     errors,
   };
 
-  // Persist/publish: storage is best-effort — a failure must not invalidate a valid assessment.
+  // Step 7: Assessment persistence
   try {
     context.repository.saveOrbitAssessment(assessment);
   } catch (error) {
@@ -484,24 +439,13 @@ export const runOrbitAssessment = async (
   return {
     assessment,
     startFailed: false,
-    ...(status === 'COMPLETED' && procurementStage && reserveStage && realProcurementState
+    ...(status === 'COMPLETED' && reserveStage
       ? {
           legacyPipeline: {
             pipelineId: `pipeline-${randomUUID()}`,
             completedAt: new Date().toISOString(),
             stages: {
               geopoliticalAnalysis: geopolitical,
-              scenarioSimulation: scenario,
-              procurementAlternatives: {
-                resolutionStatus: procurementStage.resolutionStatus,
-                source: 'Phase 2 SQLite (supplier_imports table)',
-                commercialCostStatus: 'Commercial lane-cost data unavailable',
-                isCommercialCostAvailable: false,
-                availableAlternativeDailyTonnes: realProcurementState.availableAlternativeDailyTonnes,
-                alternativeSuppliersCount: realProcurementState.supplierCount,
-                topAlternativeSuppliers: realProcurementState.suppliers.slice(0, 5),
-                procurement: procurementStage.procurement,
-              },
               reserveOptimization: {
                 optimizationId: reserveStage.optimizationId,
                 input: reserveStage.input,

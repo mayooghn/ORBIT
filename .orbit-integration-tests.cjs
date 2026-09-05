@@ -4683,251 +4683,6 @@ var createGroqNewsProvider = (overrides = {}) => new GroqService({
   configurationName: "NEWS"
 });
 
-// src/geopoliticalEvents/agent.ts
-var clone = (value2) => structuredClone(value2);
-var isEnergySupplyChainRelevant = (classification, relevance, risk) => classification.energyRelevant && relevance.relevant && risk.energyRelevant;
-var deterministicExplanation = (classification, relevance, risk) => {
-  const reason = !classification.energyRelevant ? "classification marked the event as not energy relevant" : !relevance.relevant ? "no existing Digital Twin entity matched the event" : "the deterministic risk gate marked the event as not energy relevant";
-  return `No Groq explanation was required: ${reason}. ORBIT retained the deterministic risk at ${risk.riskLevel} (${risk.riskScore}) with no Digital Twin impact.`;
-};
-var deterministicRelevantExplanation = (risk, digitalTwinImpact) => {
-  const impact = digitalTwinImpact.affectedNodeIds.length || digitalTwinImpact.affectedEdgeIds.length ? `Digital Twin impact covers ${digitalTwinImpact.affectedNodeIds.length} node(s) and ${digitalTwinImpact.affectedEdgeIds.length} edge(s).` : "No downstream Digital Twin nodes or edges were affected.";
-  return `ORBIT retained the deterministic risk at ${risk.riskLevel} (${risk.riskScore}) after applying the validated event and network rules. ${impact}`;
-};
-var analyzeEventDeterministically = (eventValue, runtime2) => {
-  const event = new GeopoliticalEventIngestionStore().ingest(eventValue);
-  const classification = classifyGeopoliticalEvent(event);
-  const relevance = analyzeGeopoliticalSupplyChainRelevance(event, runtime2.stateEngine.getCurrentTwin(), classification);
-  const risk = assessGeopoliticalRisk(event, classification, relevance);
-  const digitalTwinImpact = integrateGeopoliticalRiskWithDigitalTwin(classification, relevance, risk, runtime2);
-  return {
-    event: clone(event),
-    classification: clone(classification),
-    relevance: clone(relevance),
-    risk: clone(risk),
-    digitalTwinImpact: clone(digitalTwinImpact)
-  };
-};
-var analyzeGeopoliticalEventDeterministically = (request, eventValue, runtime2) => {
-  const normalizedRequest = typeof request === "string" ? request.trim() : "";
-  if (!normalizedRequest) throw new Error("request is required.");
-  const analysis = analyzeEventDeterministically(eventValue, runtime2);
-  const { classification, relevance, risk, digitalTwinImpact } = analysis;
-  const explanation = !isEnergySupplyChainRelevant(classification, relevance, risk) ? deterministicExplanation(classification, relevance, risk) : deterministicRelevantExplanation(risk, digitalTwinImpact);
-  return {
-    request: normalizedRequest,
-    ...analysis,
-    explanation
-  };
-};
-var GeopoliticalRiskIntelligenceAgent = class {
-  constructor(runtime2, llm) {
-    this.runtime = runtime2;
-    this.llm = llm;
-  }
-  async analyze(request, options = {}) {
-    const normalizedRequest = typeof request === "string" ? request.trim() : "";
-    if (!normalizedRequest) throw new Error("request is required.");
-    let extractedEvent = void 0;
-    try {
-      extractedEvent = await this.llm.extractEvent(normalizedRequest);
-    } catch (extractError) {
-      console.warn("[ORBIT Agent] LLM event extraction failed or timed out, falling back to deterministic extraction:", extractError);
-      return analyzeGeopoliticalEventDeterministically(normalizedRequest, void 0, this.runtime);
-    }
-    const analysis = analyzeEventDeterministically(extractedEvent, this.runtime);
-    const { event, classification, relevance, risk, digitalTwinImpact } = analysis;
-    const deterministicResults = {
-      request: normalizedRequest,
-      event: clone(event),
-      classification: clone(classification),
-      relevance: clone(relevance),
-      risk: clone(risk),
-      digitalTwinImpact: clone(digitalTwinImpact)
-    };
-    let explanation;
-    if (!isEnergySupplyChainRelevant(classification, relevance, risk)) {
-      explanation = deterministicExplanation(classification, relevance, risk);
-    } else if (options.explanation === "deterministic") {
-      explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
-    } else {
-      try {
-        explanation = await this.llm.explain(clone(deterministicResults));
-      } catch (explainError) {
-        console.warn("[ORBIT Agent] LLM explanation failed, using deterministic explanation fallback:", explainError);
-        explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
-      }
-    }
-    if (typeof explanation !== "string" || !explanation.trim()) {
-      explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
-    }
-    return {
-      request: normalizedRequest,
-      ...analysis,
-      explanation: explanation.trim()
-    };
-  }
-};
-var createGeopoliticalRiskIntelligenceAgent = (runtime2, llm = createGroqAgentProvider()) => new GeopoliticalRiskIntelligenceAgent(runtime2, llm);
-
-// src/geopoliticalEvents/monitoring.ts
-var import_node_crypto6 = require("node:crypto");
-
-// src/geopoliticalEvents/deduplication.ts
-var STOP_WORDS = /* @__PURE__ */ new Set([
-  "a",
-  "an",
-  "and",
-  "are",
-  "as",
-  "at",
-  "by",
-  "for",
-  "from",
-  "in",
-  "into",
-  "is",
-  "near",
-  "of",
-  "off",
-  "on",
-  "or",
-  "the",
-  "to",
-  "with",
-  "after",
-  "amid",
-  "around",
-  "coast",
-  "latest",
-  "new",
-  "news",
-  "report",
-  "reported",
-  "reports",
-  "says",
-  "said",
-  "today",
-  "update",
-  "updates"
-]);
-var SYNONYMS = {
-  attacked: "attack",
-  attacks: "attack",
-  attacking: "attack",
-  blocked: "blockade",
-  blocking: "blockade",
-  closes: "closure",
-  closed: "closure",
-  closing: "closure",
-  disruptions: "disruption",
-  disrupted: "disruption",
-  disrupting: "disruption",
-  hijacked: "hijack",
-  hijacking: "hijack",
-  hijacks: "hijack",
-  imports: "import",
-  imported: "import",
-  importing: "import",
-  pipelines: "pipeline",
-  pirates: "pirate",
-  piracy: "pirate",
-  refineries: "refinery",
-  seized: "seize",
-  seizes: "seize",
-  seizing: "seize",
-  sanctions: "sanction",
-  sanctioned: "sanction",
-  tankers: "tanker",
-  exports: "export",
-  exported: "export",
-  exporting: "export"
-};
-var ACTION_TERMS = /* @__PURE__ */ new Set([
-  "attack",
-  "blockade",
-  "closure",
-  "conflict",
-  "disruption",
-  "fire",
-  "halt",
-  "hijack",
-  "import",
-  "missile",
-  "outage",
-  "pirate",
-  "reroute",
-  "sanction",
-  "seize",
-  "shutdown",
-  "strike",
-  "war"
-]);
-var normalizeWord = (word) => {
-  const mapped = SYNONYMS[word] || word;
-  if (mapped.length > 4 && mapped.endsWith("ies")) return `${mapped.slice(0, -3)}y`;
-  if (mapped.length > 4 && mapped.endsWith("s") && !mapped.endsWith("ss")) return mapped.slice(0, -1);
-  return mapped;
-};
-var stripSourceSuffix = (title, source) => {
-  const normalizedSource = source?.trim();
-  if (!normalizedSource) return title;
-  const escapedSource = normalizedSource.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return title.replace(new RegExp(`\\s+-\\s+${escapedSource}\\s*$`, "i"), "");
-};
-var normalizedDedupTokens = (value2, source) => {
-  const normalized = stripSourceSuffix(value2.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase(), source).replace(/[^a-z0-9]+/g, " ").trim();
-  const tokens = normalized.split(/\s+/).map(normalizeWord).filter((token) => token.length >= 3 && !STOP_WORDS.has(token));
-  return [...new Set(tokens)].sort();
-};
-var buildArticleFingerprint = (article) => normalizedDedupTokens(`${article.title} ${article.description || ""}`, article.source).join("|");
-var buildEventFingerprint = (event) => {
-  const category = event.category?.trim().toLowerCase() || "";
-  const location = normalizedDedupTokens(event.location || "").join("|");
-  const countries = (event.countriesInvolved || []).flatMap((country) => normalizedDedupTokens(country)).sort().join("|");
-  const concepts = normalizedDedupTokens(`${event.title} ${event.description || ""}`, event.source).join("|");
-  return `category:${category};location:${location};countries:${countries};concepts:${concepts}`;
-};
-var asSet = (tokens) => new Set(tokens);
-var jaccardSimilarity = (left, right) => {
-  const leftSet = asSet(left);
-  const rightSet = asSet(right);
-  const intersection = [...leftSet].filter((token) => rightSet.has(token)).length;
-  const union = (/* @__PURE__ */ new Set([...leftSet, ...rightSet])).size;
-  return union === 0 ? 0 : intersection / union;
-};
-var areEventDatesWithinWindow = (left, right, windowMs = 72 * 60 * 60 * 1e3) => {
-  if (!left || !right) return true;
-  const leftMs = Date.parse(left);
-  const rightMs = Date.parse(right);
-  return Number.isNaN(leftMs) || Number.isNaN(rightMs) || Math.abs(leftMs - rightMs) <= windowMs;
-};
-var overlappingAnchors = (left, right) => {
-  const rightSet = asSet(right);
-  return left.filter((token) => rightSet.has(token));
-};
-var areLikelySameEvent = (left, right) => {
-  if (!areEventDatesWithinWindow(left.publishedAt || left.timestamp, right.publishedAt || right.timestamp)) return false;
-  const categoryMismatch = Boolean(left.category && right.category && left.category !== right.category);
-  const leftLocation = normalizedDedupTokens(left.location || "");
-  const rightLocation = normalizedDedupTokens(right.location || "");
-  if (leftLocation.length && rightLocation.length && !overlappingAnchors(leftLocation, rightLocation).length) return false;
-  const leftCountries = normalizedDedupTokens((left.countriesInvolved || []).join(" "));
-  const rightCountries = normalizedDedupTokens((right.countriesInvolved || []).join(" "));
-  if (leftCountries.length && rightCountries.length && !overlappingAnchors(leftCountries, rightCountries).length) return false;
-  const leftTitleTokens = normalizedDedupTokens(left.title, left.source);
-  const rightTitleTokens = normalizedDedupTokens(right.title, right.source);
-  const sharedTitleTokens = overlappingAnchors(leftTitleTokens, rightTitleTokens);
-  const titleSimilarity = jaccardSimilarity(leftTitleTokens, rightTitleTokens);
-  const actionOverlap = sharedTitleTokens.some((token) => ACTION_TERMS.has(token));
-  if (sharedTitleTokens.length >= 3 && actionOverlap && titleSimilarity >= 0.78) return true;
-  const leftTokens = normalizedDedupTokens(`${left.title} ${left.description || ""}`, left.source);
-  const rightTokens = normalizedDedupTokens(`${right.title} ${right.description || ""}`, right.source);
-  const sharedTokens = overlappingAnchors(leftTokens, rightTokens);
-  if (categoryMismatch) return false;
-  return sharedTokens.length >= 4 && sharedTokens.some((token) => ACTION_TERMS.has(token)) && jaccardSimilarity(leftTokens, rightTokens) >= 0.84;
-};
-
 // src/geopoliticalEvents/deterministicExtractor.ts
 var import_node_crypto5 = require("node:crypto");
 var HIGH_CONFIDENCE_THRESHOLD = 0.85;
@@ -5214,6 +4969,264 @@ var extractDeterministicGeopoliticalEvent = (article, graph) => {
   const validatedEvent = validateGeopoliticalEvent(event);
   reasons.push(`deterministic confidence score is ${confidence.toFixed(2)}; high-confidence threshold is ${HIGH_CONFIDENCE_THRESHOLD.toFixed(2)}.`);
   return extractionResult(validatedEvent, confidence, matchedEntities, reasons);
+};
+
+// src/geopoliticalEvents/agent.ts
+var clone = (value2) => structuredClone(value2);
+var isEnergySupplyChainRelevant = (classification, relevance, risk) => classification.energyRelevant && relevance.relevant && risk.energyRelevant;
+var deterministicExplanation = (classification, relevance, risk) => {
+  const reason = !classification.energyRelevant ? "classification marked the event as not energy relevant" : !relevance.relevant ? "no existing Digital Twin entity matched the event" : "the deterministic risk gate marked the event as not energy relevant";
+  return `No Groq explanation was required: ${reason}. ORBIT retained the deterministic risk at ${risk.riskLevel} (${risk.riskScore}) with no Digital Twin impact.`;
+};
+var deterministicRelevantExplanation = (risk, digitalTwinImpact) => {
+  const impact = digitalTwinImpact.affectedNodeIds.length || digitalTwinImpact.affectedEdgeIds.length ? `Digital Twin impact covers ${digitalTwinImpact.affectedNodeIds.length} node(s) and ${digitalTwinImpact.affectedEdgeIds.length} edge(s).` : "No downstream Digital Twin nodes or edges were affected.";
+  return `ORBIT retained the deterministic risk at ${risk.riskLevel} (${risk.riskScore}) after applying the validated event and network rules. ${impact}`;
+};
+var analyzeEventDeterministically = (eventValue, runtime2) => {
+  const event = new GeopoliticalEventIngestionStore().ingest(eventValue);
+  const classification = classifyGeopoliticalEvent(event);
+  const relevance = analyzeGeopoliticalSupplyChainRelevance(event, runtime2.stateEngine.getCurrentTwin(), classification);
+  const risk = assessGeopoliticalRisk(event, classification, relevance);
+  const digitalTwinImpact = integrateGeopoliticalRiskWithDigitalTwin(classification, relevance, risk, runtime2);
+  return {
+    event: clone(event),
+    classification: clone(classification),
+    relevance: clone(relevance),
+    risk: clone(risk),
+    digitalTwinImpact: clone(digitalTwinImpact)
+  };
+};
+var analyzeGeopoliticalEventDeterministically = (request, eventValue, runtime2) => {
+  const normalizedRequest = typeof request === "string" ? request.trim() : "";
+  if (!normalizedRequest) throw new Error("request is required.");
+  const analysis = analyzeEventDeterministically(eventValue, runtime2);
+  const { classification, relevance, risk, digitalTwinImpact } = analysis;
+  const explanation = !isEnergySupplyChainRelevant(classification, relevance, risk) ? deterministicExplanation(classification, relevance, risk) : deterministicRelevantExplanation(risk, digitalTwinImpact);
+  return {
+    request: normalizedRequest,
+    ...analysis,
+    explanation
+  };
+};
+var GeopoliticalRiskIntelligenceAgent = class {
+  constructor(runtime2, llm) {
+    this.runtime = runtime2;
+    this.llm = llm;
+  }
+  async analyze(request, options = {}) {
+    const normalizedRequest = typeof request === "string" ? request.trim() : "";
+    if (!normalizedRequest) throw new Error("request is required.");
+    let extractedEvent = void 0;
+    try {
+      extractedEvent = await this.llm.extractEvent(normalizedRequest);
+    } catch (extractError) {
+      console.warn("[ORBIT Agent] LLM event extraction failed or timed out, falling back to deterministic extraction:", extractError);
+      const graph = this.runtime.stateEngine.getCurrentTwin();
+      const deterministic = extractDeterministicGeopoliticalEvent(
+        {
+          title: normalizedRequest,
+          description: normalizedRequest,
+          source: "ORBIT Risk Intelligence Agent",
+          publishedAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        graph
+      );
+      if (deterministic.event) {
+        return analyzeGeopoliticalEventDeterministically(normalizedRequest, deterministic.event, this.runtime);
+      }
+      throw extractError;
+    }
+    const analysis = analyzeEventDeterministically(extractedEvent, this.runtime);
+    const { event, classification, relevance, risk, digitalTwinImpact } = analysis;
+    const deterministicResults = {
+      request: normalizedRequest,
+      event: clone(event),
+      classification: clone(classification),
+      relevance: clone(relevance),
+      risk: clone(risk),
+      digitalTwinImpact: clone(digitalTwinImpact)
+    };
+    let explanation;
+    if (!isEnergySupplyChainRelevant(classification, relevance, risk)) {
+      explanation = deterministicExplanation(classification, relevance, risk);
+    } else if (options.explanation === "deterministic") {
+      explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
+    } else {
+      try {
+        explanation = await this.llm.explain(clone(deterministicResults));
+      } catch (explainError) {
+        console.warn("[ORBIT Agent] LLM explanation failed, using deterministic explanation fallback:", explainError);
+        explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
+      }
+    }
+    if (typeof explanation !== "string" || !explanation.trim()) {
+      explanation = deterministicRelevantExplanation(risk, digitalTwinImpact);
+    }
+    return {
+      request: normalizedRequest,
+      ...analysis,
+      explanation: explanation.trim()
+    };
+  }
+};
+var createGeopoliticalRiskIntelligenceAgent = (runtime2, llm = createGroqAgentProvider()) => new GeopoliticalRiskIntelligenceAgent(runtime2, llm);
+
+// src/geopoliticalEvents/monitoring.ts
+var import_node_crypto6 = require("node:crypto");
+
+// src/geopoliticalEvents/deduplication.ts
+var STOP_WORDS = /* @__PURE__ */ new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "by",
+  "for",
+  "from",
+  "in",
+  "into",
+  "is",
+  "near",
+  "of",
+  "off",
+  "on",
+  "or",
+  "the",
+  "to",
+  "with",
+  "after",
+  "amid",
+  "around",
+  "coast",
+  "latest",
+  "new",
+  "news",
+  "report",
+  "reported",
+  "reports",
+  "says",
+  "said",
+  "today",
+  "update",
+  "updates"
+]);
+var SYNONYMS = {
+  attacked: "attack",
+  attacks: "attack",
+  attacking: "attack",
+  blocked: "blockade",
+  blocking: "blockade",
+  closes: "closure",
+  closed: "closure",
+  closing: "closure",
+  disruptions: "disruption",
+  disrupted: "disruption",
+  disrupting: "disruption",
+  hijacked: "hijack",
+  hijacking: "hijack",
+  hijacks: "hijack",
+  imports: "import",
+  imported: "import",
+  importing: "import",
+  pipelines: "pipeline",
+  pirates: "pirate",
+  piracy: "pirate",
+  refineries: "refinery",
+  seized: "seize",
+  seizes: "seize",
+  seizing: "seize",
+  sanctions: "sanction",
+  sanctioned: "sanction",
+  tankers: "tanker",
+  exports: "export",
+  exported: "export",
+  exporting: "export"
+};
+var ACTION_TERMS = /* @__PURE__ */ new Set([
+  "attack",
+  "blockade",
+  "closure",
+  "conflict",
+  "disruption",
+  "fire",
+  "halt",
+  "hijack",
+  "import",
+  "missile",
+  "outage",
+  "pirate",
+  "reroute",
+  "sanction",
+  "seize",
+  "shutdown",
+  "strike",
+  "war"
+]);
+var normalizeWord = (word) => {
+  const mapped = SYNONYMS[word] || word;
+  if (mapped.length > 4 && mapped.endsWith("ies")) return `${mapped.slice(0, -3)}y`;
+  if (mapped.length > 4 && mapped.endsWith("s") && !mapped.endsWith("ss")) return mapped.slice(0, -1);
+  return mapped;
+};
+var stripSourceSuffix = (title, source) => {
+  const normalizedSource = source?.trim();
+  if (!normalizedSource) return title;
+  const escapedSource = normalizedSource.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return title.replace(new RegExp(`\\s+-\\s+${escapedSource}\\s*$`, "i"), "");
+};
+var normalizedDedupTokens = (value2, source) => {
+  const normalized = stripSourceSuffix(value2.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase(), source).replace(/[^a-z0-9]+/g, " ").trim();
+  const tokens = normalized.split(/\s+/).map(normalizeWord).filter((token) => token.length >= 3 && !STOP_WORDS.has(token));
+  return [...new Set(tokens)].sort();
+};
+var buildArticleFingerprint = (article) => normalizedDedupTokens(`${article.title} ${article.description || ""}`, article.source).join("|");
+var buildEventFingerprint = (event) => {
+  const category = event.category?.trim().toLowerCase() || "";
+  const location = normalizedDedupTokens(event.location || "").join("|");
+  const countries = (event.countriesInvolved || []).flatMap((country) => normalizedDedupTokens(country)).sort().join("|");
+  const concepts = normalizedDedupTokens(`${event.title} ${event.description || ""}`, event.source).join("|");
+  return `category:${category};location:${location};countries:${countries};concepts:${concepts}`;
+};
+var asSet = (tokens) => new Set(tokens);
+var jaccardSimilarity = (left, right) => {
+  const leftSet = asSet(left);
+  const rightSet = asSet(right);
+  const intersection = [...leftSet].filter((token) => rightSet.has(token)).length;
+  const union = (/* @__PURE__ */ new Set([...leftSet, ...rightSet])).size;
+  return union === 0 ? 0 : intersection / union;
+};
+var areEventDatesWithinWindow = (left, right, windowMs = 72 * 60 * 60 * 1e3) => {
+  if (!left || !right) return true;
+  const leftMs = Date.parse(left);
+  const rightMs = Date.parse(right);
+  return Number.isNaN(leftMs) || Number.isNaN(rightMs) || Math.abs(leftMs - rightMs) <= windowMs;
+};
+var overlappingAnchors = (left, right) => {
+  const rightSet = asSet(right);
+  return left.filter((token) => rightSet.has(token));
+};
+var areLikelySameEvent = (left, right) => {
+  if (!areEventDatesWithinWindow(left.publishedAt || left.timestamp, right.publishedAt || right.timestamp)) return false;
+  const categoryMismatch = Boolean(left.category && right.category && left.category !== right.category);
+  const leftLocation = normalizedDedupTokens(left.location || "");
+  const rightLocation = normalizedDedupTokens(right.location || "");
+  if (leftLocation.length && rightLocation.length && !overlappingAnchors(leftLocation, rightLocation).length) return false;
+  const leftCountries = normalizedDedupTokens((left.countriesInvolved || []).join(" "));
+  const rightCountries = normalizedDedupTokens((right.countriesInvolved || []).join(" "));
+  if (leftCountries.length && rightCountries.length && !overlappingAnchors(leftCountries, rightCountries).length) return false;
+  const leftTitleTokens = normalizedDedupTokens(left.title, left.source);
+  const rightTitleTokens = normalizedDedupTokens(right.title, right.source);
+  const sharedTitleTokens = overlappingAnchors(leftTitleTokens, rightTitleTokens);
+  const titleSimilarity = jaccardSimilarity(leftTitleTokens, rightTitleTokens);
+  const actionOverlap = sharedTitleTokens.some((token) => ACTION_TERMS.has(token));
+  if (sharedTitleTokens.length >= 3 && actionOverlap && titleSimilarity >= 0.78) return true;
+  const leftTokens = normalizedDedupTokens(`${left.title} ${left.description || ""}`, left.source);
+  const rightTokens = normalizedDedupTokens(`${right.title} ${right.description || ""}`, right.source);
+  const sharedTokens = overlappingAnchors(leftTokens, rightTokens);
+  if (categoryMismatch) return false;
+  return sharedTokens.length >= 4 && sharedTokens.some((token) => ACTION_TERMS.has(token)) && jaccardSimilarity(leftTokens, rightTokens) >= 0.84;
 };
 
 // src/geopoliticalEvents/monitoring.ts
@@ -6451,19 +6464,8 @@ var buildAssessmentSummary = (input) => {
     parts.push(`Risk ${input.geopolitical.risk.riskLevel.toUpperCase()} (${input.geopolitical.risk.riskScore}/100).`);
   }
   if (input.disruption) {
-    parts.push(`Modeled as a ${input.disruption.severity} disruption at ${input.disruption.affectedNodeId} for ${input.disruption.durationDays} day(s) at ${input.disruption.capacityReductionPercent}% capacity reduction.`);
-  }
-  if (input.scenario) {
-    parts.push(`Modeled supply gap ${input.scenario.shortage.toLocaleString()} ${input.scenario.shortageUnit}.`);
-  }
-  if (input.procurement) {
-    if (input.procurement.resolutionStatus === "UNAVAILABLE") {
-      parts.push("No real procurement alternatives were available for the affected node.");
-    } else if (input.procurement.procurement?.status === "OPTIMAL") {
-      parts.push(`Procurement plan covers ${input.procurement.procurement.totalProcured.toLocaleString()} ${input.procurement.procurement.totalProcuredUnit}.`);
-    } else if (input.procurement.procurement) {
-      parts.push(`Procurement optimization returned ${input.procurement.procurement.status}.`);
-    }
+    const durText = input.disruption.durationDays > 0 ? ` for ${input.disruption.durationDays} day(s)` : "";
+    parts.push(`Modeled as a ${input.disruption.severity} disruption at ${input.disruption.affectedNodeId}${durText} at ${input.disruption.capacityReductionPercent}% capacity reduction.`);
   }
   if (input.reserve) {
     parts.push(`Reserve coverage ${input.reserve.result.coverageStatus}; recommended drawdown ${input.reserve.result.recommendedReserveDrawdown.toLocaleString()}.`);
@@ -6477,22 +6479,36 @@ var buildAssessmentSummary = (input) => {
 var buildAssessmentRecommendation = (input) => {
   if (input.reserve) {
     if (input.reserve.result.coverageStatus === "INFEASIBLE") {
-      return "Reserve coverage is infeasible for this disruption: secure additional alternative procurement or external supply before the shortfall window.";
+      return "Reserve coverage is infeasible for this disruption: secure additional external supply before the shortfall window.";
     }
     if (input.reserve.result.coverageStatus === "PARTIALLY_COVERED" || input.reserve.result.coverageStatus === "RESERVE_BELOW_THRESHOLD") {
       return "Reserve coverage is constrained: schedule replenishment and monitor the minimum reserve threshold during the disruption window.";
     }
-  }
-  if (input.procurement?.resolutionStatus === "UNAVAILABLE") {
-    return "Procurement data was unavailable for the affected node: validate supplier import coverage before relying on the reserve drawdown plan.";
-  }
-  if (input.reserve && input.procurement?.procurement?.status === "OPTIMAL") {
-    return "Execute the optimized procurement plan and track the recovery timeline; the reserve drawdown stays within the safety constraint.";
+    if (input.reserve.result.coverageStatus === "FULLY_COVERED") {
+      return "Reserve coverage is sufficient: execute the recommended reserve drawdown within the safety constraint.";
+    }
+    if (input.reserve.result.coverageStatus === "NO_EFFECTIVE_GAP") {
+      return "No effective supply gap detected: strategic reserves remain intact without requiring drawdown.";
+    }
   }
   if (input.geopolitical && (input.geopolitical.risk.riskLevel === "low" || input.geopolitical.risk.riskLevel === "medium")) {
     return "No immediate intervention required: continue monitoring for follow-up events.";
   }
-  return void 0;
+  return "Maintain standard reserve monitoring: review operational posture as conditions develop.";
+};
+var deriveNumericSupplyGap = (impact) => {
+  if (!impact?.affectedFlow) return 0;
+  const nodeTotal = (impact.affectedFlow.nodeTotals || []).reduce(
+    (acc, m) => acc + (typeof m?.value === "number" && Number.isFinite(m.value) ? m.value : 0),
+    0
+  );
+  if (nodeTotal > 0) return nodeTotal;
+  const edgeTotal = (impact.affectedFlow.edgeTotals || []).reduce(
+    (acc, m) => acc + (typeof m?.value === "number" && Number.isFinite(m.value) ? m.value : 0),
+    0
+  );
+  if (edgeTotal > 0) return edgeTotal;
+  return 0;
 };
 var runOrbitAssessment = async (input, context) => {
   const eventText = typeof input?.text === "string" && input.text.trim() ? input.text.trim() : typeof input?.request === "string" && input.request.trim() ? input.request.trim() : null;
@@ -6535,11 +6551,11 @@ var runOrbitAssessment = async (input, context) => {
     errors.push(`${stage}: ${reason}`);
   };
   let geopolitical;
+  let digitalTwinImpact;
   let disruption;
-  let scenario;
-  let procurementStage;
   let reserveStage;
-  let realProcurementState;
+  const rawDuration = input?.event?.durationDays ?? input?.durationDays ?? geopolitical?.event?.durationDays;
+  const durationDays = typeof rawDuration === "number" && Number.isFinite(rawDuration) && rawDuration > 0 ? Math.floor(rawDuration) : void 0;
   const step1StartedAt = (/* @__PURE__ */ new Date()).toISOString();
   try {
     geopolitical = eventText ? await context.geopoliticalRiskAgent.analyze(eventText) : analyzeGeopoliticalEventDeterministically(
@@ -6554,13 +6570,23 @@ var runOrbitAssessment = async (input, context) => {
   if (geopolitical) {
     const step2StartedAt = (/* @__PURE__ */ new Date()).toISOString();
     try {
+      digitalTwinImpact = geopolitical.digitalTwinImpact ?? integrateGeopoliticalRiskWithDigitalTwin(
+        geopolitical.classification,
+        geopolitical.relevance,
+        geopolitical.risk,
+        context.digitalTwin
+      );
       const graph = context.digitalTwin.stateEngine.getCurrentTwin();
-      const affectedNodeId = typeof input?.affectedNodeId === "string" && input.affectedNodeId.trim() ? input.affectedNodeId.trim() : geopolitical.digitalTwinImpact.affectedNodeIds[0] || geopolitical.relevance.matchedNodeIds[0] || graph.nodes.find((n) => n.nodeType === "supplier" || n.nodeType === "shipping_route")?.nodeId || "supplier-default";
+      const affectedNodeId = typeof input?.affectedNodeId === "string" && input.affectedNodeId.trim() ? input.affectedNodeId.trim() : digitalTwinImpact.affectedNodeIds[0] || geopolitical.relevance.matchedNodeIds[0] || graph.nodes.find((n) => n.nodeType === "supplier" || n.nodeType === "shipping_route")?.nodeId || "supplier-default";
       const severity = input?.severity === "LOW" || input?.severity === "MEDIUM" || input?.severity === "HIGH" || input?.severity === "CRITICAL" ? input.severity : geopolitical.risk.riskLevel === "critical" ? "CRITICAL" : geopolitical.risk.riskLevel === "high" ? "HIGH" : geopolitical.risk.riskLevel === "medium" ? "MEDIUM" : "LOW";
-      const durationDays = typeof input?.durationDays === "number" && input.durationDays > 0 ? input.durationDays : severity === "CRITICAL" ? 60 : severity === "HIGH" ? 30 : severity === "MEDIUM" ? 14 : 7;
       const defaultReduction = severity === "CRITICAL" ? 80 : severity === "HIGH" ? 50 : severity === "MEDIUM" ? 30 : 15;
       const capacityReductionPercent = typeof input?.capacityReductionPercent === "number" ? Math.min(100, Math.max(0, input.capacityReductionPercent)) : defaultReduction;
-      disruption = { affectedNodeId, severity, durationDays, capacityReductionPercent };
+      disruption = {
+        affectedNodeId,
+        severity,
+        durationDays: durationDays ?? 0,
+        capacityReductionPercent
+      };
       markStage("networkImpactResolution", step2StartedAt);
     } catch (error) {
       markStage("networkImpactResolution", step2StartedAt, error);
@@ -6571,73 +6597,23 @@ var runOrbitAssessment = async (input, context) => {
   if (geopolitical && disruption) {
     const step3StartedAt = (/* @__PURE__ */ new Date()).toISOString();
     try {
-      const scenarioInput = {
-        eventId: geopolitical.event.id || "pipeline-event-1",
-        durationDays: disruption.durationDays,
-        severity: disruption.severity,
-        affectedNodeId: disruption.affectedNodeId,
-        capacityReductionPercent: disruption.capacityReductionPercent
-      };
-      scenario = context.scenarioEngine.run(context.digitalTwin.stateEngine, scenarioInput);
-      markStage("scenarioSimulation", step3StartedAt);
-    } catch (error) {
-      markStage("scenarioSimulation", step3StartedAt, error);
-    }
-  } else {
-    skipStage("scenarioSimulation", "Skipped because the disruption parameters were unavailable.");
-  }
-  if (scenario && disruption) {
-    const step4StartedAt = (/* @__PURE__ */ new Date()).toISOString();
-    try {
-      realProcurementState = context.repository.getRealAlternativeProcurement({
-        excludedCountry: disruption.affectedNodeId
-      });
-      const resolution = buildProcurementRequestFromScenario(
-        scenario,
-        context.digitalTwin.stateEngine.getCurrentTwin(),
-        input?.dataSource === "demo" ? context.demoProcurementDataProvider : context.procurementDataProvider
-      );
-      let procurementResult = null;
-      let alternativeProcured = 0;
-      if (typeof input?.alternativeProcurement === "number") {
-        alternativeProcured = Math.max(0, input.alternativeProcurement);
-        if (resolution.status === "AVAILABLE" && resolution.request) {
-          procurementResult = await optimizeProcurement(resolution.request);
-        }
-      } else if (resolution.status === "AVAILABLE" && resolution.request) {
-        procurementResult = await optimizeProcurement(resolution.request);
-        if (procurementResult.status === "OPTIMAL") {
-          alternativeProcured = disruption.durationDays > 0 ? procurementResult.totalProcured / disruption.durationDays : procurementResult.totalProcured;
-        }
-      } else {
-        alternativeProcured = 0;
-      }
-      procurementStage = {
-        resolutionStatus: resolution.status,
-        source: resolution.source,
-        ...resolution.reason ? { reason: resolution.reason } : {},
-        procurement: procurementResult,
-        alternativeProcuredPerDay: alternativeProcured
-      };
-      markStage("procurementOptimization", step4StartedAt);
-    } catch (error) {
-      markStage("procurementOptimization", step4StartedAt, error);
-    }
-  } else {
-    skipStage("procurementOptimization", "Skipped because the scenario simulation result was unavailable.");
-  }
-  if (scenario && disruption) {
-    const step5StartedAt = (/* @__PURE__ */ new Date()).toISOString();
-    try {
       const reserveState = context.repository.getCurrentStrategicReserveState();
+      if (durationDays === void 0) {
+        throw new Error(
+          "Disruption duration (event.durationDays) is missing or invalid; reserve optimization cannot be performed without an explicit duration."
+        );
+      }
+      const derivedGap = deriveNumericSupplyGap(digitalTwinImpact);
+      const supplyGap = derivedGap > 0 ? derivedGap : typeof input?.supplyGap === "number" && Number.isFinite(input.supplyGap) && input.supplyGap >= 0 ? input.supplyGap : 0;
       const reserveInput = {
-        currentReserve: typeof input?.currentReserve === "number" ? input.currentReserve : reserveState.currentReserve,
-        demand: typeof input?.demand === "number" ? input.demand : reserveState.currentDemand,
-        supplyGap: scenario.shortage,
-        disruptionDuration: disruption.durationDays,
-        alternativeProcurement: procurementStage?.alternativeProcuredPerDay ?? 0,
-        replenishmentRate: typeof input?.replenishmentRate === "number" ? input.replenishmentRate : reserveState.defaultReplenishmentRate,
-        minimumReserveThreshold: typeof input?.minimumReserveThreshold === "number" ? input.minimumReserveThreshold : reserveState.minimumReserveThreshold
+        currentReserve: reserveState.currentReserve,
+        demand: reserveState.currentDemand,
+        supplyGap,
+        availableSupply: Math.max(0, reserveState.currentDemand - supplyGap),
+        disruptionDuration: durationDays,
+        alternativeProcurement: 0,
+        replenishmentRate: reserveState.defaultReplenishmentRate,
+        minimumReserveThreshold: reserveState.minimumReserveThreshold
       };
       const reserveOptimization = optimizeStrategicReserve(reserveInput);
       const optimizationId = context.repository.saveStrategicReserveOptimization(
@@ -6645,12 +6621,12 @@ var runOrbitAssessment = async (input, context) => {
         reserveOptimization
       );
       reserveStage = { input: reserveInput, result: reserveOptimization, optimizationId };
-      markStage("reserveOptimization", step5StartedAt);
+      markStage("reserveOptimization", step3StartedAt);
     } catch (error) {
-      markStage("reserveOptimization", step5StartedAt, error);
+      markStage("reserveOptimization", step3StartedAt, error);
     }
   } else {
-    skipStage("reserveOptimization", "Skipped because the disruption parameters or scenario result were unavailable.");
+    skipStage("reserveOptimization", "Skipped because upstream analysis was unavailable.");
   }
   const completedCount = stages.filter((stage) => stage.status === "COMPLETED").length;
   const status = completedCount === stages.length ? "COMPLETED" : completedCount === 0 ? "FAILED" : "PARTIAL";
@@ -6663,8 +6639,6 @@ var runOrbitAssessment = async (input, context) => {
     ...monitoredArticle ? { article: monitoredArticle } : {},
     ...geopolitical ? { geopolitical } : {},
     ...disruption ? { disruption } : {},
-    ...scenario ? { scenario } : {},
-    ...procurementStage ? { procurement: procurementStage } : {},
     ...reserveStage ? { reserve: reserveStage } : {},
     stages,
     status,
@@ -6673,13 +6647,10 @@ var runOrbitAssessment = async (input, context) => {
       status,
       geopolitical,
       disruption,
-      scenario,
-      procurement: procurementStage,
       reserve: reserveStage
     }),
     recommendation: buildAssessmentRecommendation({
       geopolitical,
-      procurement: procurementStage,
       reserve: reserveStage
     }),
     errors
@@ -6697,23 +6668,12 @@ var runOrbitAssessment = async (input, context) => {
   return {
     assessment,
     startFailed: false,
-    ...status === "COMPLETED" && procurementStage && reserveStage && realProcurementState ? {
+    ...status === "COMPLETED" && reserveStage ? {
       legacyPipeline: {
         pipelineId: `pipeline-${(0, import_node_crypto7.randomUUID)()}`,
         completedAt: (/* @__PURE__ */ new Date()).toISOString(),
         stages: {
           geopoliticalAnalysis: geopolitical,
-          scenarioSimulation: scenario,
-          procurementAlternatives: {
-            resolutionStatus: procurementStage.resolutionStatus,
-            source: "Phase 2 SQLite (supplier_imports table)",
-            commercialCostStatus: "Commercial lane-cost data unavailable",
-            isCommercialCostAvailable: false,
-            availableAlternativeDailyTonnes: realProcurementState.availableAlternativeDailyTonnes,
-            alternativeSuppliersCount: realProcurementState.supplierCount,
-            topAlternativeSuppliers: realProcurementState.suppliers.slice(0, 5),
-            procurement: procurementStage.procurement
-          },
           reserveOptimization: {
             optimizationId: reserveStage.optimizationId,
             input: reserveStage.input,
@@ -8314,10 +8274,24 @@ var database = openPhase2Database({ dbPath });
 var repository = new Phase2Repository(database);
 var runtime = createDigitalTwinRuntime(repository);
 var realDataProvider = new RealScenarioProcurementDataProvider(repository);
+var stubAgent = {
+  analyze: async (input) => {
+    const affectedNodeId = "chokepoint-strait-of-hormuz";
+    return {
+      request: typeof input === "string" ? input : JSON.stringify(input),
+      event: { id: "evt-test-hormuz", title: "Strait of Hormuz disruption", description: "Test event.", timestamp: "2026-01-01T00:00:00.000Z", source: "test", location: "Strait of Hormuz", countriesInvolved: ["Iran", "Oman"], category: "maritime_disruption", severity: "critical" },
+      classification: { eventId: "evt-test-hormuz", category: "maritime_disruption", severity: "critical", energyRelevant: true, countriesInvolved: ["Iran", "Oman"], location: "Strait of Hormuz", classificationReasons: ["test"] },
+      relevance: { eventId: "evt-test-hormuz", relevant: true, matchedNodeIds: [affectedNodeId], matchedNodeTypes: ["chokepoint"], matchedLocations: ["Strait of Hormuz"], matchedCountries: [], relevanceReasons: ["test"] },
+      risk: { eventId: "evt-test-hormuz", riskLevel: "high", riskScore: 60, factors: [], reasoning: ["test"], matchedNodeIds: [affectedNodeId], energyRelevant: true },
+      digitalTwinImpact: { eventId: "evt-test-hormuz", relevant: true, riskLevel: "high", riskScore: 60, matchedNodeIds: [affectedNodeId], affectedNodeIds: [affectedNodeId], affectedNodeNames: ["Strait of Hormuz"], affectedEdgeIds: [], affectedNodeTypes: ["chokepoint"], affectedCapacity: { nodeTotals: [], edgeTotals: [] }, affectedFlow: { nodeTotals: [], edgeTotals: [] }, impactReasons: ["test"] },
+      explanation: "Test stub."
+    };
+  }
+};
 var server;
 var baseUrl = "";
 (0, import_node_test.before)(async () => {
-  const app = createApp(repository, runtime, void 0, void 0, realDataProvider);
+  const app = createApp(repository, runtime, stubAgent, void 0, realDataProvider);
   server = (0, import_node_http.createServer)(app);
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
@@ -8328,7 +8302,7 @@ var baseUrl = "";
   server.close();
   database.close();
 });
-(0, import_node_test.default)("Integration: /api/pipeline/run with 30-day scenario where Replacement Supply returns a cumulative quantity and confirms the Reserve Optimizer receives the correct daily equivalent", async () => {
+(0, import_node_test.default)("Integration: /api/pipeline/run with 30-day scenario confirms the Reserve Optimizer receives the correct inputs without procurement stage", async () => {
   const durationDays = 30;
   const response = await fetch(`${baseUrl}/api/pipeline/run`, {
     method: "POST",
@@ -8344,23 +8318,16 @@ var baseUrl = "";
   import_strict.default.equal(response.status, 200);
   const body = await response.json();
   import_strict.default.equal(body.status, "AVAILABLE");
-  const stages = body.pipeline?.stages;
-  import_strict.default.ok(stages, "Pipeline stages should be present");
-  const procurementStage = stages.procurementAlternatives;
-  import_strict.default.ok(procurementStage, "Procurement alternatives stage should be present");
-  const procurementResult = procurementStage.procurement;
-  const reserveInput = stages.reserveOptimization?.input;
-  if (procurementResult && procurementResult.status === "OPTIMAL") {
-    const totalProcured = procurementResult.totalProcured;
-    const expectedDailyEquivalent = totalProcured / durationDays;
-    import_strict.default.equal(reserveInput.alternativeProcurement, expectedDailyEquivalent);
-    console.log(`Verified automatic conversion: Cumulative ${totalProcured} tonnes over ${durationDays} days successfully normalized to daily equivalent ${reserveInput.alternativeProcurement} tonnes/day.`);
-  } else {
-    import_strict.default.equal(reserveInput.alternativeProcurement, 0);
-    console.log("No optimal plan found automatically, alternativeProcurement defaulted to 0.");
-  }
+  import_strict.default.ok(body.assessment, "OrbitAssessment should be present");
+  import_strict.default.equal(body.assessment.status, "COMPLETED");
+  const reserveResult = body.assessment.reserve;
+  import_strict.default.ok(reserveResult, "Reserve optimization should be present in assessment");
+  import_strict.default.equal(reserveResult.input.disruptionDuration, durationDays);
+  import_strict.default.equal(reserveResult.input.alternativeProcurement, 0);
+  import_strict.default.equal(typeof reserveResult.input.supplyGap, "number");
+  console.log(`Verified streamlined assessment: disruptionDuration=${durationDays}, alternativeProcurement=0, supplyGap=${reserveResult.input.supplyGap}`);
 });
-(0, import_node_test.default)("Integration: /api/pipeline/run with manually supplied alternativeProcurement preserves override exactly as-is", async () => {
+(0, import_node_test.default)("Integration: /api/pipeline/run enforces alternativeProcurement = 0 per exact architecture specification", async () => {
   const manualOverride = 15e3;
   const response = await fetch(`${baseUrl}/api/pipeline/run`, {
     method: "POST",
@@ -8377,11 +8344,11 @@ var baseUrl = "";
   import_strict.default.equal(response.status, 200);
   const body = await response.json();
   import_strict.default.equal(body.status, "AVAILABLE");
-  const stages = body.pipeline?.stages;
-  import_strict.default.ok(stages, "Pipeline stages should be present");
-  const reserveInput = stages.reserveOptimization?.input;
-  import_strict.default.equal(reserveInput.alternativeProcurement, manualOverride);
-  console.log(`Verified manual override: alternativeProcurement override preserved exactly as manually supplied: ${manualOverride} tonnes/day.`);
+  import_strict.default.ok(body.assessment, "OrbitAssessment should be present");
+  const reserveInput = body.assessment.reserve?.input;
+  import_strict.default.ok(reserveInput, "Reserve input should be present");
+  import_strict.default.equal(reserveInput.alternativeProcurement, 0);
+  console.log(`Verified exact specification: alternativeProcurement is 0.`);
 });
 (0, import_node_test.default)("Integration Case A: Partial external replacement", () => {
   const input = {

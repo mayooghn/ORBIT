@@ -6,6 +6,7 @@ import { analyzeGeopoliticalSupplyChainRelevance, type GeopoliticalSupplyChainRe
 import { assessGeopoliticalRisk, type GeopoliticalRiskAssessment } from './risk';
 import { createGroqAgentProvider, type GroqExplanationInput, type GroqServiceContract } from './groq';
 import type { GeopoliticalEvent } from './model';
+import { extractDeterministicGeopoliticalEvent } from './deterministicExtractor';
 
 export interface GeopoliticalRiskAgentResponse {
   request: string;
@@ -125,7 +126,20 @@ export class GeopoliticalRiskIntelligenceAgent implements GeopoliticalRiskAgent 
       extractedEvent = await this.llm.extractEvent(normalizedRequest);
     } catch (extractError) {
       console.warn('[ORBIT Agent] LLM event extraction failed or timed out, falling back to deterministic extraction:', extractError);
-      return analyzeGeopoliticalEventDeterministically(normalizedRequest, undefined, this.runtime);
+      const graph = this.runtime.stateEngine.getCurrentTwin();
+      const deterministic = extractDeterministicGeopoliticalEvent(
+        {
+          title: normalizedRequest,
+          description: normalizedRequest,
+          source: 'ORBIT Risk Intelligence Agent',
+          publishedAt: new Date().toISOString(),
+        },
+        graph,
+      );
+      if (deterministic.event) {
+        return analyzeGeopoliticalEventDeterministically(normalizedRequest, deterministic.event, this.runtime);
+      }
+      throw extractError;
     }
 
     const analysis = analyzeEventDeterministically(extractedEvent, this.runtime);

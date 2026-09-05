@@ -67,11 +67,11 @@ after(async () => {
 // ---------------------------------------------------------------------------
 // A. MANUAL EVENT -> ORCHESTRATOR
 // ---------------------------------------------------------------------------
-test('A1: manual structured event -> COMPLETED assessment with all 5 stages', async () => {
+test('A1: manual structured event -> COMPLETED assessment with streamlined stages', async () => {
   const response = await fetch(`${baseUrl}/api/pipeline/run`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ event: { id: 'evt-manual-1', title: 'Strait of Hormuz blockade', description: 'Manual event.', timestamp: '2026-01-01T00:00:00.000Z', source: 'phase6-test', location: 'Strait of Hormuz', countriesInvolved: ['Iran', 'Oman'], category: 'maritime_disruption', severity: 'critical' } }),
+    body: JSON.stringify({ event: { id: 'evt-manual-1', title: 'Strait of Hormuz blockade', description: 'Manual event.', durationDays: 14, timestamp: '2026-01-01T00:00:00.000Z', source: 'phase6-test', location: 'Strait of Hormuz', countriesInvolved: ['Iran', 'Oman'], category: 'maritime_disruption', severity: 'critical' } }),
   });
   assert.equal(response.status, 200);
   const body = (await response.json()) as any;
@@ -80,14 +80,14 @@ test('A1: manual structured event -> COMPLETED assessment with all 5 stages', as
   assert.match(a.assessmentId, /^assessment-[0-9a-f-]{36}$/);
   assert.equal(a.status, 'COMPLETED');
   assert.equal(a.trigger, 'manual_request');
-  assert.equal(a.stages.length, 5);
+  assert.equal(a.stages.length, 3);
   assert.ok(a.stages.every((s: any) => s.status === 'COMPLETED'));
   assert.deepEqual(a.errors, []);
   assert.equal(a.overallRisk, 'critical');
   assert.ok(a.summary.length > 0 && a.recommendation && a.recommendation.length > 0);
   assert.ok(a.geopolitical && a.geopolitical.event.id === 'evt-manual-1');
   assert.ok(a.disruption && a.disruption.affectedNodeId === 'chokepoint-strait-of-hormuz');
-  assert.ok(a.scenario && a.reserve && a.reserve.optimizationId.startsWith('reserve-optimization-'));
+  assert.ok(a.reserve && a.reserve.optimizationId.startsWith('reserve-optimization-'));
   const latest = await fetch(`${baseUrl}/api/assessments/latest`);
   const latestBody = (await latest.json()) as any;
   assert.equal(latestBody.assessment.assessmentId, a.assessmentId);
@@ -129,7 +129,7 @@ test('C1: critical event -> high overallRisk + affected assets + reserve produce
   const response = await fetch(`${baseUrl}/api/pipeline/run`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ event: { id: 'evt-critical-1', title: 'Critical Hormuz blockade', description: 'Full blockade.', timestamp: '2026-01-01T00:00:00.000Z', source: 'phase6-test', location: 'Strait of Hormuz', countriesInvolved: ['Iran', 'Oman'], category: 'maritime_disruption', severity: 'critical' } }),
+    body: JSON.stringify({ event: { id: 'evt-critical-1', title: 'Critical Hormuz blockade', description: 'Full blockade.', durationDays: 10, timestamp: '2026-01-01T00:00:00.000Z', source: 'phase6-test', location: 'Strait of Hormuz', countriesInvolved: ['Iran', 'Oman'], category: 'maritime_disruption', severity: 'critical' } }),
   });
   assert.equal(response.status, 200);
   const body = (await response.json()) as any;
@@ -166,8 +166,6 @@ test('D1: geopolitical stage failure -> FAILED, downstream SKIPPED, persisted', 
     const stageMap = Object.fromEntries(a.stages.map((s: any) => [s.stage, s.status]));
     assert.equal(stageMap.geopoliticalAnalysis, 'FAILED');
     assert.equal(stageMap.networkImpactResolution, 'SKIPPED');
-    assert.equal(stageMap.scenarioSimulation, 'SKIPPED');
-    assert.equal(stageMap.procurementOptimization, 'SKIPPED');
     assert.equal(stageMap.reserveOptimization, 'SKIPPED');
     assert.ok(a.errors.length > 0);
     assert.match(a.errors[0], /stub geopolitical failure/);
@@ -177,43 +175,22 @@ test('D1: geopolitical stage failure -> FAILED, downstream SKIPPED, persisted', 
   }
 });
 
-test('D2: scenario stage failure (bad node) -> PARTIAL, downstream SKIPPED', async () => {
-  const badNodeAgent: GeopoliticalRiskAgent = {
-    analyze: async () => ({
-      request: 'stub',
-      event: { id: 'evt-bad-node', title: 'Bad node', description: 'phase6', timestamp: '2026-01-01T00:00:00.000Z', source: 'phase6-test', location: 'Nowhere', countriesInvolved: [], category: 'maritime_disruption', severity: 'critical' },
-      classification: { eventId: 'evt-bad-node', category: 'maritime_disruption', severity: 'critical', energyRelevant: true, countriesInvolved: [], location: 'Nowhere', classificationReasons: ['stub'] },
-      relevance: { eventId: 'evt-bad-node', relevant: true, matchedNodeIds: ['node-does-not-exist'], matchedNodeTypes: ['chokepoint'], matchedLocations: [], matchedCountries: [], relevanceReasons: ['stub'] },
-      risk: { eventId: 'evt-bad-node', riskLevel: 'high', riskScore: 60, factors: [], reasoning: ['stub'], matchedNodeIds: ['node-does-not-exist'], energyRelevant: true },
-      digitalTwinImpact: { eventId: 'evt-bad-node', relevant: true, riskLevel: 'high', riskScore: 60, matchedNodeIds: ['node-does-not-exist'], affectedNodeIds: ['node-does-not-exist'], affectedNodeNames: ['Nowhere'], affectedEdgeIds: [], affectedNodeTypes: ['chokepoint'], affectedCapacity: { nodeTotals: [], edgeTotals: [] }, affectedFlow: { nodeTotals: [], edgeTotals: [] }, impactReasons: ['stub'] },
-      explanation: 'stub',
-    }),
-  };
-  const app = createApp(repository, runtime, badNodeAgent);
-  const failServer = createServer(app);
-  await new Promise<void>((resolve) => failServer.listen(0, resolve));
-  const failBase = `http://127.0.0.1:${(failServer.address() as any).port}`;
-  try {
-    const response = await fetch(`${failBase}/api/pipeline/run`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text: 'Bad node event' }),
-    });
-    assert.equal(response.status, 200);
-    const body = (await response.json()) as any;
-    assert.equal(body.assessment.status, 'PARTIAL');
-    const stageMap = Object.fromEntries(body.assessment.stages.map((s: any) => [s.stage, s.status]));
-    assert.equal(stageMap.geopoliticalAnalysis, 'COMPLETED');
-    assert.equal(stageMap.networkImpactResolution, 'COMPLETED');
-    assert.equal(stageMap.scenarioSimulation, 'FAILED');
-    assert.match(body.assessment.stages.find((s: any) => s.stage === 'scenarioSimulation').error, /node-does-not-exist/);
-    assert.equal(stageMap.procurementOptimization, 'SKIPPED');
-    assert.equal(stageMap.reserveOptimization, 'SKIPPED');
-    assert.ok(body.assessment.errors.length > 0);
-    assert.equal(body.pipeline, undefined, 'no legacy payload on PARTIAL');
-  } finally {
-    await new Promise<void>((resolve) => failServer.close(() => resolve()));
-  }
+test('D2: missing durationDays -> PARTIAL, reserve failure, honest ledger', async () => {
+  const response = await fetch(`${baseUrl}/api/pipeline/run`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text: 'Event without explicit duration' }),
+  });
+  assert.equal(response.status, 200);
+  const body = (await response.json()) as any;
+  assert.equal(body.assessment.status, 'PARTIAL');
+  const stageMap = Object.fromEntries(body.assessment.stages.map((s: any) => [s.stage, s.status]));
+  assert.equal(stageMap.geopoliticalAnalysis, 'COMPLETED');
+  assert.equal(stageMap.networkImpactResolution, 'COMPLETED');
+  assert.equal(stageMap.reserveOptimization, 'FAILED');
+  assert.match(body.assessment.stages.find((s: any) => s.stage === 'reserveOptimization').error, /duration/i);
+  assert.ok(body.assessment.errors.length > 0);
+  assert.equal(body.pipeline, undefined, 'no legacy payload on PARTIAL');
 });
 
 // ---------------------------------------------------------------------------
@@ -331,7 +308,7 @@ test('I1: persisted assessment matches orchestrator result (round-trip)', async 
   const response = await fetch(`${baseUrl}/api/pipeline/run`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ event: { id: 'evt-consistency-1', title: 'Consistency test', description: 'phase6', timestamp: '2026-01-01T00:00:00.000Z', source: 'phase6-test', location: 'Strait of Hormuz', countriesInvolved: ['Iran'], category: 'maritime_disruption', severity: 'critical' } }),
+    body: JSON.stringify({ event: { id: 'evt-consistency-1', title: 'Consistency test', description: 'phase6', durationDays: 10, timestamp: '2026-01-01T00:00:00.000Z', source: 'phase6-test', location: 'Strait of Hormuz', countriesInvolved: ['Iran'], category: 'maritime_disruption', severity: 'critical' } }),
   });
   const body = (await response.json()) as any;
   const original = body.assessment;

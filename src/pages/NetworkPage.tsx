@@ -270,8 +270,8 @@ const stateBadgeLevel = (state: OperationalState): string => {
   return 'BLOCKED';
 };
 
-const formatMeasurement = (value: number, unit: string): string =>
-  `${value.toLocaleString()} ${unit.replaceAll('_', ' ')}`;
+const formatMeasurement = (value: number | undefined | null, unit?: string): string =>
+  `${(value ?? 0).toLocaleString()} ${(unit ?? '').replaceAll('_', ' ')}`;
 
 const formatNodeMeasurement = (measurement: DigitalTwinNode['capacity'], unitStatus?: unknown): string => {
   if (!measurement) return 'Not supplied';

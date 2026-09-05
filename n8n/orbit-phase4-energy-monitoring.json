@@ -249,7 +249,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ monitoredEventId: $json.event.article.id, text: ($json.event.article.title || '') + '. ' + ($json.event.article.description || '') }) }}",
+        "jsonBody": "={{ (() => {\n  const article = $json.event?.article || {};\n  const text = (($json.event?.article?.title || '') + '. ' + ($json.event?.article?.description || '')).trim();\n  const match = text.match(/\\b(\\d+)\\s*(?:-|\\s)?\\s*days?\\b/i);\n  const durationDays = match && parseInt(match[1], 10) > 0 ? parseInt(match[1], 10) : undefined;\n  return JSON.stringify({\n    monitoredEventId: article.id,\n    text,\n    ...(durationDays !== undefined ? { durationDays } : {})\n  });\n})() }}",
         "options": {
           "timeout": 300000,
           "response": {

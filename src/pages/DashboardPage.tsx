@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { StatusBadge } from '../components/common/StatusBadge';
-import { deriveModuleServiceStatuses, type ModuleServiceConnectionStatus } from '../services/moduleServices';
+import { deriveModuleServiceStatuses } from '../services/moduleServices';
 import {
   checkBackendHealth,
   fetchLatestOrbitAssessment,
@@ -14,414 +14,102 @@ import type { OrbitAssessment } from '../types/orbitAssessment';
 import type { StrategicReserveState } from '../reserves/model';
 import {
   Activity,
+  AlertOctagon,
+  AlertTriangle,
+  ArrowRight,
+  ArrowUpRight,
+  BarChart3,
   Bot,
+  CheckCircle2,
+  Clock,
   Cpu,
   Database,
-  Globe,
-  Network,
-  ShieldCheck,
-  Radar,
-  AlertTriangle,
-  ArrowUpRight,
-  Zap,
-  TrendingUp,
+  ExternalLink,
+  Layers,
   Lock,
+  Network,
+  Radio,
+  RefreshCw,
+  Server,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  TrendingDown,
+  TrendingUp,
+  Zap,
 } from 'lucide-react';
 
 interface DashboardPageProps {
   onNavigate: (path: string) => void;
 }
 
-/* ==========================================================================
-   DASHBOARD BACKGROUND — Grid, radar, signal waves
-   ========================================================================== */
-const DashboardBackground: React.FC = () => {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  return (
-    <>
-      {/* Grid */}
-      <div className="db-grid" aria-hidden="true" />
-
-      {/* Scan line */}
-      {!reduced && <div className="db-scan-line" aria-hidden="true" />}
-
-      {/* Radar */}
-      <div className="db-radar" aria-hidden="true">
-        <div className="db-radar-ring" style={{ width: '100%', height: '100%' }} />
-        <div className="db-radar-ring" style={{ width: '70%', height: '70%' }} />
-        <div className="db-radar-ring" style={{ width: '40%', height: '40%' }} />
-        {!reduced && <div className="db-radar-sweep" />}
-      </div>
-
-      {/* Signal waves */}
-      <svg className="db-signal-wave" style={{ position: 'fixed', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <path d="M -20 200 Q 200 180, 400 210 T 800 190 T 1220 205" />
-        <path d="M -20 350 Q 300 330, 600 360 T 1220 345" className="db-wave-accent" />
-        <path d="M -20 500 Q 250 480, 500 510 T 1220 495" />
-        <path d="M -20 650 Q 350 630, 700 660 T 1220 645" className="db-wave-accent" style={{ animationDelay: '5s' }} />
-        {!reduced && (
-          <>
-            <path d="M -20 200 Q 200 180, 400 210 T 800 190 T 1220 205" className="db-wave-highlight" />
-            <path d="M -20 500 Q 250 480, 500 510 T 1220 495" className="db-wave-highlight" style={{ animationDelay: '4s', animationDuration: '12s' }} />
-          </>
-        )}
-      </svg>
-    </>
-  );
-};
-
-/* ==========================================================================
-   DASHBOARD GLOBE — Refined network visualization
-   ========================================================================== */
-const DASHBOARD_NODES = [
-  { id: 'hormuz', label: 'HORMUZ', x: 58, y: 42, type: 'chokepoint' as const, size: 1.4 },
-  { id: 'ras_tanura', label: 'RAS TANURA', x: 55, y: 40, type: 'refinery' as const, size: 1.1 },
-  { id: 'jamnagar', label: 'JAMNAGAR', x: 63, y: 44, type: 'refinery' as const, size: 1.2 },
-  { id: 'singapore', label: 'SINGAPORE', x: 72, y: 52, type: 'hub' as const, size: 1.3 },
-  { id: 'rotterdam', label: 'ROTTERDAM', x: 47, y: 32, type: 'port' as const, size: 1.1 },
-  { id: 'huizhou', label: 'HUIZHOU', x: 74, y: 44, type: 'port' as const, size: 1.0 },
-  { id: 'mumbai', label: 'MUMBAI', x: 62, y: 46, type: 'hub' as const, size: 1.2 },
-  { id: 'fujairah', label: 'FUJAIRAH', x: 57, y: 43, type: 'port' as const, size: 1.1 },
-];
-
-const DASHBOARD_ROUTES = [
-  { from: 'hormuz', to: 'jamnagar', active: true },
-  { from: 'hormuz', to: 'singapore', active: true },
-  { from: 'ras_tanura', to: 'mumbai', active: false },
-  { from: 'rotterdam', to: 'hormuz', active: false },
-  { from: 'fujairah', to: 'singapore', active: true },
-  { from: 'jamnagar', to: 'huizhou', active: false },
-  { from: 'mumbai', to: 'singapore', active: false },
-];
-
-const DashboardGlobe: React.FC = () => {
-  const [reduced, setReduced] = useState(false);
-  const [activeRoute, setActiveRoute] = useState(0);
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    if (reduced) return;
-    const t = setInterval(() => {
-      setActiveRoute((prev) => (prev + 1) % DASHBOARD_ROUTES.length);
-    }, 3500);
-    return () => clearInterval(t);
-  }, [reduced]);
-
-  const getNode = (id: string) => DASHBOARD_NODES.find((n) => n.id === id)!;
-
-  const isNodeActive = (nodeId: string) => {
-    return DASHBOARD_ROUTES.some(
-      (r, i) => i === activeRoute && r.active && (r.from === nodeId || r.to === nodeId)
-    );
-  };
-
-  const isConnectedToHovered = (nodeId: string) => {
-    if (!hoveredNode) return false;
-    return DASHBOARD_ROUTES.some(
-      (r) => (r.from === hoveredNode && r.to === nodeId) || (r.to === hoveredNode && r.from === nodeId)
-    );
-  };
-
-  return (
-    <div className="db-globe-container">
-      {/* Orbital rings */}
-      <div className="db-globe-ring" style={{ width: '98%', height: '98%' }} />
-      <div className="db-globe-ring db-globe-ring-accent" style={{ width: '80%', height: '80%' }} />
-      <div className="db-globe-ring" style={{ width: '60%', height: '60%' }} />
-
-      {/* Globe SVG */}
-      <svg viewBox="0 0 100 100" className="w-full h-full" role="img" aria-label="Energy supply chain network visualization showing global trade routes and infrastructure nodes">
-        <defs>
-          <radialGradient id="db-globe-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(249,115,22,0.06)" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-          <radialGradient id="db-globe-core" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-
-        {/* Globe background glow */}
-        <circle cx="50" cy="50" r="40" fill="url(#db-globe-glow)" />
-        <circle cx="50" cy="50" r="38" fill="url(#db-globe-core)" />
-
-        {/* Subtle internal grid for depth */}
-        <g opacity="0.03">
-          {Array.from({ length: 9 }, (_, i) => (
-            <line key={`ig-h${i}`} x1="12" y1={14 + i * 8.5} x2="88" y2={14 + i * 8.5} stroke="white" strokeWidth="0.15" />
-          ))}
-          {Array.from({ length: 9 }, (_, i) => (
-            <line key={`ig-v${i}`} x1={14 + i * 8.5} y1="12" x2={14 + i * 8.5} y2="88" stroke="white" strokeWidth="0.15" />
-          ))}
-        </g>
-
-        {/* Latitude lines — subtle curved mesh */}
-        {[28, 36, 44, 50, 56, 64, 72].map((y) => {
-          const distFromCenter = Math.abs(y - 50);
-          const rx = 38 * Math.cos((distFromCenter / 38) * (Math.PI / 2));
-          return (
-            <ellipse
-              key={`lat-${y}`}
-              cx="50" cy={y}
-              rx={rx}
-              ry={3.5}
-              fill="none"
-              stroke="rgba(255,255,255,0.025)"
-              strokeWidth="0.25"
-            />
-          );
-        })}
-
-        {/* Longitude lines — meridian curves */}
-        {[0, 24, 48, 72, 96, 120, 144].map((angle) => (
-          <ellipse
-            key={`lon-${angle}`}
-            cx="50" cy="50"
-            rx={38 * Math.cos((angle * Math.PI) / 180)}
-            ry={38}
-            fill="none"
-            stroke="rgba(255,255,255,0.02)"
-            strokeWidth="0.2"
-            transform={`rotate(${angle * 0.08} 50 50)`}
-          />
-        ))}
-
-        {/* Rotating dashed orbit */}
-        {!reduced && (
-          <g className="db-globe-rotate" style={{ transformOrigin: '50px 50px' }}>
-            <circle cx="50" cy="50" r="37" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.25" strokeDasharray="2 14" />
-          </g>
-        )}
-
-        {/* Routes */}
-        {DASHBOARD_ROUTES.map((route, i) => {
-          const from = getNode(route.from);
-          const to = getNode(route.to);
-          const isActive = i === activeRoute && route.active;
-          const isHovered = hoveredNode === route.from || hoveredNode === route.to;
-          const showRoute = isActive || isHovered;
-          return (
-            <line
-              key={`${route.from}-${route.to}`}
-              x1={from.x} y1={from.y}
-              x2={to.x} y2={to.y}
-              stroke={showRoute ? 'rgba(249,115,22,0.35)' : 'rgba(255,255,255,0.04)'}
-              strokeWidth={showRoute ? 0.5 : 0.2}
-              strokeLinecap="round"
-              style={{ transition: 'stroke 0.5s ease, stroke-width 0.5s ease' }}
-            />
-          );
-        })}
-
-        {/* Signal packets on active routes */}
-        {!reduced && DASHBOARD_ROUTES.map((route, i) => {
-          if (i !== activeRoute || !route.active) return null;
-          const from = getNode(route.from);
-          const to = getNode(route.to);
-          return (
-            <g key={`signal-${route.from}-${route.to}`}>
-              {/* Signal trail */}
-              <circle r="0.6" fill="#f97316" opacity="0.25">
-                <animateMotion dur="2.8s" repeatCount="indefinite" path={`M ${from.x} ${from.y} L ${to.x} ${to.y}`} />
-              </circle>
-              {/* Signal head */}
-              <circle r="0.9" fill="#f97316" opacity="0.9">
-                <animateMotion dur="2.8s" repeatCount="indefinite" path={`M ${from.x} ${from.y} L ${to.x} ${to.y}`} />
-                <animate attributeName="opacity" values="0.9;0.5;0.9" dur="1.2s" repeatCount="indefinite" />
-              </circle>
-            </g>
-          );
-        })}
-
-        {/* Nodes */}
-        {DASHBOARD_NODES.map((node) => {
-          const isActive = isNodeActive(node.id);
-          const isHovered = hoveredNode === node.id;
-          const isConnected = isConnectedToHovered(node.id);
-          const nodeColor = node.type === 'chokepoint' ? '#f97316' : node.type === 'refinery' ? '#fb923c' : 'rgba(255,255,255,0.5)';
-          const showDetail = isActive || isHovered || isConnected;
-          return (
-            <g
-              key={node.id}
-              onMouseEnter={() => setHoveredNode(node.id)}
-              onMouseLeave={() => setHoveredNode(null)}
-              style={{ cursor: 'pointer' }}
-            >
-              {/* Node glow */}
-              {showDetail && (
-                <circle
-                  cx={node.x} cy={node.y}
-                  r={node.size * 4}
-                  fill={nodeColor}
-                  opacity={isHovered ? 0.12 : 0.06}
-                  style={{ transition: 'opacity 0.3s ease' }}
-                />
-              )}
-              {/* Node body */}
-              <circle
-                cx={node.x} cy={node.y}
-                r={showDetail ? node.size * 1.5 : node.size}
-                fill={showDetail ? nodeColor : 'rgba(255,255,255,0.25)'}
-                stroke={isHovered ? 'rgba(255,255,255,0.4)' : 'none'}
-                strokeWidth={isHovered ? 0.3 : 0}
-                style={{ transition: 'all 0.4s ease' }}
-              />
-              {/* Node pulse ring */}
-              {isActive && !reduced && (
-                <circle
-                  cx={node.x} cy={node.y}
-                  r={node.size * 1.4}
-                  fill="none"
-                  stroke={nodeColor}
-                  strokeWidth="0.2"
-                  opacity="0.4"
-                >
-                  <animate attributeName="r" from={`${node.size * 1.4}`} to={`${node.size * 4}`} dur="2.5s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" from="0.4" to="0" dur="2.5s" repeatCount="indefinite" />
-                </circle>
-              )}
-              {/* Node label */}
-              <text
-                x={node.x} y={node.y - 3.5}
-                textAnchor="middle"
-                fill={showDetail ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.18)'}
-                style={{ fontSize: '2.4px', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.1em', transition: 'fill 0.4s ease', fontWeight: showDetail ? 600 : 400 }}
-              >
-                {node.label}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-};
-
-/* ==========================================================================
-   DASHBOARD STATUS STRIP — Compact operational bar
-   ========================================================================== */
-const DashboardStatusStrip: React.FC<{
-  loaded: boolean;
-  backendAvailable: boolean;
-  networkStatus: ModuleServiceConnectionStatus;
-  signals: number | null;
-  affectedAssets: number;
-  elevated: number | null;
-}> = ({ loaded, backendAvailable, networkStatus, signals, affectedAssets, elevated }) => {
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    const t = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const utc = time.toISOString().slice(0, 19).replace('T', ' ') + ' UTC';
-
-  return (
-    <div className="db-operational-strip">
-      <div className={`db-operational-strip-item ${loaded && backendAvailable ? 'is-active' : ''}`}>
-        <span className={`db-status-dot ${loaded && backendAvailable ? 'db-status-dot-operative' : 'db-status-dot-alert'}`} />
-        <span>{!loaded ? 'SYSTEM SYNCING' : backendAvailable ? 'SYSTEM OPERATIONAL' : 'SYSTEM OFFLINE'}</span>
-      </div>
-      <div className={`db-operational-strip-item ${loaded && networkStatus === 'READY' ? 'is-active' : ''}`}>
-        <span className={`db-status-dot ${loaded && networkStatus === 'READY' ? 'db-status-dot-operative' : 'db-status-dot-alert'}`} />
-        <span>{!loaded ? 'NETWORK SYNCING' : networkStatus === 'READY' ? 'NETWORK STABLE' : networkStatus === 'UNKNOWN' ? 'NETWORK UNKNOWN' : 'NETWORK OFFLINE'}</span>
-      </div>
-      <div className="db-operational-strip-item">
-        <Activity className="w-3 h-3 text-[#555]" />
-        <span>{signals === null ? '— SIGNALS' : `${signals} SIGNALS`}</span>
-      </div>
-      <div className="db-operational-strip-item">
-        <Database className="w-3 h-3 text-[#555]" />
-        <span>{affectedAssets} AFFECTED</span>
-      </div>
-      <div className="db-operational-strip-item">
-        <AlertTriangle className="w-3 h-3 text-amber-500/60" />
-        <span>{elevated === null ? '— ELEVATED' : `${elevated} ELEVATED`}</span>
-      </div>
-      <div className="db-operational-strip-item ml-auto">
-        <span className="text-[#444]">{utc}</span>
-      </div>
-    </div>
-  );
-};
-
-/* ==========================================================================
-   MAIN DASHBOARD PAGE
-   ========================================================================== */
 interface OrbitOverview {
   loaded: boolean;
+  refreshing: boolean;
   health: HealthApiResponse | null;
   monitoring: MonitoringStatusResponse['monitoring'] | null;
   reserveState: StrategicReserveState | null;
   latestAssessment: OrbitAssessment | null;
   assessmentsAvailable: boolean;
   recentAssessments: OrbitAssessment[];
+  error?: string | null;
 }
 
 const INITIAL_OVERVIEW: OrbitOverview = {
   loaded: false,
+  refreshing: false,
   health: null,
   monitoring: null,
   reserveState: null,
   latestAssessment: null,
   assessmentsAvailable: false,
   recentAssessments: [],
+  error: null,
 };
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [overview, setOverview] = useState<OrbitOverview>(INITIAL_OVERVIEW);
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState<string>('');
+
+  const loadData = useCallback(async (isRefresh = false): Promise<void> => {
+    if (isRefresh) {
+      setOverview((prev) => ({ ...prev, refreshing: true }));
+    }
+
+    const [health, monitoringStatus, reserveState, assessmentList, latest] = await Promise.allSettled([
+      checkBackendHealth(),
+      fetchMonitoringStatus(),
+      fetchStrategicReserveState(),
+      fetchOrbitAssessments(50),
+      fetchLatestOrbitAssessment(),
+    ]);
+
+    setOverview({
+      loaded: true,
+      refreshing: false,
+      health: health.status === 'fulfilled' ? health.value : null,
+      monitoring: monitoringStatus.status === 'fulfilled' ? monitoringStatus.value.monitoring ?? null : null,
+      reserveState: reserveState.status === 'fulfilled' ? reserveState.value ?? null : null,
+      latestAssessment: latest.status === 'fulfilled' ? latest.value : null,
+      assessmentsAvailable: assessmentList.status === 'fulfilled',
+      recentAssessments: assessmentList.status === 'fulfilled' ? assessmentList.value : [],
+      error: health.status === 'rejected' ? 'Failed to establish backend health connection' : null,
+    });
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    void loadData(false);
+  }, [loadData]);
 
-    // One-shot load on page entry — no polling loop (monitoring refresh has its
-    // own server-side cycle and the Assistant page owns live monitoring polling).
-    const load = async (): Promise<void> => {
-      const [health, monitoringStatus, reserveState, assessmentList, latest] = await Promise.allSettled([
-        checkBackendHealth(),
-        fetchMonitoringStatus(),
-        fetchStrategicReserveState(),
-        fetchOrbitAssessments(50),
-        fetchLatestOrbitAssessment(),
-      ]);
-
-      if (cancelled) return;
-
-      setOverview({
-        loaded: true,
-        health: health.status === 'fulfilled' ? health.value : null,
-        monitoring: monitoringStatus.status === 'fulfilled' ? monitoringStatus.value.monitoring ?? null : null,
-        reserveState: reserveState.status === 'fulfilled' ? reserveState.value ?? null : null,
-        latestAssessment: latest.status === 'fulfilled' ? latest.value : null,
-        assessmentsAvailable: assessmentList.status === 'fulfilled',
-        recentAssessments: assessmentList.status === 'fulfilled' ? assessmentList.value : [],
-      });
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toISOString().slice(0, 19).replace('T', ' ') + ' UTC');
     };
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const backendAvailable = overview.health?.status === 'AVAILABLE';
@@ -432,366 +120,1144 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     reserveStateAvailable: Boolean(overview.reserveState),
     latestAssessment: overview.latestAssessment,
   });
-  const corridor = moduleStatuses.corridor;
-  const reserve = moduleStatuses.reserve;
-  const assistant = moduleStatuses.assistant;
 
-  // Command Overview metrics — derived only from real fetched data.
-  const dayAgoMs = Date.now() - 24 * 60 * 60 * 1000;
-  const activeDisruptions = overview.recentAssessments.filter((assessment) => {
-    const createdAtMs = Date.parse(assessment.createdAt);
+  const latest = overview.latestAssessment;
+  const activeDisruptions = overview.recentAssessments.filter((a) => {
+    const createdAtMs = Date.parse(a.createdAt);
     return (
       Number.isFinite(createdAtMs) &&
-      createdAtMs >= dayAgoMs &&
-      (assessment.overallRisk === 'high' || assessment.overallRisk === 'critical')
+      createdAtMs >= Date.now() - 24 * 60 * 60 * 1000 &&
+      (a.overallRisk === 'high' || a.overallRisk === 'critical')
     );
   }).length;
+
   const criticalAlerts = overview.monitoring?.criticalAlerts ?? null;
   const highAlerts = overview.monitoring?.highRiskAlerts ?? null;
-  const riskAlerts = criticalAlerts === null && highAlerts === null ? null : (criticalAlerts ?? 0) + (highAlerts ?? 0);
-  const scenariosRun = overview.recentAssessments.filter((assessment) =>
-    assessment.stages.some((stage) => stage.stage === 'scenarioSimulation' && stage.status === 'COMPLETED'),
-  ).length;
-  const reserveCoverage = overview.latestAssessment?.reserve?.result.coverageStatus ?? null;
-  const riskLevel = overview.latestAssessment?.overallRisk?.toUpperCase() ?? null;
-  const latestStatus = overview.latestAssessment?.status ?? null;
-  const affectedAssets: string[] = overview.latestAssessment?.geopolitical?.digitalTwinImpact?.affectedNodeNames?.filter((name) => Boolean(name && name.trim()))
-    ?? overview.latestAssessment?.geopolitical?.digitalTwinImpact?.affectedNodeIds
-    ?? [];
+  const riskAlertsCount =
+    criticalAlerts === null && highAlerts === null ? null : (criticalAlerts ?? 0) + (highAlerts ?? 0);
+
+  // Derived real data from latest assessment
+  const overallRiskLevel = latest?.overallRisk?.toUpperCase() ?? (latest?.geopolitical?.risk.riskLevel.toUpperCase() ?? null);
+  const affectedNodeNames =
+    latest?.geopolitical?.digitalTwinImpact?.affectedNodeNames?.filter(Boolean) ??
+    latest?.geopolitical?.digitalTwinImpact?.affectedNodeIds ??
+    (latest?.disruption?.affectedNodeId ? [latest.disruption.affectedNodeId] : []);
+  const affectedEdgeIds = latest?.geopolitical?.digitalTwinImpact?.affectedEdgeIds ?? [];
+  const reserveCoverageStatus = latest?.reserve?.result.coverageStatus ?? null;
+  const digitalTwinImpact = latest?.geopolitical?.digitalTwinImpact;
+
+  // Selected assessment for detail viewing if user clicks a row in table
+  const displayedAssessment = selectedAssessmentId
+    ? overview.recentAssessments.find((a) => a.assessmentId === selectedAssessmentId) ?? latest
+    : latest;
 
   return (
-    <div className="dashboard-root">
-      <DashboardBackground />
+    <div className="min-h-screen bg-[#000000] text-[#EDEDED] font-sans antialiased p-3 sm:p-5 lg:p-6 space-y-5">
+      {/* -------------------------------------------------------------
+          TOP OPERATIONAL STATUS STRIP
+         ------------------------------------------------------------- */}
+      <header className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-2 bg-[#060606] border border-[#1a1a1a] rounded text-xs font-mono">
+        <div className="flex flex-wrap items-center gap-4 text-[#888888]">
+          <div className="flex items-center gap-2">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                backendAvailable ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+              }`}
+            />
+            <span className="font-semibold tracking-wider text-[#CCCCCC]">
+              {backendAvailable ? 'SYSTEM ONLINE' : 'SYSTEM DEGRADED'}
+            </span>
+          </div>
 
-      <div className="relative z-10 space-y-4">
-        {/* Top status strip */}
-        <DashboardStatusStrip
-          loaded={overview.loaded}
-          backendAvailable={backendAvailable}
-          networkStatus={corridor.status}
-          signals={overview.monitoring?.detectedEvents ?? null}
-          affectedAssets={affectedAssets.length}
-          elevated={riskAlerts}
-        />
+          <div className="h-3.5 w-[1px] bg-[#222222]" />
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#EDEDED]">
-                Command Center
-              </h1>
-              <StatusBadge
-                level={!overview.loaded ? 'UNKNOWN' : backendAvailable ? 'AVAILABLE' : 'NOT_CONNECTED'}
-                label={!overview.loaded ? 'SYNCING' : backendAvailable ? 'LIVE' : 'STANDBY'}
-                size="sm"
+          <div className="flex items-center gap-1.5">
+            <Radio className="w-3.5 h-3.5 text-[#f97316]" />
+            <span>
+              MONITORING:{' '}
+              <strong className="text-[#EDEDED]">
+                {overview.monitoring ? `${overview.monitoring.detectedEvents ?? 0} DETECTED` : 'N/A'}
+              </strong>
+            </span>
+          </div>
+
+          <div className="h-3.5 w-[1px] bg-[#222222]" />
+
+          <div className="flex items-center gap-1.5">
+            <Network className="w-3.5 h-3.5 text-[#10b981]" />
+            <span>
+              DATA LAYER:{' '}
+              <strong className="text-[#EDEDED]">{dataLayerCapability}</strong>
+            </span>
+          </div>
+
+          <div className="h-3.5 w-[1px] bg-[#222222]" />
+
+          <div className="flex items-center gap-1.5">
+            <Database className="w-3.5 h-3.5 text-[#f59e0b]" />
+            <span>
+              RESERVE:{' '}
+              <strong className="text-[#EDEDED]">
+                {overview.reserveState?.currentReserve != null
+                  ? `${(overview.reserveState.currentReserve / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k ${overview.reserveState.unit || 'tonnes'}`
+                  : 'N/A'}
+              </strong>
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 text-[#666666]">
+          <span>{currentTime || 'SYNCING UTC…'}</span>
+          <button
+            type="button"
+            onClick={() => void loadData(true)}
+            disabled={overview.refreshing}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-[#111111] hover:bg-[#1c1c1c] text-[#CCCCCC] hover:text-white border border-[#262626] rounded transition-colors text-[11px] disabled:opacity-50 cursor-pointer"
+            title="Refresh dashboard intelligence from backend APIs"
+          >
+            <RefreshCw className={`w-3 h-3 ${overview.refreshing ? 'animate-spin text-[#f97316]' : ''}`} />
+            <span>{overview.refreshing ? 'REFRESHING' : 'REFRESH'}</span>
+          </button>
+        </div>
+      </header>
+
+      {/* -------------------------------------------------------------
+          DASHBOARD TITLE & ACTIONS
+         ------------------------------------------------------------- */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1a1a1a] pb-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#FFFFFF] font-mono">
+              COMMAND OVERVIEW
+            </h1>
+            <span className="px-2 py-0.5 text-[10px] font-mono font-semibold tracking-widest uppercase bg-[#f97316]/10 text-[#f97316] border border-[#f97316]/30 rounded">
+              OPERATIONAL INTELLIGENCE
+            </span>
+          </div>
+          <p className="text-xs text-[#888888] mt-1 font-mono">
+            Real-time geopolitical risk monitoring, digital twin network degradation, and strategic reserve optimization.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onNavigate('/app/assistant')}
+            className="px-3 py-1.5 bg-[#141414] hover:bg-[#1e1e1e] border border-[#2a2a2a] rounded text-xs font-mono text-[#EDEDED] flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Bot className="w-3.5 h-3.5 text-[#f97316]" />
+            <span>Risk Agent</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate('/app/network')}
+            className="px-3 py-1.5 bg-[#141414] hover:bg-[#1e1e1e] border border-[#2a2a2a] rounded text-xs font-mono text-[#EDEDED] flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Network className="w-3.5 h-3.5 text-[#10b981]" />
+            <span>Digital Twin</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate('/app/reserves')}
+            className="px-3 py-1.5 bg-[#141414] hover:bg-[#1e1e1e] border border-[#2a2a2a] rounded text-xs font-mono text-[#EDEDED] flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Database className="w-3.5 h-3.5 text-[#f59e0b]" />
+            <span>Reserves</span>
+          </button>
+        </div>
+      </div>
+
+      {/* -------------------------------------------------------------
+          1. TOP SUMMARY METRIC CARDS
+         ------------------------------------------------------------- */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        {/* Overall Risk Card */}
+        <div className="bg-[#060606] border border-[#1a1a1a] rounded p-4 flex flex-col justify-between hover:border-[#2a2a2a] transition-colors">
+          <div className="flex items-center justify-between text-[#888888] text-xs font-mono">
+            <span className="uppercase tracking-wider">Overall Risk</span>
+            <AlertTriangle
+              className={`w-4 h-4 ${
+                overallRiskLevel === 'CRITICAL' || overallRiskLevel === 'HIGH'
+                  ? 'text-red-500'
+                  : overallRiskLevel === 'MEDIUM'
+                  ? 'text-amber-500'
+                  : 'text-emerald-500'
+              }`}
+            />
+          </div>
+          <div className="my-2">
+            <div
+              className={`text-2xl font-bold font-mono ${
+                overallRiskLevel === 'CRITICAL' || overallRiskLevel === 'HIGH'
+                  ? 'text-red-400'
+                  : overallRiskLevel === 'MEDIUM'
+                  ? 'text-amber-400'
+                  : overallRiskLevel === 'LOW'
+                  ? 'text-emerald-400'
+                  : 'text-[#888888]'
+              }`}
+            >
+              {overallRiskLevel ?? 'NO RISK'}
+            </div>
+            <div className="text-[11px] text-[#666666] font-mono mt-0.5">
+              {latest?.geopolitical?.risk.riskScore != null
+                ? `Score: ${(latest.geopolitical.risk.riskScore * 100).toFixed(0)}% · factors: ${
+                    latest.geopolitical.risk.factors?.length ?? 0
+                  }`
+                : 'Real telemetry sync'}
+            </div>
+          </div>
+          <div className="text-[10px] text-[#555555] font-mono border-t border-[#141414] pt-2">
+            {latest ? `Latest assessment: ${latest.assessmentId.slice(0, 18)}…` : 'Awaiting event ingest'}
+          </div>
+        </div>
+
+        {/* Active Events Card */}
+        <div className="bg-[#060606] border border-[#1a1a1a] rounded p-4 flex flex-col justify-between hover:border-[#2a2a2a] transition-colors">
+          <div className="flex items-center justify-between text-[#888888] text-xs font-mono">
+            <span className="uppercase tracking-wider">Active Events</span>
+            <Activity className="w-4 h-4 text-[#f97316]" />
+          </div>
+          <div className="my-2">
+            <div className="text-2xl font-bold font-mono text-[#EDEDED]">
+              {overview.monitoring?.detectedEvents != null ? overview.monitoring.detectedEvents : 'N/A'}
+            </div>
+            <div className="text-[11px] text-[#666666] font-mono mt-0.5">
+              {overview.monitoring
+                ? `${overview.monitoring.relevantEvents ?? 0} relevant · ${riskAlertsCount ?? 0} elevated`
+                : 'Feed offline'}
+            </div>
+          </div>
+          <div className="text-[10px] text-[#555555] font-mono border-t border-[#141414] pt-2">
+            {activeDisruptions > 0
+              ? `${activeDisruptions} high/critical in 24h`
+              : 'Zero active disruptions in 24h'}
+          </div>
+        </div>
+
+        {/* Affected Assets Card */}
+        <div className="bg-[#060606] border border-[#1a1a1a] rounded p-4 flex flex-col justify-between hover:border-[#2a2a2a] transition-colors">
+          <div className="flex items-center justify-between text-[#888888] text-xs font-mono">
+            <span className="uppercase tracking-wider">Affected Assets</span>
+            <Network className="w-4 h-4 text-[#10b981]" />
+          </div>
+          <div className="my-2">
+            <div className="text-2xl font-bold font-mono text-[#EDEDED]">
+              {affectedNodeNames.length > 0 ? affectedNodeNames.length : 0}
+            </div>
+            <div className="text-[11px] text-[#666666] font-mono mt-0.5 truncate" title={affectedNodeNames.join(', ')}>
+              {affectedNodeNames.length > 0
+                ? `${affectedNodeNames.slice(0, 2).join(', ')}${affectedNodeNames.length > 2 ? '…' : ''}`
+                : 'All corridors nominal'}
+            </div>
+          </div>
+          <div className="text-[10px] text-[#555555] font-mono border-t border-[#141414] pt-2">
+            {affectedEdgeIds.length > 0 ? `${affectedEdgeIds.length} maritime transit edges degraded` : 'Nominal corridor routing'}
+          </div>
+        </div>
+
+        {/* Reserve Coverage Card */}
+        <div className="bg-[#060606] border border-[#1a1a1a] rounded p-4 flex flex-col justify-between hover:border-[#2a2a2a] transition-colors">
+          <div className="flex items-center justify-between text-[#888888] text-xs font-mono">
+            <span className="uppercase tracking-wider">Reserve Coverage</span>
+            <Database className="w-4 h-4 text-[#f59e0b]" />
+          </div>
+          <div className="my-2">
+            <div
+              className={`text-base font-bold font-mono truncate ${
+                reserveCoverageStatus === 'FULLY_COVERED' || reserveCoverageStatus === 'NO_EFFECTIVE_GAP'
+                  ? 'text-emerald-400'
+                  : reserveCoverageStatus === 'PARTIALLY_COVERED'
+                  ? 'text-amber-400'
+                  : reserveCoverageStatus === 'INSUFFICIENT_COVERAGE'
+                  ? 'text-red-400'
+                  : 'text-[#AAAAAA]'
+              }`}
+              title={reserveCoverageStatus ?? 'N/A'}
+            >
+              {reserveCoverageStatus ?? (overview.reserveState ? 'MONITORED' : 'N/A')}
+            </div>
+            <div className="text-[11px] text-[#666666] font-mono mt-0.5">
+              {latest?.reserve?.result
+                ? `Drawdown: ${(latest.reserve.result.recommendedReserveDrawdown ?? latest.reserve.result.drawdownRate ?? 0).toLocaleString()} t/d`
+                : overview.reserveState?.currentReserve != null
+                ? `Stock: ${overview.reserveState.currentReserve.toLocaleString()} ${overview.reserveState.unit || 'tonnes'}`
+                : 'Reserve telemetry offline'}
+            </div>
+          </div>
+          <div className="text-[10px] text-[#555555] font-mono border-t border-[#141414] pt-2">
+            {latest?.reserve?.input?.minimumReserveThreshold != null
+              ? `Safety threshold: ${latest.reserve.input.minimumReserveThreshold.toLocaleString()} t`
+              : overview.reserveState?.minimumReserveThreshold != null
+              ? `Min threshold: ${overview.reserveState.minimumReserveThreshold.toLocaleString()} ${overview.reserveState.unit || 'tonnes'}`
+              : 'Constraint inactive'}
+          </div>
+        </div>
+
+        {/* Latest Assessment Status Card */}
+        <div className="bg-[#060606] border border-[#1a1a1a] rounded p-4 flex flex-col justify-between hover:border-[#2a2a2a] transition-colors">
+          <div className="flex items-center justify-between text-[#888888] text-xs font-mono">
+            <span className="uppercase tracking-wider">Assessment Status</span>
+            <Clock className="w-4 h-4 text-[#888888]" />
+          </div>
+          <div className="my-2">
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  latest?.status === 'COMPLETED'
+                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                    : latest?.status === 'PARTIAL'
+                    ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'
+                    : latest?.status === 'FAILED'
+                    ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+                    : 'bg-[#444444]'
+                }`}
+              />
+              <span className="text-base font-bold font-mono text-[#EDEDED]">
+                {latest?.status ?? 'NO ASSESSMENTS'}
+              </span>
+            </div>
+            <div className="text-[11px] text-[#666666] font-mono mt-0.5">
+              {latest?.completedAt
+                ? new Date(latest.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' UTC'
+                : latest?.createdAt
+                ? new Date(latest.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' UTC'
+                : 'Awaiting run'}
+            </div>
+          </div>
+          <div className="text-[10px] text-[#555555] font-mono border-t border-[#141414] pt-2">
+            {latest?.trigger === 'monitored_event' ? 'Trigger: n8n automated monitor' : latest ? 'Trigger: Manual intake request' : 'Standby'}
+          </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------------
+          3. ORCHESTRATOR FLOW PIPELINE (News -> n8n -> ORBIT -> GEO -> Digital Twin -> Reserve -> Assessment)
+         ------------------------------------------------------------- */}
+      <section className="bg-[#060606] border border-[#1a1a1a] rounded p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[#f97316]" />
+            <h2 className="text-xs font-mono font-bold tracking-wider text-[#CCCCCC] uppercase">
+              ORCHESTRATOR PIPELINE FLOW
+            </h2>
+          </div>
+          <span className="text-[11px] font-mono text-[#666666]">
+            Architectural Stage Ledger · Deterministic Hand-off
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+          {/* Stage 1: NEWS */}
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded p-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[11px] font-mono text-[#888888]">
+              <span className="font-semibold text-[#CCCCCC]">1. NEWS</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </div>
+            <div className="my-1.5">
+              <span className="text-xs font-mono font-bold text-emerald-400">READY</span>
+              <p className="text-[10px] font-mono text-[#666666] mt-0.5">
+                {overview.monitoring?.detectedEvents != null
+                  ? `${overview.monitoring.detectedEvents} feed items`
+                  : 'Google News RSS'}
+              </p>
+            </div>
+            <div className="text-[9px] font-mono text-[#555555]">Source Ingestion</div>
+          </div>
+
+          {/* Stage 2: n8n */}
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded p-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[11px] font-mono text-[#888888]">
+              <span className="font-semibold text-[#CCCCCC]">2. n8n</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </div>
+            <div className="my-1.5">
+              <span className="text-xs font-mono font-bold text-emerald-400">
+                {overview.monitoring?.status === 'ACTIVE' ? 'ACTIVE' : 'READY'}
+              </span>
+              <p className="text-[10px] font-mono text-[#666666] mt-0.5">
+                {overview.monitoring?.lastScan?.scannedAt
+                  ? `Scan ${new Date(overview.monitoring.lastScan.scannedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : '15m poll / webhook'}
+              </p>
+            </div>
+            <div className="text-[9px] font-mono text-[#555555]">Energy Monitor</div>
+          </div>
+
+          {/* Stage 3: ORBIT */}
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded p-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[11px] font-mono text-[#888888]">
+              <span className="font-semibold text-[#CCCCCC]">3. ORBIT</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${backendAvailable ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            </div>
+            <div className="my-1.5">
+              <span className={`text-xs font-mono font-bold ${backendAvailable ? 'text-emerald-400' : 'text-red-400'}`}>
+                {backendAvailable ? 'ONLINE' : 'DEGRADED'}
+              </span>
+              <p className="text-[10px] font-mono text-[#666666] mt-0.5">
+                /api/pipeline/run
+              </p>
+            </div>
+            <div className="text-[9px] font-mono text-[#555555]">Fast HTTP Adapter</div>
+          </div>
+
+          {/* Stage 4: GEO */}
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded p-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[11px] font-mono text-[#888888]">
+              <span className="font-semibold text-[#CCCCCC]">4. GEO</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  latest?.stages?.find((s) => s.stage === 'geopoliticalAnalysis')?.status === 'COMPLETED'
+                    ? 'bg-emerald-500'
+                    : latest?.stages?.find((s) => s.stage === 'geopoliticalAnalysis')?.status === 'FAILED'
+                    ? 'bg-red-500'
+                    : 'bg-emerald-500'
+                }`}
               />
             </div>
-            <p className="text-xs text-[#666] mt-1">
-              Global energy intelligence — live network monitoring
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="db-card px-3 py-1.5 text-[11px] font-mono text-[#888] hover:text-[#ccc] flex items-center gap-1.5 cursor-pointer">
-              <Lock className="w-3 h-3" />
-              <span>SECURE ACCESS</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Main hero: Globe + Metrics */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Left: Core metrics */}
-          <div className="lg:col-span-3 space-y-3">
-            {/* Reserve Cover */}
-            <div className="db-card p-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="db-section-label">Reserve Cover</span>
-                <Database className="w-3 h-3 text-amber-400/50" />
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-[#EDEDED] db-metric-value">
-                  {overview.latestAssessment?.reserve
-                    ? overview.latestAssessment.reserve.input.currentReserve.toLocaleString()
-                    : overview.reserveState
-                      ? overview.reserveState.currentReserve.toLocaleString()
-                      : '—'}
-                </span>
-                <span className="text-[11px] text-[#555] font-mono">{overview.reserveState?.unit ?? 'units'}</span>
-              </div>
-              <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#555] font-mono">
-                <div className={`w-1.5 h-1.5 rounded-full ${overview.latestAssessment?.reserve || overview.reserveState ? 'bg-emerald-500/50' : 'bg-amber-500/50'}`} />
-                <span>
-                  {overview.latestAssessment?.reserve
-                    ? `Coverage ${overview.latestAssessment.reserve.result.coverageStatus} · threshold ${overview.latestAssessment.reserve.input.minimumReserveThreshold.toLocaleString()}`
-                    : overview.reserveState
-                      ? 'Reserve telemetry connected'
-                      : 'Reserve data unavailable'}
-                </span>
-              </div>
-            </div>
-
-            {/* Active Events */}
-            <div className="db-card p-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="db-section-label">Active Events</span>
-                <Activity className="w-3 h-3 text-amber-400/50" />
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-bold text-[#EDEDED] db-metric-value">
-                  {overview.monitoring ? overview.monitoring.detectedEvents ?? 0 : '—'}
-                </span>
-                <span className="text-[11px] text-[#555] font-mono">events</span>
-              </div>
-              <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#555] font-mono">
-                <div className={`w-1.5 h-1.5 rounded-full ${overview.monitoring ? 'bg-emerald-500/50' : 'bg-amber-500/50'}`} />
-                <span>{overview.monitoring ? 'Monitoring feed connected' : 'Monitoring unavailable'}</span>
-              </div>
-            </div>
-
-            {/* Risk Level */}
-            <div className="db-card p-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="db-section-label">Risk Level</span>
-                <TrendingUp className="w-3 h-3 text-emerald-400/50" />
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className={`text-lg font-bold db-metric-value ${riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'text-orange-400/80' : riskLevel ? 'text-emerald-400/80' : 'text-[#888]'}`}>
-                  {riskLevel ?? '—'}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[#555] font-mono">
-                <div className={`w-1.5 h-1.5 rounded-full ${riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'bg-orange-500/50' : riskLevel ? 'bg-emerald-500/50' : 'bg-[#333]'}`} />
-                <span>
-                  {overview.latestAssessment
-                    ? `Latest assessment ${overview.latestAssessment.status.toLowerCase()}`
-                    : overview.loaded
-                      ? 'No assessments recorded yet'
-                      : 'Syncing…'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Center: Globe visualization */}
-          <div className="lg:col-span-6 flex items-center justify-center">
-            <DashboardGlobe />
-          </div>
-
-          {/* Right: Status and quick access */}
-          <div className="lg:col-span-3 space-y-3">
-            {/* System Status */}
-            <div className="db-card p-3">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Cpu className="w-3 h-3 text-orange-400/60" />
-                <span className="text-[11px] font-semibold text-[#999] font-mono uppercase tracking-wider">System Status</span>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="db-status-dot db-status-dot-operative" style={{ width: 4, height: 4 }} />
-                    <span className="text-[11px] text-[#777] font-mono">Foundation</span>
-                  </div>
-                  <span className="text-[11px] text-emerald-400/70 font-mono">READY</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="db-status-dot db-status-dot-operative" style={{ width: 4, height: 4 }} />
-                    <span className="text-[11px] text-[#777] font-mono">Authentication</span>
-                  </div>
-                  <span className="text-[11px] text-emerald-400/70 font-mono">READY</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className={`db-status-dot ${dataLayerCapability === 'READY' ? 'db-status-dot-operative' : dataLayerCapability === 'UNKNOWN' ? 'db-status-dot-alert' : 'db-status-dot-alert'}`}
-                      style={{ width: 4, height: 4 }}
-                    />
-                    <span className="text-[11px] text-[#777] font-mono">Operational data</span>
-                  </div>
-                  <span className={`text-[11px] font-mono ${dataLayerCapability === 'READY' ? 'text-emerald-400/70' : dataLayerCapability === 'UNKNOWN' ? 'text-[#888]' : 'text-orange-400/70'}`}>
-                    {dataLayerCapability === 'READY' ? 'READY' : dataLayerCapability === 'UNKNOWN' ? 'UNKNOWN' : 'OFFLINE'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Network Status */}
-            <div className="db-card p-3">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Network className="w-3 h-3 text-orange-400/60" />
-                <span className="text-[11px] font-semibold text-[#999] font-mono uppercase tracking-wider">Network</span>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#777] font-mono">Corridors</span>
-                  <span className={`text-[11px] font-mono ${corridor.status === 'READY' ? 'text-emerald-400/70' : corridor.status === 'UNKNOWN' ? 'text-[#888]' : 'text-orange-400/70'}`}>
-                    {corridor.status === 'READY' ? 'CONNECTED' : corridor.status === 'UNKNOWN' ? 'UNKNOWN' : 'NOT CONNECTED'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#777] font-mono">Topology</span>
-                  <span className={`text-[11px] font-mono ${corridor.status === 'READY' ? 'text-emerald-400/70' : corridor.status === 'UNKNOWN' ? 'text-[#888]' : 'text-orange-400/70'}`}>
-                    {corridor.status === 'READY' ? 'CONNECTED' : corridor.status === 'UNKNOWN' ? 'UNKNOWN' : 'NOT CONNECTED'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Security */}
-            <div className="db-card p-3">
-              <div className="flex items-center gap-1.5 mb-2">
-                <ShieldCheck className="w-3 h-3 text-orange-400/60" />
-                <span className="text-[11px] font-semibold text-[#999] font-mono uppercase tracking-wider">Security</span>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#777] font-mono">Access</span>
-                  <span className="text-[11px] text-emerald-400/70 font-mono">SECURE</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-[#777] font-mono">Session</span>
-                  <span className="text-[11px] text-emerald-400/70 font-mono">ACTIVE</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Operational Modules */}
-        <div>
-          <div className="flex items-center gap-2 mb-2.5">
-            <Radar className="w-3.5 h-3.5 text-orange-400/50" />
-            <span className="db-section-label">Operational Modules</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { label: 'Digital Twin Network', desc: corridor.message, path: '/app/network', icon: Network, status: corridor.status },
-              { label: 'Reserve Management', desc: reserve.message, path: '/app/reserves', icon: Database, status: reserve.status },
-              { label: 'Geopolitical Risk Agent', desc: assistant.message, path: '/app/assistant', icon: Bot, status: assistant.status },
-            ].map(({ label, desc, path, icon: Icon, status }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => onNavigate(path)}
-                className="db-module-card text-left"
+            <div className="my-1.5">
+              <span
+                className={`text-xs font-mono font-bold ${
+                  latest?.stages?.find((s) => s.stage === 'geopoliticalAnalysis')?.status === 'FAILED'
+                    ? 'text-red-400'
+                    : 'text-emerald-400'
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-3.5 h-3.5 text-orange-400/50" />
-                    <span className="text-[11px] font-semibold text-[#ccc] font-mono">{label}</span>
-                  </div>
-                  <ArrowUpRight className="w-3 h-3 text-[#444] group-hover:text-[#888] transition-colors" />
-                </div>
-                <p className="text-[11px] text-[#555] leading-relaxed mt-1">{desc}</p>
-                <div className="mt-2 flex items-center gap-1.5">
-                  <span
-                    className={`db-status-dot ${status === 'READY' ? 'db-status-dot-operative' : status === 'UNKNOWN' ? 'db-status-dot-alert' : 'db-status-dot-alert'}`}
-                    style={{ width: 4, height: 4 }}
-                  />
-                  <span className={`text-[11px] font-mono ${status === 'READY' ? 'text-emerald-400/60' : status === 'UNKNOWN' ? 'text-[#888]' : 'text-orange-400/60'}`}>
-                    {status === 'READY' ? 'CONNECTED' : status === 'UNKNOWN' ? 'UNKNOWN' : 'NOT CONNECTED'}
-                  </span>
-                </div>
-              </button>
-            ))}
+                {latest?.stages?.find((s) => s.stage === 'geopoliticalAnalysis')?.status ?? 'READY'}
+              </span>
+              <p className="text-[10px] font-mono text-[#666666] mt-0.5">
+                {latest?.geopolitical?.risk.riskScore != null
+                  ? `Score: ${(latest.geopolitical.risk.riskScore * 100).toFixed(0)}%`
+                  : 'Groq/Rule Agent'}
+              </p>
+            </div>
+            <div className="text-[9px] font-mono text-[#555555]">Risk Quantification</div>
+          </div>
+
+          {/* Stage 5: DIGITAL TWIN */}
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded p-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[11px] font-mono text-[#888888]">
+              <span className="font-semibold text-[#CCCCCC]">5. TWIN</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  latest?.stages?.find((s) => s.stage === 'networkImpactResolution')?.status === 'COMPLETED'
+                    ? 'bg-emerald-500'
+                    : latest?.stages?.find((s) => s.stage === 'networkImpactResolution')?.status === 'FAILED'
+                    ? 'bg-red-500'
+                    : 'bg-emerald-500'
+                }`}
+              />
+            </div>
+            <div className="my-1.5">
+              <span
+                className={`text-xs font-mono font-bold ${
+                  latest?.stages?.find((s) => s.stage === 'networkImpactResolution')?.status === 'FAILED'
+                    ? 'text-red-400'
+                    : 'text-emerald-400'
+                }`}
+              >
+                {latest?.stages?.find((s) => s.stage === 'networkImpactResolution')?.status ?? 'READY'}
+              </span>
+              <p className="text-[10px] font-mono text-[#666666] mt-0.5">
+                {affectedNodeNames.length > 0 ? `${affectedNodeNames.length} nodes bound` : 'Graph Resolution'}
+              </p>
+            </div>
+            <div className="text-[9px] font-mono text-[#555555]">Network Impact</div>
+          </div>
+
+          {/* Stage 6: RESERVE */}
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded p-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[11px] font-mono text-[#888888]">
+              <span className="font-semibold text-[#CCCCCC]">6. RESERVE</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  latest?.stages?.find((s) => s.stage === 'reserveOptimization')?.status === 'COMPLETED'
+                    ? 'bg-emerald-500'
+                    : latest?.stages?.find((s) => s.stage === 'reserveOptimization')?.status === 'FAILED'
+                    ? 'bg-red-500'
+                    : 'bg-emerald-500'
+                }`}
+              />
+            </div>
+            <div className="my-1.5">
+              <span
+                className={`text-xs font-mono font-bold ${
+                  latest?.stages?.find((s) => s.stage === 'reserveOptimization')?.status === 'FAILED'
+                    ? 'text-red-400'
+                    : 'text-emerald-400'
+                }`}
+              >
+                {latest?.stages?.find((s) => s.stage === 'reserveOptimization')?.status ?? 'READY'}
+              </span>
+              <p className="text-[10px] font-mono text-[#666666] mt-0.5">
+                {latest?.reserve?.result
+                  ? `${(latest.reserve.result.recommendedReserveDrawdown ?? latest.reserve.result.drawdownRate ?? 0).toLocaleString()} t/d`
+                  : 'Optimizer Engine'}
+              </p>
+            </div>
+            <div className="text-[9px] font-mono text-[#555555]">Safety Constraints</div>
+          </div>
+
+          {/* Stage 7: ASSESSMENT */}
+          <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded p-3 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[11px] font-mono text-[#888888]">
+              <span className="font-semibold text-[#CCCCCC]">7. PERSIST</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  latest?.status === 'COMPLETED'
+                    ? 'bg-emerald-500'
+                    : latest?.status === 'PARTIAL'
+                    ? 'bg-amber-500'
+                    : latest?.status === 'FAILED'
+                    ? 'bg-red-500'
+                    : 'bg-[#444444]'
+                }`}
+              />
+            </div>
+            <div className="my-1.5">
+              <span
+                className={`text-xs font-mono font-bold ${
+                  latest?.status === 'COMPLETED'
+                    ? 'text-emerald-400'
+                    : latest?.status === 'PARTIAL'
+                    ? 'text-amber-400'
+                    : latest?.status === 'FAILED'
+                    ? 'text-red-400'
+                    : 'text-[#888888]'
+                }`}
+              >
+                {latest?.status ?? 'STANDBY'}
+              </span>
+              <p className="text-[10px] font-mono text-[#666666] mt-0.5">
+                {overview.recentAssessments.length} stored records
+              </p>
+            </div>
+            <div className="text-[9px] font-mono text-[#555555]">SQLite Persistence</div>
           </div>
         </div>
+      </section>
 
-        {/* Intelligence Summary */}
-        <div className="db-card p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Zap className="w-3.5 h-3.5 text-orange-400/60" />
-            <span className="text-[11px] font-semibold text-[#999] font-mono uppercase tracking-wider">Intelligence Summary</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">
-                {!overview.loaded || !overview.assessmentsAvailable ? '—' : activeDisruptions}
-              </div>
-              <div className="text-[11px] text-[#555] font-mono mt-0.5">Active Disruptions</div>
-              <div className="text-[10px] text-[#555] font-mono mt-0.5">
-                {!overview.loaded ? 'Syncing…' : !overview.assessmentsAvailable ? 'History unavailable' : activeDisruptions === 0 ? 'No active disruptions' : 'High/critical · last 24h'}
-              </div>
+      {/* -------------------------------------------------------------
+          2. LIVE ASSESSMENT PANEL & IMPACT (Split Grid)
+         ------------------------------------------------------------- */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left / Main: Live Assessment Detail */}
+        <div className="lg:col-span-7 bg-[#060606] border border-[#1a1a1a] rounded p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#141414] pb-3">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-[#f97316]" />
+              <h2 className="text-sm font-mono font-bold text-[#FFFFFF] tracking-wider uppercase">
+                LIVE ORBIT ASSESSMENT
+              </h2>
             </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">{riskAlerts ?? '—'}</div>
-              <div className="text-[11px] text-[#555] font-mono mt-0.5">Risk Alerts</div>
-              <div className="text-[10px] text-[#555] font-mono mt-0.5">
-                {riskAlerts === null ? 'Monitoring unavailable' : `${criticalAlerts ?? 0} critical · ${highAlerts ?? 0} high`}
+            {displayedAssessment ? (
+              <div className="flex items-center gap-2 text-xs font-mono">
+                <span className="px-2 py-0.5 bg-[#141414] border border-[#222222] text-[#AAAAAA] rounded">
+                  {displayedAssessment.assessmentId}
+                </span>
+                <StatusBadge
+                  level={
+                    displayedAssessment.status === 'COMPLETED'
+                      ? 'AVAILABLE'
+                      : displayedAssessment.status === 'PARTIAL'
+                      ? 'CONSTRAINED'
+                      : 'CRITICAL'
+                  }
+                  label={displayedAssessment.status}
+                  size="sm"
+                />
               </div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">{overview.loaded ? reserveCoverage ?? '—' : '—'}</div>
-              <div className="text-[11px] text-[#555] font-mono mt-0.5">Reserve Status</div>
-              <div className="text-[10px] text-[#555] font-mono mt-0.5">
-                {!overview.loaded ? 'Syncing…' : reserveCoverage ? 'From latest assessment' : 'Reserve data unavailable'}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-[#EDEDED] db-metric-value">
-                {!overview.loaded || !overview.assessmentsAvailable ? '—' : scenariosRun}
-              </div>
-              <div className="text-[11px] text-[#555] font-mono mt-0.5">Scenarios Run</div>
-              <div className="text-[10px] text-[#555] font-mono mt-0.5">
-                {!overview.loaded ? 'Syncing…' : !overview.assessmentsAvailable ? 'History unavailable' : 'Assessments with completed simulation'}
-              </div>
-            </div>
-          </div>
-
-          {/* Latest unified assessment — real data from GET /api/assessments/latest */}
-          <div className="mt-4 pt-3 border-t border-[#1c2230]">
-            {!overview.loaded ? (
-              <div className="text-[11px] text-[#555] font-mono">Syncing live intelligence…</div>
-            ) : !overview.latestAssessment ? (
-              <div className="text-[11px] text-[#555] font-mono">No assessments recorded yet — run one from the Geopolitical Risk Agent.</div>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[11px] font-mono font-semibold ${riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'text-orange-400/80' : 'text-emerald-400/80'}`}>
-                      {riskLevel ?? 'UNKNOWN RISK'}
-                    </span>
-                    <span className={`text-[11px] font-mono ${latestStatus === 'COMPLETED' ? 'text-emerald-400/70' : latestStatus === 'PARTIAL' ? 'text-amber-400/70' : 'text-orange-400/70'}`}>
-                      {latestStatus ?? 'UNKNOWN'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-[#555] font-mono">
-                    {overview.latestAssessment.completedAt ? `${overview.latestAssessment.completedAt.slice(0, 19).replace('T', ' ')} UTC` : '—'}
+              <span className="text-xs font-mono text-[#666666]">NO DATA</span>
+            )}
+          </div>
+
+          {!displayedAssessment ? (
+            <div className="py-12 text-center text-xs font-mono text-[#666666] space-y-2">
+              <p>No assessment records found in the database.</p>
+              <p className="text-[11px] text-[#444444]">
+                Trigger an assessment from the Geopolitical Risk Agent or let n8n detect incoming energy disruptions.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Event & Location Title */}
+              <div>
+                <div className="flex items-center gap-2 text-[11px] font-mono text-[#f97316]">
+                  <span>EVENT DISRUPTION PROFILE</span>
+                  <span>·</span>
+                  <span>
+                    {displayedAssessment.geopolitical?.classification.location ||
+                      displayedAssessment.geopolitical?.event.location ||
+                      'Global Energy Corridor'}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#999] leading-relaxed">{overview.latestAssessment.summary}</p>
-                {overview.latestAssessment.recommendation && (
-                  <p className="text-[11px] text-orange-400/70 leading-relaxed">{overview.latestAssessment.recommendation}</p>
+                <h3 className="text-base font-bold text-[#EDEDED] mt-1 font-mono">
+                  {displayedAssessment.geopolitical?.event.title ||
+                    displayedAssessment.article?.title ||
+                    displayedAssessment.summary}
+                </h3>
+              </div>
+
+              {/* Grid of Key Assessment Attributes */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-mono">
+                <div className="p-2.5 bg-[#0b0b0b] border border-[#1a1a1a] rounded">
+                  <div className="text-[10px] text-[#666666] uppercase">Overall Risk</div>
+                  <div
+                    className={`font-bold mt-0.5 ${
+                      displayedAssessment.overallRisk === 'critical' || displayedAssessment.overallRisk === 'high'
+                        ? 'text-red-400'
+                        : displayedAssessment.overallRisk === 'medium'
+                        ? 'text-amber-400'
+                        : 'text-emerald-400'
+                    }`}
+                  >
+                    {displayedAssessment.overallRisk?.toUpperCase() ?? 'N/A'}
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-[#0b0b0b] border border-[#1a1a1a] rounded">
+                  <div className="text-[10px] text-[#666666] uppercase">Disruption Severity</div>
+                  <div className="font-bold text-[#EDEDED] mt-0.5">
+                    {displayedAssessment.disruption?.severity ??
+                      displayedAssessment.geopolitical?.classification.severity ??
+                      'N/A'}
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-[#0b0b0b] border border-[#1a1a1a] rounded">
+                  <div className="text-[10px] text-[#666666] uppercase">Duration</div>
+                  <div className="font-bold text-[#EDEDED] mt-0.5">
+                    {displayedAssessment.disruption?.durationDays != null
+                      ? `${displayedAssessment.disruption.durationDays} Days`
+                      : displayedAssessment.geopolitical?.event.durationDays != null
+                      ? `${displayedAssessment.geopolitical.event.durationDays} Days`
+                      : 'N/A'}
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-[#0b0b0b] border border-[#1a1a1a] rounded">
+                  <div className="text-[10px] text-[#666666] uppercase">Capacity Reduction</div>
+                  <div className="font-bold text-[#f97316] mt-0.5">
+                    {displayedAssessment.disruption?.capacityReductionPercent != null
+                      ? `-${displayedAssessment.disruption.capacityReductionPercent}%`
+                      : 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Geopolitical Assessment Reasoning */}
+              <div className="space-y-1.5 text-xs font-mono">
+                <span className="text-[11px] text-[#888888] font-semibold uppercase tracking-wider">
+                  Geopolitical Analysis:
+                </span>
+                <p className="text-[#CCCCCC] leading-relaxed bg-[#0a0a0a] p-3 rounded border border-[#1a1a1a]">
+                  {displayedAssessment.geopolitical?.risk.reasoning ||
+                    displayedAssessment.geopolitical?.classification.classificationReasons.join('; ') ||
+                    displayedAssessment.summary}
+                </p>
+              </div>
+
+              {/* Operational Recommendation Box */}
+              {displayedAssessment.recommendation && (
+                <div className="p-3 bg-[#f97316]/5 border border-[#f97316]/20 rounded text-xs font-mono space-y-1">
+                  <div className="flex items-center gap-1.5 text-[#f97316] font-semibold uppercase tracking-wide text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Recommended Reserve Action</span>
+                  </div>
+                  <p className="text-[#EDEDED] leading-relaxed">
+                    {displayedAssessment.recommendation}
+                  </p>
+                </div>
+              )}
+
+              {/* Metadata Provenance Row */}
+              <div className="pt-2 border-t border-[#141414] flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-[#666666]">
+                <div className="flex items-center gap-2">
+                  <span>Trigger: {displayedAssessment.trigger}</span>
+                  {displayedAssessment.monitoredEventId && (
+                    <span>· Monitored ID: {displayedAssessment.monitoredEventId}</span>
+                  )}
+                </div>
+                {displayedAssessment.article?.sourceUrl && (
+                  <a
+                    href={displayedAssessment.article.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 text-[#f97316] hover:underline"
+                  >
+                    <span>Source: {displayedAssessment.article.source || 'Original News'}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
                 )}
-                <div className="text-[10px] text-[#555] font-mono break-all">{overview.latestAssessment.assessmentId}</div>
-                {affectedAssets.length > 0 ? (
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Network Impact & Reserve Section */}
+        <div className="lg:col-span-5 space-y-4">
+          {/* 5. NETWORK / IMPACT SECTION */}
+          <div className="bg-[#060606] border border-[#1a1a1a] rounded p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-[#141414] pb-2">
+              <div className="flex items-center gap-2">
+                <Network className="w-4 h-4 text-[#10b981]" />
+                <h3 className="text-xs font-mono font-bold text-[#FFFFFF] tracking-wider uppercase">
+                  NETWORK & DIGITAL TWIN IMPACT
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate('/app/network')}
+                className="text-[11px] font-mono text-[#f97316] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>Full Graph</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            {digitalTwinImpact ? (
+              <div className="space-y-2.5 text-xs font-mono">
+                {/* Affected Nodes */}
+                <div>
+                  <div className="text-[10px] text-[#666666] uppercase mb-1">Affected Nodes / Chokepoints</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {affectedNodeNames.map((node) => (
+                      <span
+                        key={node}
+                        className="px-2 py-0.5 bg-[#141414] border border-[#2a2a2a] text-[#10b981] rounded text-[11px]"
+                      >
+                        {node}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Affected Edges */}
+                {affectedEdgeIds.length > 0 && (
                   <div>
-                    <div className="text-[10px] text-[#666] font-mono uppercase tracking-wider mb-1">Affected assets</div>
-                    <div className="flex flex-wrap gap-1">
-                      {affectedAssets.slice(0, 6).map((asset) => (
-                        <span key={asset} className="px-1.5 py-0.5 rounded bg-[#161b28] border border-[#232a3a] text-[10px] text-[#aaa] font-mono">
-                          {asset}
+                    <div className="text-[10px] text-[#666666] uppercase mb-1">Affected Shipping Corridors</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {affectedEdgeIds.map((edge) => (
+                        <span
+                          key={edge}
+                          className="px-2 py-0.5 bg-[#141414] border border-[#2a2a2a] text-[#f97316] rounded text-[10px]"
+                        >
+                          {edge}
                         </span>
                       ))}
-                      {affectedAssets.length > 6 && (
-                        <span className="text-[10px] text-[#555] font-mono">+{affectedAssets.length - 6} more</span>
-                      )}
                     </div>
                   </div>
-                ) : (
-                  <div className="text-[10px] text-[#555] font-mono">No affected Digital Twin assets reported for this assessment.</div>
                 )}
+
+                {/* Flow and Capacity Measurements */}
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="p-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded">
+                    <div className="text-[10px] text-[#666666]">Node Flow Impact</div>
+                    <div className="font-bold text-[#EDEDED] mt-0.5">
+                      {digitalTwinImpact.affectedFlow?.nodeTotals?.[0]?.value != null
+                        ? `${digitalTwinImpact.affectedFlow.nodeTotals[0].value.toLocaleString()} ${
+                            digitalTwinImpact.affectedFlow.nodeTotals[0].unit || 't/d'
+                          }`
+                        : 'Calculated in Twin'}
+                    </div>
+                  </div>
+                  <div className="p-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded">
+                    <div className="text-[10px] text-[#666666]">Edge Flow Impact</div>
+                    <div className="font-bold text-[#EDEDED] mt-0.5">
+                      {digitalTwinImpact.affectedFlow?.edgeTotals?.[0]?.value != null
+                        ? `${digitalTwinImpact.affectedFlow.edgeTotals[0].value.toLocaleString()} ${
+                            digitalTwinImpact.affectedFlow.edgeTotals[0].unit || 't/d'
+                          }`
+                        : 'Corridor rerouting'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Impact Reasons */}
+                {digitalTwinImpact.impactReasons && digitalTwinImpact.impactReasons.length > 0 && (
+                  <div className="text-[11px] text-[#888888] bg-[#0a0a0a] p-2 rounded border border-[#141414] leading-relaxed">
+                    {digitalTwinImpact.impactReasons.join(' · ')}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-xs font-mono text-[#666666]">
+                No active network degradation recorded in latest assessment. Corridors nominal.
+              </div>
+            )}
+          </div>
+
+          {/* 6. RESERVE SECTION */}
+          <div className="bg-[#060606] border border-[#1a1a1a] rounded p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-[#141414] pb-2">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-[#f59e0b]" />
+                <h3 className="text-xs font-mono font-bold text-[#FFFFFF] tracking-wider uppercase">
+                  STRATEGIC RESERVE OPTIMIZATION
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate('/app/reserves')}
+                className="text-[11px] font-mono text-[#f97316] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>Reserve Manager</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            {latest?.reserve ? (
+              <div className="space-y-3 text-xs font-mono">
+                {/* Metric Summary Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded">
+                    <div className="text-[10px] text-[#666666] uppercase">Current Reserve</div>
+                    <div className="font-bold text-[#EDEDED] mt-0.5 text-sm">
+                      {latest.reserve.input?.currentReserve != null
+                        ? `${latest.reserve.input.currentReserve.toLocaleString()} tonnes`
+                        : 'N/A'}
+                    </div>
+                  </div>
+
+                  <div className="p-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded">
+                    <div className="text-[10px] text-[#666666] uppercase">Daily Demand</div>
+                    <div className="font-bold text-[#EDEDED] mt-0.5 text-sm">
+                      {latest.reserve.input?.demand != null
+                        ? `${latest.reserve.input.demand.toLocaleString()} t/d`
+                        : 'N/A'}
+                    </div>
+                  </div>
+
+                  <div className="p-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded">
+                    <div className="text-[10px] text-[#666666] uppercase">Supply Gap</div>
+                    <div className="font-bold text-[#f97316] mt-0.5 text-sm">
+                      {latest.reserve.input?.supplyGap != null
+                        ? `${latest.reserve.input.supplyGap.toLocaleString()} t/d`
+                        : latest.reserve.result?.calculatedSupplyGap != null
+                        ? `${latest.reserve.result.calculatedSupplyGap.toLocaleString()} t/d`
+                        : latest.reserve.result?.grossSupplyGap != null
+                        ? `${latest.reserve.result.grossSupplyGap.toLocaleString()} t/d`
+                        : '0 t/d'}
+                    </div>
+                  </div>
+
+                  <div className="p-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded">
+                    <div className="text-[10px] text-[#666666] uppercase">Min Safety Floor</div>
+                    <div className="font-bold text-amber-400 mt-0.5 text-sm">
+                      {latest.reserve.input?.minimumReserveThreshold != null
+                        ? `${latest.reserve.input.minimumReserveThreshold.toLocaleString()} tonnes`
+                        : 'N/A'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Drawdown Result Box */}
+                <div className="p-3 bg-[#0a0a0a] border border-[#1c1c1c] rounded space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-[#888888] font-semibold">Recommended Drawdown:</span>
+                    <span className="text-sm font-bold text-emerald-400">
+                      {(
+                        latest.reserve.result?.recommendedReserveDrawdown ??
+                        latest.reserve.result?.reserveDrawdownRate ??
+                        latest.reserve.result?.drawdownRate ??
+                        0
+                      ).toLocaleString()}{' '}
+                      tonnes/day
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-[#777777]">
+                    <span>Drawdown duration:</span>
+                    <span className="text-[#EDEDED]">
+                      {latest.reserve.result?.duration ??
+                        latest.reserve.input?.disruptionDuration ??
+                        'N/A'}{' '}
+                      Days
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-[#777777]">
+                    <span>Projected remaining reserve:</span>
+                    <span className="text-[#EDEDED]">
+                      {latest.reserve.result?.remainingReserve != null
+                        ? `${latest.reserve.result.remainingReserve.toLocaleString()} tonnes`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-[#777777]">
+                    <span>Coverage evaluation:</span>
+                    <span
+                      className={`font-semibold ${
+                        latest.reserve.result?.coverageStatus === 'FULLY_COVERED' ||
+                        latest.reserve.result?.coverageStatus === 'NO_EFFECTIVE_GAP'
+                          ? 'text-emerald-400'
+                          : 'text-amber-400'
+                      }`}
+                    >
+                      {latest.reserve.result?.coverageStatus ?? 'UNKNOWN'}
+                    </span>
+                  </div>
+                </div>
+
+                {latest.reserve.result?.explanation && (
+                  <p className="text-[11px] text-[#888888] leading-relaxed">
+                    {latest.reserve.result.explanation}
+                  </p>
+                )}
+              </div>
+            ) : overview.reserveState ? (
+              <div className="space-y-2 text-xs font-mono">
+                <div className="p-2.5 bg-[#0a0a0a] border border-[#1a1a1a] rounded space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-[#888888]">Current Reserve:</span>
+                    <span className="font-bold text-[#EDEDED]">
+                      {overview.reserveState.currentReserve != null
+                        ? `${overview.reserveState.currentReserve.toLocaleString()} ${overview.reserveState.unit || 'tonnes'}`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#888888]">Baseline Demand:</span>
+                    <span className="text-[#EDEDED]">
+                      {overview.reserveState.currentDemand != null
+                        ? `${overview.reserveState.currentDemand.toLocaleString()} ${overview.reserveState.unit || 'tonnes'}/day`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#888888]">Safety Threshold:</span>
+                    <span className="text-amber-400">
+                      {overview.reserveState.minimumReserveThreshold != null
+                        ? `${overview.reserveState.minimumReserveThreshold.toLocaleString()} ${overview.reserveState.unit || 'tonnes'}`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-[#666666]">
+                  Awaiting assessment trigger to calculate disruption-specific drawdown schedules.
+                </p>
+              </div>
+            ) : (
+              <div className="py-6 text-center text-xs font-mono text-[#666666]">
+                Strategic reserve telemetry not connected.
               </div>
             )}
           </div>
         </div>
+      </section>
 
-        {/* Footer note */}
-        <div className="text-center text-[11px] text-[#333] font-mono pb-2">
-          ORBIT — Global Energy Intelligence Platform
+      {/* -------------------------------------------------------------
+          4. RISK / EVENTS SECTION (Real Historical Assessments Table)
+         ------------------------------------------------------------- */}
+      <section className="bg-[#060606] border border-[#1a1a1a] rounded p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#141414] pb-2">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-[#f97316]" />
+            <h2 className="text-xs font-mono font-bold text-[#FFFFFF] tracking-wider uppercase">
+              ORBIT INTELLIGENCE LEDGER (PERSISTED ASSESSMENTS)
+            </h2>
+          </div>
+          <span className="text-[11px] font-mono text-[#666666]">
+            Showing {overview.recentAssessments.length} persistent evaluations
+          </span>
         </div>
-      </div>
+
+        {overview.recentAssessments.length === 0 ? (
+          <div className="py-10 text-center text-xs font-mono text-[#666666] space-y-1">
+            <p>No recorded assessment events in SQLite database.</p>
+            <p className="text-[11px] text-[#444444]">
+              Execute an assessment via Geopolitical Risk Agent or POST /api/pipeline/run to view records.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-mono border-collapse">
+              <thead>
+                <tr className="border-b border-[#1f1f1f] text-[#666666] text-[10px] uppercase tracking-wider">
+                  <th className="py-2 px-2.5">Time (UTC)</th>
+                  <th className="py-2 px-2.5">Event / Location</th>
+                  <th className="py-2 px-2.5">Risk</th>
+                  <th className="py-2 px-2.5">Severity</th>
+                  <th className="py-2 px-2.5">Affected Assets</th>
+                  <th className="py-2 px-2.5">Coverage</th>
+                  <th className="py-2 px-2.5">Status</th>
+                  <th className="py-2 px-2.5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#141414]">
+                {overview.recentAssessments.map((a) => {
+                  const isSelected = displayedAssessment?.assessmentId === a.assessmentId;
+                  const rowNodes =
+                    a.geopolitical?.digitalTwinImpact?.affectedNodeNames?.filter(Boolean) ??
+                    a.geopolitical?.digitalTwinImpact?.affectedNodeIds ??
+                    (a.disruption?.affectedNodeId ? [a.disruption.affectedNodeId] : []);
+                  return (
+                    <tr
+                      key={a.assessmentId}
+                      className={`hover:bg-[#0c0c0c] transition-colors cursor-pointer ${
+                        isSelected ? 'bg-[#121212]' : ''
+                      }`}
+                      onClick={() => setSelectedAssessmentId(a.assessmentId)}
+                    >
+                      <td className="py-2 px-2.5 text-[#AAAAAA] whitespace-nowrap">
+                        {a.createdAt && !isNaN(new Date(a.createdAt).getTime())
+                          ? new Date(a.createdAt).toLocaleString([], {
+                              month: 'short',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : 'N/A'}
+                      </td>
+                      <td className="py-2 px-2.5 max-w-[260px]">
+                        <div className="font-semibold text-[#EDEDED] truncate" title={a.summary}>
+                          {a.geopolitical?.event.title || a.article?.title || a.summary}
+                        </div>
+                        <div className="text-[10px] text-[#666666] truncate">
+                          {a.geopolitical?.classification.location ||
+                            a.geopolitical?.event.location ||
+                            'Global Corridor'}
+                        </div>
+                      </td>
+                      <td className="py-2 px-2.5 whitespace-nowrap">
+                        <span
+                          className={`font-semibold ${
+                            a.overallRisk === 'critical' || a.overallRisk === 'high'
+                              ? 'text-red-400'
+                              : a.overallRisk === 'medium'
+                              ? 'text-amber-400'
+                              : 'text-emerald-400'
+                          }`}
+                        >
+                          {a.overallRisk?.toUpperCase() ?? 'N/A'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-2.5 whitespace-nowrap text-[#CCCCCC]">
+                        {a.disruption?.severity ?? a.geopolitical?.classification.severity ?? 'LOW'}
+                      </td>
+                      <td className="py-2 px-2.5 max-w-[180px] truncate text-[#888888]">
+                        {rowNodes.length > 0 ? rowNodes.join(', ') : 'None reported'}
+                      </td>
+                      <td className="py-2 px-2.5 whitespace-nowrap">
+                        <span
+                          className={`text-[11px] ${
+                            a.reserve?.result.coverageStatus === 'FULLY_COVERED' ||
+                            a.reserve?.result.coverageStatus === 'NO_EFFECTIVE_GAP'
+                              ? 'text-emerald-400'
+                              : a.reserve?.result.coverageStatus
+                              ? 'text-amber-400'
+                              : 'text-[#666666]'
+                          }`}
+                        >
+                          {a.reserve?.result.coverageStatus ?? 'N/A'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-2.5 whitespace-nowrap">
+                        <StatusBadge
+                          level={
+                            a.status === 'COMPLETED'
+                              ? 'AVAILABLE'
+                              : a.status === 'PARTIAL'
+                              ? 'CONSTRAINED'
+                              : 'CRITICAL'
+                          }
+                          label={a.status}
+                          size="sm"
+                        />
+                      </td>
+                      <td className="py-2 px-2.5 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAssessmentId(a.assessmentId);
+                          }}
+                          className={`px-2 py-1 text-[10px] rounded font-mono border transition-colors ${
+                            isSelected
+                              ? 'bg-[#f97316]/20 border-[#f97316] text-[#f97316]'
+                              : 'bg-[#141414] border-[#222222] text-[#888888] hover:text-white'
+                          }`}
+                        >
+                          {isSelected ? 'VIEWING' : 'SELECT'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* -------------------------------------------------------------
+          OPERATIONAL MODULE QUICK ACCESS (Cards)
+         ------------------------------------------------------------- */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div
+          onClick={() => onNavigate('/app/network')}
+          className="bg-[#060606] border border-[#1a1a1a] hover:border-[#333333] rounded p-3.5 flex flex-col justify-between cursor-pointer transition-colors"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Network className="w-4 h-4 text-[#10b981]" />
+              <span className="font-mono text-xs font-bold text-[#EDEDED]">DIGITAL TWIN NETWORK</span>
+            </div>
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#555555]" />
+          </div>
+          <p className="text-[11px] font-mono text-[#777777] my-2 leading-relaxed">
+            {moduleStatuses.corridor.message}
+          </p>
+          <div className="flex items-center justify-between text-[10px] font-mono text-[#555555]">
+            <span>Topology & Graph Status</span>
+            <span className="text-[#10b981] font-semibold">{moduleStatuses.corridor.status}</span>
+          </div>
+        </div>
+
+        <div
+          onClick={() => onNavigate('/app/reserves')}
+          className="bg-[#060606] border border-[#1a1a1a] hover:border-[#333333] rounded p-3.5 flex flex-col justify-between cursor-pointer transition-colors"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Database className="w-4 h-4 text-[#f59e0b]" />
+              <span className="font-mono text-xs font-bold text-[#EDEDED]">STRATEGIC RESERVES</span>
+            </div>
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#555555]" />
+          </div>
+          <p className="text-[11px] font-mono text-[#777777] my-2 leading-relaxed">
+            {moduleStatuses.reserve.message}
+          </p>
+          <div className="flex items-center justify-between text-[10px] font-mono text-[#555555]">
+            <span>Drawdown Model</span>
+            <span className="text-[#f59e0b] font-semibold">{moduleStatuses.reserve.status}</span>
+          </div>
+        </div>
+
+        <div
+          onClick={() => onNavigate('/app/assistant')}
+          className="bg-[#060606] border border-[#1a1a1a] hover:border-[#333333] rounded p-3.5 flex flex-col justify-between cursor-pointer transition-colors"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-[#f97316]" />
+              <span className="font-mono text-xs font-bold text-[#EDEDED]">GEOPOLITICAL AGENT</span>
+            </div>
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#555555]" />
+          </div>
+          <p className="text-[11px] font-mono text-[#777777] my-2 leading-relaxed">
+            {moduleStatuses.assistant.message}
+          </p>
+          <div className="flex items-center justify-between text-[10px] font-mono text-[#555555]">
+            <span>Inference Engine</span>
+            <span className="text-[#f97316] font-semibold">{moduleStatuses.assistant.status}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer System Line */}
+      <footer className="text-center py-2 text-[11px] font-mono text-[#444444] border-t border-[#121212]">
+        ORBIT Global Energy Supply Chain Intelligence Platform · Real-Time Operations
+      </footer>
     </div>
   );
 };
