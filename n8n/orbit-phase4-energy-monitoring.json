@@ -104,7 +104,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://orbit-rebb.onrender.com/api/geopolitical-risk/monitor/scans",
+        "url": "http://127.0.0.1:3000/api/geopolitical-risk/monitor/scans",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -159,7 +159,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://orbit-rebb.onrender.com/api/geopolitical-risk/monitor/events",
+        "url": "http://127.0.0.1:3000/api/geopolitical-risk/monitor/events",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -192,80 +192,6 @@
       "typeVersion": 4.2,
       "position": [
         100,
-        0
-      ],
-      "onError": "continueRegularOutput",
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "orbit-n8n-condition-high-critical",
-              "leftValue": "={{ $json.alert }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "orbit-n8n-if-high-critical",
-      "name": "Candidate Is High or Critical Alert",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        320,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://orbit-rebb.onrender.com/api/pipeline/run",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "User-Agent",
-              "value": "ORBIT-n8n-energy-monitor/1.0"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ (() => {\n  const article = $json.event?.article || {};\n  const text = (($json.event?.article?.title || '') + '. ' + ($json.event?.article?.description || '')).trim();\n  const match = text.match(/\\b(\\d+)\\s*(?:-|\\s)?\\s*days?\\b/i);\n  const durationDays = match && parseInt(match[1], 10) > 0 ? parseInt(match[1], 10) : undefined;\n  return JSON.stringify({\n    monitoredEventId: article.id,\n    text,\n    ...(durationDays !== undefined ? { durationDays } : {})\n  });\n})() }}",
-        "options": {
-          "timeout": 300000,
-          "response": {
-            "response": {
-              "responseFormat": "json",
-              "neverError": true
-            }
-          }
-        }
-      },
-      "id": "orbit-n8n-trigger-assessment",
-      "name": "Trigger ORBIT Assessment",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        540,
         0
       ],
       "onError": "continueRegularOutput",
@@ -342,29 +268,6 @@
             "index": 0
           }
         ]
-      ]
-    },
-    "POST Candidate to ORBIT": {
-      "main": [
-        [
-          {
-            "node": "Candidate Is High or Critical Alert",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Candidate Is High or Critical Alert": {
-      "main": [
-        [
-          {
-            "node": "Trigger ORBIT Assessment",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
       ]
     }
   },

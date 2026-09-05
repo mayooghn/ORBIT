@@ -3,6 +3,7 @@ import {
   getAuth, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  fetchSignInMethodsForEmail,
   signOut as fbSignOut, 
   onAuthStateChanged as fbOnAuthStateChanged,
   User as FirebaseUser,
@@ -96,6 +97,7 @@ export {
   auth, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  fetchSignInMethodsForEmail,
   fbSignOut, 
   fbOnAuthStateChanged
 };

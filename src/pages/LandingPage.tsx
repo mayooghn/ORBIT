@@ -1,23 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Activity,
-  AlertTriangle,
   ArrowDown,
   ArrowRight,
-  Compass,
+  Bot,
+  CheckCircle2,
   Database,
-  Fuel,
-  GitBranch,
+  Globe2,
   Lock,
   Menu,
+  MessageSquare,
   Network,
-  Radar,
+  Radio,
   ShieldCheck,
   Target,
+  Workflow,
   X,
   Zap,
 } from 'lucide-react';
 import { OrbitLogo } from '../components/common/OrbitLogo';
+import { OrbitLandingBackground } from '../components/landing/OrbitLandingBackground';
 
 interface LandingPageProps {
   onNavigateToAuth: () => void;
@@ -26,135 +28,20 @@ interface LandingPageProps {
 }
 
 const NAV_ITEMS = [
+  { label: 'The Problem', href: '#problem' },
+  { label: 'What is ORBIT', href: '#what-is-orbit' },
+  { label: 'Risk Intelligence', href: '#risk-intelligence' },
+  { label: 'Digital Twin', href: '#digital-twin' },
+  { label: 'Reserves', href: '#reserves' },
+  { label: 'Orchestrator', href: '#orchestrator' },
   { label: 'Why ORBIT', href: '#why-orbit' },
-  { label: 'Capabilities', href: '#capabilities' },
-  { label: 'Use Cases', href: '#use-cases' },
-  { label: 'Workflow', href: '#workflow' },
-  { label: 'Security', href: '#security' },
 ];
 
-const SIGNALS = [
-  { icon: Database, label: 'Source traceability' },
-  { icon: Network, label: 'Digital Twin mapping' },
-  { icon: GitBranch, label: 'Deterministic scenarios' },
-  { icon: ShieldCheck, label: 'Strategic reserve optimization' },
-];
-
-const CORE_PILLARS = [
-  {
-    number: '01',
-    step: 'DETECT',
-    title: 'Monitor geopolitical events',
-    description: 'Monitor geopolitical and supply-chain events from source-backed intelligence.',
-    icon: Radar,
-  },
-  {
-    number: '02',
-    step: 'UNDERSTAND',
-    title: 'Assess risk & exposure',
-    description: 'Assess how an event affects crude flows, suppliers, chokepoints, infrastructure, and energy exposure.',
-    icon: Activity,
-  },
-  {
-    number: '03',
-    step: 'MAP',
-    title: 'Trace digital twin impact',
-    description: "Trace the impact across ORBIT's digital twin of the energy network.",
-    icon: Network,
-  },
-  {
-    number: '04',
-    step: 'RESPOND',
-    title: 'Test operational responses',
-    description: 'Test procurement, scenario, and strategic reserve responses using deterministic operational models.',
-    icon: ShieldCheck,
-  },
-];
-
-const DIFFERENTIATORS = [
-  {
-    icon: Database,
-    title: 'SOURCE-BACKED',
-    subtitle: 'Evidence Traceability',
-    description: 'Trace the evidence behind an event and its assessment. Every signal is anchored to verified source documents.',
-  },
-  {
-    icon: Network,
-    title: 'NETWORK-AWARE',
-    subtitle: 'Physical Propagation',
-    description: 'Understand how geopolitical events propagate through the energy system from chokepoints to refinery intake.',
-  },
-  {
-    icon: Target,
-    title: 'DECISION-READY',
-    subtitle: 'Deterministic Models',
-    description: 'Evaluate concrete response options through deterministic scenarios and reserve models that respect safety floors.',
-  },
-];
-
-const USE_CASES = [
-  {
-    icon: Fuel,
-    title: 'Maritime Chokepoints',
-    tag: 'Flow Disruption',
-    description: 'Track flow disruption risks and tanker rerouting across Hormuz, Bab el-Mandeb, and Malacca corridors.',
-  },
-  {
-    icon: Compass,
-    title: 'Pipeline Disruptions',
-    tag: 'Transit Outage',
-    description: 'Model compression outages, gas transit bottlenecks, and alternative intake terminal capacity.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Strategic Petroleum Reserves',
-    tag: 'SPR Optimization',
-    description: 'Evaluate SPR buffer days, drawdown requirements, safety reserve floors, and emergency replenishment timelines.',
-  },
-  {
-    icon: GitBranch,
-    title: 'Trade Reconfiguration',
-    tag: 'Supply Shift',
-    description: 'Assess origin shifts, alternative supplier capacity, and contract supply alternatives during supply cutoffs.',
-  },
-];
-
-const WORKFLOW_STEPS = [
-  {
-    number: '01',
-    phase: 'DETECT',
-    icon: Radar,
-    title: 'Geopolitical event',
-    description: 'Ingest and verify source-backed geopolitical signals and chokepoint alerts.',
-  },
-  {
-    number: '02',
-    phase: 'ANALYZE',
-    icon: Activity,
-    title: 'Risk & relevance',
-    description: 'Quantify energy supply-chain relevance, flow vulnerability, and risk severity.',
-  },
-  {
-    number: '03',
-    phase: 'MAP',
-    icon: Network,
-    title: 'Digital Twin infrastructure impact',
-    description: 'Trace Digital Twin infrastructure impact across ports, refineries, and pipelines.',
-  },
-  {
-    number: '04',
-    phase: 'SIMULATE',
-    icon: GitBranch,
-    title: 'Deterministic scenarios',
-    description: 'Model alternative supplier capacity, rerouting timelines, and deterministic scenarios.',
-  },
-  {
-    number: '05',
-    phase: 'RESPOND',
-    icon: ShieldCheck,
-    title: 'Reserve decision',
-    description: 'Calculate safe SPR release, enforce safety floors, and finalize action plans.',
-  },
+const HERO_TAGS = [
+  'GLOBAL EVENTS',
+  'RISK INTELLIGENCE',
+  'DIGITAL TWIN',
+  'STRATEGIC RESERVES',
 ];
 
 const NETWORK_NODES = [
@@ -177,54 +64,6 @@ const NETWORK_EDGES = [
   { from: 'chokepoint', to: 'demand' },
 ];
 
-const SCENARIOS = [
-  {
-    id: 'baseline',
-    label: 'BASELINE',
-    description: 'Normal supply conditions',
-    impact: 'LOW',
-    risk: 'LOW',
-    feasibility: 'AVAILABLE',
-  },
-  {
-    id: 'chokepoint',
-    label: 'CHOKEPOINT DISRUPTION',
-    description: 'Maritime transit halt',
-    impact: 'HIGH',
-    risk: 'HIGH',
-    feasibility: 'CONSTRAINED',
-  },
-  {
-    id: 'shortfall',
-    label: 'SUPPLY SHORTFALL',
-    description: 'Reduced crude availability',
-    impact: 'MEDIUM',
-    risk: 'MEDIUM',
-    feasibility: 'LIMITED',
-  },
-  {
-    id: 'alternative',
-    label: 'ALTERNATIVE ROUTE',
-    description: 'Rerouting via secondary path',
-    impact: 'LOW',
-    risk: 'MEDIUM',
-    feasibility: 'AVAILABLE',
-  },
-];
-
-const RESERVE_STATES = [
-  { level: 85, label: 'AVAILABLE BUFFER', color: 'var(--accent-emerald)' },
-  { level: 60, label: 'SAFE ZONE', color: 'var(--accent-energy)' },
-  { level: 30, label: 'MINIMUM FLOOR', color: 'var(--accent-crimson)' },
-];
-
-const RESPONSE_OPTIONS = [
-  { label: 'OPTION A', title: 'Procurement shift', impact: 'LOW', risk: 'MEDIUM', feasibility: 'AVAILABLE', time: '2-5 days' },
-  { label: 'OPTION B', title: 'Route diversion', impact: 'MEDIUM', risk: 'LOW', feasibility: 'AVAILABLE', time: '1-3 days' },
-  { label: 'OPTION C', title: 'Reserve drawdown', impact: 'HIGH', risk: 'HIGH', feasibility: 'LIMITED', time: 'Immediate' },
-  { label: 'OPTION D', title: 'Combined response', impact: 'LOW', risk: 'LOW', feasibility: 'AVAILABLE', time: '1-5 days' },
-];
-
 /* ==========================================================================
    SIGNATURE ANIMATION — ORBIT Intelligence Flow
    ========================================================================== */
@@ -240,11 +79,11 @@ interface FlowNodeDef {
 }
 
 const FLOW_NODES: FlowNodeDef[] = [
-  { id: 'src', x: 46, y: 130, label: 'SOURCE SIGNALS', sub: 'geopolitical · maritime · market', activeAt: [0] },
-  { id: 'event', x: 215, y: 130, label: 'EVENT', sub: 'Strait of Hormuz disruption', activeAt: [0] },
-  { id: 'risk', x: 385, y: 130, label: 'RISK ENGINE', sub: 'flow vulnerability · exposure', activeAt: [1] },
-  { id: 'twin', x: 545, y: 78, label: 'DIGITAL TWIN', sub: 'ports · refineries · pipelines', activeAt: [2, 3] },
-  { id: 'decision', x: 660, y: 130, label: 'DECISION', sub: 'procurement · scenarios · reserves', activeAt: [4, 5] },
+  { id: 'src', x: 46, y: 130, label: 'WORLD EVENTS', sub: 'global signals & news', activeAt: [0] },
+  { id: 'event', x: 215, y: 130, label: 'RISK EVALUATION', sub: 'energy supply impact', activeAt: [0, 1] },
+  { id: 'risk', x: 385, y: 130, label: 'NETWORK MAP', sub: 'ports · refineries · routes', activeAt: [1, 2] },
+  { id: 'twin', x: 545, y: 78, label: 'RESERVE CHECK', sub: 'safe emergency buffer', activeAt: [2, 3] },
+  { id: 'decision', x: 660, y: 130, label: 'ACTION', sub: 'decision-ready picture', activeAt: [4, 5] },
 ];
 
 interface FlowPathDef {
@@ -260,7 +99,14 @@ const FLOW_PATHS: FlowPathDef[] = [
   { id: 'p-risk-decision', d: 'M 413 142 C 500 142, 540 130, 632 130', activeAt: [4] },
 ];
 
-const STAGE_LABELS = ['DETECTING SIGNALS', 'ANALYZING EXPOSURE', 'MAPPING NETWORK', 'SIMULATING IMPACT', 'PREPARING RESPONSE', 'DECISION READY'] as const;
+const STAGE_LABELS = [
+  'DETECTING SIGNALS',
+  'ANALYZING EXPOSURE',
+  'MAPPING NETWORK',
+  'CHECKING RESERVES',
+  'CONNECTING SYSTEMS',
+  'DECISION READY',
+] as const;
 
 const HeroFlowVisual: React.FC = () => {
   const [stage, setStage] = useState(0);
@@ -300,11 +146,11 @@ const HeroFlowVisual: React.FC = () => {
         <div className="flex items-center gap-2">
           <span className="lp-node-pulse inline-block h-2 w-2 rounded-full bg-[var(--accent-energy)]" aria-hidden="true" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]">
-            ORBIT Decision Engine
+            ORBIT Intelligence Engine
           </span>
         </div>
-        <span className="rounded-md border border-orange-200 bg-orange-50 px-2 py-0.5 font-mono text-[10px] font-medium text-orange-700">
-          EXAMPLE WORKFLOW
+        <span className="rounded border border-orange-200 bg-orange-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-orange-700">
+          AUTOMATED FLOW
         </span>
       </div>
 
@@ -318,8 +164,8 @@ const HeroFlowVisual: React.FC = () => {
 
         <line x1="20" y1="40" x2="700" y2="40" stroke="var(--border-subtle)" strokeWidth="1" />
         <line x1="20" y1="220" x2="700" y2="220" stroke="var(--border-subtle)" strokeWidth="1" />
-        <text x="20" y="30" className="fill-[var(--text-faint)]" style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.18em' }}>INTAKE</text>
-        <text x="20" y="236" className="fill-[var(--text-faint)]" style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.18em' }}>OUTPUT</text>
+        <text x="20" y="30" className="fill-[var(--text-faint)]" style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.18em' }}>GLOBAL EVENTS</text>
+        <text x="20" y="236" className="fill-[var(--text-faint)]" style={{ fontSize: 9, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.18em' }}>ENERGY DECISIONS</text>
 
         {FLOW_PATHS.map((p) => {
           const active = isActivePath(p);
@@ -381,7 +227,7 @@ const HeroFlowVisual: React.FC = () => {
 
         <g style={{ transition: 'opacity 500ms ease' }} opacity={isFinal ? 1 : 0} className="lp-output-pulse">
           <rect x="636" y="100" width="54" height="60" rx="8" fill="var(--accent-energy)" opacity="0.10" />
-          <text x="663" y="132" textAnchor="middle" className="fill-[var(--accent-energy)]" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.14em' }}>RESPONSE</text>
+          <text x="663" y="132" textAnchor="middle" className="fill-[var(--accent-energy)]" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.14em' }}>DECISION</text>
           <text x="663" y="149" textAnchor="middle" className="fill-[var(--accent-energy)]" style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.14em' }}>READY</text>
         </g>
       </svg>
@@ -391,7 +237,7 @@ const HeroFlowVisual: React.FC = () => {
           stage {String(stage + 1).padStart(2, '0')} / {FLOW_STAGES[stage]}
         </span>
         <span className={`font-mono text-[10px] transition-colors duration-400 ${isFinal ? 'text-orange-600' : 'text-orange-500'}`}>
-          {isFinal ? 'PIPELINE COMPLETE' : STAGE_LABELS[stage]}
+          {isFinal ? 'ONE CONNECTED PICTURE' : STAGE_LABELS[stage]}
         </span>
       </div>
     </div>
@@ -405,8 +251,7 @@ const Reveal: React.FC<{
   children: React.ReactNode;
   className?: string;
   delay?: number;
-  variant?: 'default' | 'left' | 'right' | 'scale';
-}> = ({ children, className, delay, variant = 'default' }) => {
+}> = ({ children, className, delay }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -432,15 +277,10 @@ const Reveal: React.FC<{
     return () => observer.disconnect();
   }, []);
 
-  const variantClass = variant === 'left' ? 'orbit-reveal-left'
-    : variant === 'right' ? 'orbit-reveal-right'
-    : variant === 'scale' ? 'orbit-reveal-scale'
-    : '';
-
   return (
     <div
       ref={ref}
-      className={`${variantClass || 'orbit-reveal'} ${className || ''}`}
+      className={`orbit-reveal ${className || ''}`}
       style={delay ? { '--orbit-reveal-delay': `${delay}ms` } as React.CSSProperties : undefined}
     >
       {children}
@@ -449,7 +289,7 @@ const Reveal: React.FC<{
 };
 
 /* ==========================================================================
-   INTERACTIVE NETWORK VISUALIZATION
+   INTERACTIVE NETWORK VISUALIZATION (DIGITAL TWIN)
    ========================================================================== */
 const NetworkVisualization: React.FC = () => {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -480,7 +320,7 @@ const NetworkVisualization: React.FC = () => {
         </span>
         <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          Connected
+          Interactive Network Model
         </span>
       </div>
 
@@ -529,7 +369,7 @@ const NetworkVisualization: React.FC = () => {
           return (
             <g
               key={node.id}
-              className="lp-network-node"
+              className="lp-network-node cursor-pointer"
               onMouseEnter={() => setHoveredNode(node.id)}
               onMouseLeave={() => setHoveredNode(null)}
               style={{ opacity: dimmed ? 0.35 : 1, transition: 'opacity 0.3s ease' }}
@@ -560,7 +400,7 @@ const NetworkVisualization: React.FC = () => {
             </span>
           </div>
         ) : (
-          <span className="text-xs text-[var(--text-muted)]">Hover a node to inspect</span>
+          <span className="text-xs text-[var(--text-muted)]">Hover any node to trace connection pathways across the network</span>
         )}
       </div>
     </div>
@@ -568,138 +408,62 @@ const NetworkVisualization: React.FC = () => {
 };
 
 /* ==========================================================================
-   SCENARIO MODELLING VISUALIZATION
+   CONCEPTUAL STRATEGIC RESERVE MODEL (NO MOCK PERCENTAGES)
    ========================================================================== */
-const ScenarioVisualization: React.FC = () => {
-  const [selected, setSelected] = useState('baseline');
-  const current = SCENARIOS.find((s) => s.id === selected)!;
-
+const ConceptualReserveVisual: React.FC = () => {
   return (
     <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
       <div className="mb-4 flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-          Scenario Modelling
+          Strategic Reserve Strategy
         </span>
-        <span className="rounded border border-orange-200 bg-orange-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-orange-700">
-          DEMO
-        </span>
+        <span className="font-mono text-[10px] text-[var(--text-muted)]">SAFETY BOUNDARY ENFORCED</span>
       </div>
 
-      <div className="mb-4 flex flex-col gap-2">
-        {SCENARIOS.map((scenario) => (
-          <button
-            key={scenario.id}
-            type="button"
-            onClick={() => setSelected(scenario.id)}
-            className={`lp-scenario-select rounded-lg border p-3 text-left ${selected === scenario.id ? 'is-selected border-[var(--accent-energy)] bg-orange-50/60' : 'border-[var(--border-subtle)] bg-[var(--bg-surface)]'}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">{scenario.label}</span>
-              <span className={`font-mono text-[10px] font-semibold ${scenario.impact === 'HIGH' ? 'text-red-600' : scenario.impact === 'MEDIUM' ? 'text-orange-600' : 'text-emerald-600'}`}>
-                {scenario.impact} IMPACT
-              </span>
+      <div className="space-y-4">
+        {/* Conceptual 3-tier safety layers */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-[var(--text-primary)]">Reserve Operating Bounds</span>
+            <span className="font-mono text-[11px] font-bold text-emerald-600">Protected</span>
+          </div>
+
+          <div className="relative h-8 overflow-hidden rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] flex">
+            <div className="h-full bg-emerald-500/20 border-r border-emerald-500/30 flex items-center justify-center px-2 text-[10px] font-mono font-bold text-emerald-700" style={{ width: '45%' }}>
+              AVAILABLE BUFFER
             </div>
-            <span className="text-xs text-[var(--text-secondary)]">{scenario.description}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-3 gap-3 border-t border-[var(--border-subtle)] pt-4">
-        <div className="text-center">
-          <span className="block font-mono text-[11px] uppercase tracking-wider text-[var(--text-faint)]">Risk</span>
-          <span className={`block text-sm font-bold ${current.risk === 'HIGH' ? 'text-red-600' : current.risk === 'MEDIUM' ? 'text-orange-600' : 'text-emerald-600'}`}>
-            {current.risk}
-          </span>
-        </div>
-        <div className="text-center">
-          <span className="block font-mono text-[11px] uppercase tracking-wider text-[var(--text-faint)]">Impact</span>
-          <span className={`block text-sm font-bold ${current.impact === 'HIGH' ? 'text-red-600' : current.impact === 'MEDIUM' ? 'text-orange-600' : 'text-emerald-600'}`}>
-            {current.impact}
-          </span>
-        </div>
-        <div className="text-center">
-          <span className="block font-mono text-[11px] uppercase tracking-wider text-[var(--text-faint)]">Feasibility</span>
-          <span className={`block text-sm font-bold ${current.feasibility === 'CONSTRAINED' ? 'text-red-600' : current.feasibility === 'LIMITED' ? 'text-orange-600' : 'text-emerald-600'}`}>
-            {current.feasibility}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ==========================================================================
-   RESERVE GAUGE VISUALIZATION
-   ========================================================================== */
-const ReserveGauge: React.FC = () => {
-  const [level, setLevel] = useState(85);
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    if (reduced) return;
-    const t = setInterval(() => {
-      setLevel((prev) => {
-        if (prev <= 45) return 85;
-        return prev - 0.8;
-      });
-    }, 200);
-    return () => clearInterval(t);
-  }, [reduced]);
-
-  return (
-    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
-      <div className="mb-4 flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-          Reserve Model
-        </span>
-        <span className="font-mono text-[10px] text-[var(--text-muted)]">DRAWDOWN SIMULATION</span>
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-[var(--text-primary)]">Strategic Reserve Level</span>
-          <span className="font-mono font-bold text-[var(--accent-energy)]">{Math.round(level)}%</span>
-        </div>
-
-        <div className="relative h-6 overflow-hidden rounded-full bg-[var(--bg-surface)]" style={{ border: '1px solid var(--border-subtle)' }}>
-          <div
-            className="lp-reserve-bar absolute left-0 top-0 h-full rounded-full"
-            style={{
-              width: `${level}%`,
-              background: level > 60 ? 'var(--accent-emerald)' : level > 30 ? 'var(--accent-energy)' : 'var(--accent-crimson)',
-              transition: reduced ? 'none' : 'width 0.3s ease',
-            }}
-          />
-          <div className="absolute left-0 top-0 flex h-full w-full items-center">
-            <div className="ml-2 h-3 w-px bg-white/40" style={{ marginLeft: '60%' }} />
-            <span className="ml-1 font-mono text-[10px] text-white/70">SAFE</span>
+            <div className="h-full bg-amber-500/20 border-r border-amber-500/30 flex items-center justify-center px-2 text-[10px] font-mono font-bold text-amber-700" style={{ width: '30%' }}>
+              DISRUPTION CONTINGENCY
+            </div>
+            <div className="h-full bg-rose-500/20 flex items-center justify-center px-2 text-[10px] font-mono font-bold text-rose-700" style={{ width: '25%' }}>
+              PROTECTED SAFETY FLOOR
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 text-center">
-          {RESERVE_STATES.map((state) => (
-            <div key={state.label} className="rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2">
-              <div className="mx-auto mb-1 h-1 w-8 rounded-full" style={{ background: state.color, opacity: 0.6 }} />
-              <span className="block font-mono text-[10px] uppercase tracking-wider text-[var(--text-faint)]">{state.label}</span>
-            </div>
-          ))}
+        {/* 3 Core Conceptual Pillars */}
+        <div className="grid grid-cols-3 gap-2 text-center pt-1">
+          <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2.5">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--accent-energy)]">01 / CURRENT</span>
+            <p className="mt-1 text-xs font-semibold text-[var(--text-primary)]">Current Reserve</p>
+            <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">Available stockpile</p>
+          </div>
+          <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2.5">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-600">02 / IMPACT</span>
+            <p className="mt-1 text-xs font-semibold text-[var(--text-primary)]">Disruption</p>
+            <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">Shortfall demands</p>
+          </div>
+          <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2.5">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600">03 / ACTION</span>
+            <p className="mt-1 text-xs font-semibold text-[var(--text-primary)]">Reserve Strategy</p>
+            <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">Safe release limits</p>
+          </div>
         </div>
 
-        <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="block text-xs font-bold uppercase tracking-wider text-[var(--accent-energy)]">Current Draw Rate</span>
-              <span className="text-xs text-[var(--text-secondary)]">Buffer consumption during disruption</span>
-            </div>
-            <span className="font-mono text-sm font-bold text-[var(--text-primary)]">{level > 60 ? 'Sustainable' : level > 30 ? 'Monitor' : 'Critical'}</span>
+        <div className="rounded-lg border border-orange-200 bg-orange-50/60 p-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[var(--text-primary)]">
+            <ShieldCheck className="h-4 w-4 text-[var(--accent-energy)] shrink-0" />
+            <span>Safety Rule: Required reserve safety level is never breached.</span>
           </div>
         </div>
       </div>
@@ -708,119 +472,18 @@ const ReserveGauge: React.FC = () => {
 };
 
 /* ==========================================================================
-   DECISION PANEL PREVIEW
-   ========================================================================== */
-const DecisionPreview: React.FC = () => {
-  const [step, setStep] = useState(0);
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    if (reduced) { setStep(5); return; }
-    const t = setInterval(() => setStep((s) => (s + 1) % 6), 2000);
-    return () => clearInterval(t);
-  }, [reduced]);
-
-  const steps = [
-    { label: 'EVENT', value: 'Strait of Hormuz disruption detected', active: step >= 0 },
-    { label: 'EXPOSURE', value: 'Crude transit: 2.1M bbl/day affected', active: step >= 1 },
-    { label: 'IMPACT', value: 'Refinery intake constraint: 14-day window', active: step >= 2 },
-    { label: 'SCENARIO', value: 'Chokepoint closure (primary model)', active: step >= 3 },
-    { label: 'OPTIONS', value: 'Route diversion + SPR release available', active: step >= 4 },
-    { label: 'STATUS', value: 'Decision ready for operator review', active: step >= 5 },
-  ];
-
-  return (
-    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 lp-decision-activate">
-      <div className="mb-4 flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-[var(--accent-energy)] lp-signal-pulse" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
-            Decision Panel
-          </span>
-        </div>
-        <span className="rounded border border-orange-200 bg-orange-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-orange-700">
-          LIVE PREVIEW
-        </span>
-      </div>
-
-      <div className="space-y-2">
-        {steps.map((s, i) => (
-          <div
-            key={s.label}
-            className={`flex items-center justify-between rounded-lg border p-3 transition-all duration-300 ${
-              s.active
-                ? 'border-orange-200 bg-orange-50/50'
-                : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] opacity-40'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className={`font-mono text-[10px] font-bold tracking-wider ${s.active ? 'text-[var(--accent-energy)]' : 'text-[var(--text-faint)]'}`}>
-                {s.label}
-              </span>
-              <span className="text-xs font-semibold text-[var(--text-primary)]">{s.value}</span>
-            </div>
-            {s.active && i === step && (
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-energy)] lp-signal-pulse" />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ==========================================================================
-   SOURCE TRACEABILITY VISUAL
+   SOURCE TRACEABILITY VISUAL (WHY ORBIT)
    ========================================================================== */
 const SourceTraceVisual: React.FC = () => {
-  const [activeStep, setActiveStep] = useState(-1);
+  const [activeStep, setActiveStep] = useState(4);
   const ref = useRef<HTMLDivElement>(null);
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (reduced) { setActiveStep(4); return; }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) { setActiveStep(-1); return; }
-        let step = 0;
-        const advance = () => {
-          setActiveStep(step);
-          step++;
-          if (step <= 4) setTimeout(advance, 600);
-        };
-        advance();
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [reduced]);
 
   const steps = [
-    { label: 'SOURCE', sub: 'Verified document', icon: Database },
-    { label: 'SIGNAL', sub: 'Intelligence feed', icon: Zap },
-    { label: 'EVENT', sub: 'Classified event', icon: AlertTriangle },
-    { label: 'ASSESSMENT', sub: 'Risk evaluation', icon: Activity },
-    { label: 'DECISION', sub: 'Operational response', icon: Target },
+    { label: 'REAL EVENT', sub: 'Verified source news', icon: Database },
+    { label: 'SIGNAL', sub: 'Intelligence intake', icon: Zap },
+    { label: 'ENERGY RISK', sub: 'Impact evaluated', icon: Activity },
+    { label: 'NETWORK TRACE', sub: 'Assets mapped', icon: Network },
+    { label: 'ACTION', sub: 'Decision ready', icon: Target },
   ];
 
   return (
@@ -838,9 +501,9 @@ const SourceTraceVisual: React.FC = () => {
           const isActive = activeStep >= i;
           return (
             <React.Fragment key={s.label}>
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1.5">
                 <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-all duration-300 ${
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all duration-300 ${
                     isActive
                       ? 'border-[var(--accent-energy)] bg-orange-50 text-[var(--accent-energy)]'
                       : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-faint)]'
@@ -848,18 +511,18 @@ const SourceTraceVisual: React.FC = () => {
                 >
                   <Icon className="h-4 w-4" />
                 </div>
-                <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${isActive ? 'text-[var(--accent-energy)]' : 'text-[var(--text-faint)]'}`}>
+                <span className={`text-[9px] font-bold uppercase tracking-wider ${isActive ? 'text-[var(--accent-energy)]' : 'text-[var(--text-faint)]'}`}>
                   {s.label}
                 </span>
-                <span className="text-[10px] text-[var(--text-muted)]">{s.sub}</span>
+                <span className="text-[9px] text-[var(--text-muted)] hidden sm:block">{s.sub}</span>
               </div>
               {i < steps.length - 1 && (
-                <div className="flex-1 px-2">
+                <div className="flex-1 px-1 sm:px-2">
                   <div
                     className="h-px transition-all duration-500"
                     style={{
-                      background: activeStep > i ? 'var(--accent-energy)' : 'var(--border-subtle)',
-                      opacity: activeStep > i ? 1 : 0.4,
+                      background: 'var(--accent-energy)',
+                      opacity: 0.6,
                     }}
                   />
                 </div>
@@ -873,162 +536,7 @@ const SourceTraceVisual: React.FC = () => {
 };
 
 /* ==========================================================================
-   DATA ROUTING WINDOW
-   ========================================================================== */
-const ROUTING_STAGES = [
-  { label: 'SOURCE SIGNAL', detail: 'Maritime intelligence', status: 'RECEIVED' },
-  { label: 'EVENT DETECTED', detail: 'Strait of Hormuz disruption', status: 'ANALYZING' },
-  { label: 'RISK ENGINE', detail: 'Flow vulnerability assessment', status: 'PROCESSING' },
-  { label: 'DIGITAL TWIN', detail: 'Network impact mapping', status: 'MAPPING' },
-  { label: 'ROUTING', detail: 'Digital twin integration', status: 'ROUTING TO MODEL' },
-  { label: 'DECISION READY', detail: 'Response options prepared', status: 'COMPLETE' },
-] as const;
-
-const DataRoutingWindow: React.FC = () => {
-  const [activeStep, setActiveStep] = useState(0);
-  const [reduced, setReduced] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const isVisible = useRef(false);
-  const intervalRef = useRef<number | null>(null);
-  const timeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !isVisible.current) {
-          isVisible.current = true;
-          if (!reduced) {
-            let step = 0;
-            intervalRef.current = window.setInterval(() => {
-              step++;
-              if (step >= ROUTING_STAGES.length) {
-                if (intervalRef.current) window.clearInterval(intervalRef.current);
-                timeoutRef.current = window.setTimeout(() => {
-                  step = 0;
-                  setActiveStep(0);
-                  isVisible.current = false;
-                }, 3000);
-              }
-              setActiveStep(step);
-            }, 1800);
-          }
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-      if (intervalRef.current) window.clearInterval(intervalRef.current);
-      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-    };
-  }, [reduced]);
-
-  return (
-    <div ref={sectionRef} className="lp-data-routing" role="img" aria-label="ORBIT data routing pipeline">
-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className={`inline-block h-2 w-2 rounded-full ${activeStep > 0 ? 'bg-[var(--accent-energy)]' : 'bg-[var(--text-muted)]'}`} style={{ transition: 'background 0.4s ease' }} />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-primary)]">
-            SOURCE SIGNAL
-          </span>
-        </div>
-        <span className={`font-mono text-[10px] transition-colors duration-500 ${activeStep >= ROUTING_STAGES.length - 1 ? 'text-[var(--accent-emerald)]' : 'text-[var(--accent-energy)]'}`}>
-          {ROUTING_STAGES[Math.min(activeStep, ROUTING_STAGES.length - 1)].status}
-        </span>
-      </div>
-      {ROUTING_STAGES.map(({ label, detail, status }, i) => {
-        const isActive = i === activeStep;
-        const isComplete = i < activeStep;
-        return (
-          <div key={label} className={`lp-routing-row ${isActive ? 'is-active' : ''}`}>
-            <span className={`lp-routing-dot ${isActive ? 'is-active' : ''} ${isComplete ? 'is-complete' : ''}`} />
-            <div className="flex-1">
-              <span className={`text-xs font-semibold ${isActive ? 'text-[var(--accent-energy)]' : isComplete ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`} style={{ transition: 'color 0.4s ease' }}>
-                {label}
-              </span>
-              <span className="ml-2 text-xs text-[var(--text-muted)]">{detail}</span>
-            </div>
-            <span className={`font-mono text-[10px] ${isActive ? 'text-[var(--accent-energy)]' : isComplete ? 'text-[var(--accent-emerald)]' : 'text-[var(--text-faint)]'}`} style={{ transition: 'color 0.4s ease' }}>
-              {status}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-/* ==========================================================================
-   RESPONSE COMPARISON VISUAL
-   ========================================================================== */
-const ResponseComparison: React.FC = () => {
-  const [selected, setSelected] = useState(0);
-
-  return (
-    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
-      <div className="mb-4 flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-          Response Comparison
-        </span>
-        <span className="font-mono text-[10px] text-[var(--text-muted)]">OPTION ANALYSIS</span>
-      </div>
-
-      <div className="space-y-2">
-        {RESPONSE_OPTIONS.map((opt, i) => (
-          <button
-            key={opt.label}
-            type="button"
-            onClick={() => setSelected(i)}
-            className={`w-full rounded-lg border p-3 text-left transition-all duration-300 ${
-              selected === i
-                ? 'border-[var(--accent-energy)] bg-orange-50/60'
-                : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-orange-200'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-[10px] font-bold tracking-wider text-[var(--accent-energy)]">{opt.label}</span>
-                <span className="text-xs font-semibold text-[var(--text-primary)]">{opt.title}</span>
-              </div>
-              <span className="font-mono text-[10px] text-[var(--text-muted)]">{opt.time}</span>
-            </div>
-
-            {selected === i && (
-              <div className="mt-3 grid grid-cols-3 gap-2 border-t border-orange-200 pt-2">
-                <div>
-                  <span className="block font-mono text-[10px] uppercase text-[var(--text-faint)]">Impact</span>
-                  <span className={`block text-xs font-bold ${opt.impact === 'HIGH' ? 'text-red-600' : opt.impact === 'MEDIUM' ? 'text-orange-600' : 'text-emerald-600'}`}>{opt.impact}</span>
-                </div>
-                <div>
-                  <span className="block font-mono text-[10px] uppercase text-[var(--text-faint)]">Risk</span>
-                  <span className={`block text-xs font-bold ${opt.risk === 'HIGH' ? 'text-red-600' : opt.risk === 'MEDIUM' ? 'text-orange-600' : 'text-emerald-600'}`}>{opt.risk}</span>
-                </div>
-                <div>
-                  <span className="block font-mono text-[10px] uppercase text-[var(--text-faint)]">Feasibility</span>
-                  <span className={`block text-xs font-bold ${opt.feasibility === 'CONSTRAINED' ? 'text-red-600' : opt.feasibility === 'LIMITED' ? 'text-orange-600' : 'text-emerald-600'}`}>{opt.feasibility}</span>
-                </div>
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ==========================================================================
-   MAIN LANDING PAGE
+   MAIN LANDING PAGE COMPONENT
    ========================================================================== */
 export const LandingPage: React.FC<LandingPageProps> = ({
   onNavigateToAuth,
@@ -1036,15 +544,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   isAuthenticated,
 }) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState<string>('Why ORBIT');
+  const [activeItem, setActiveItem] = useState<string>('The Problem');
   const [scrolled, setScrolled] = useState(false);
   const [scrollPct, setScrollPct] = useState(0);
-  const [heroStatusIdx, setHeroStatusIdx] = useState(0);
   const isManualScrollRef = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<number | null>(null);
 
   const primaryAction = isAuthenticated ? onNavigateToApp : onNavigateToAuth;
-  const primaryLabel = isAuthenticated ? 'Dashboard' : 'Sign in';
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, label: string, href: string) => {
     e.preventDefault();
@@ -1092,7 +598,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       }).filter(Boolean) as { label: string; top: number; bottom: number }[];
 
       if (window.scrollY < 250) {
-        setActiveItem('Why ORBIT');
+        setActiveItem('The Problem');
         return;
       }
 
@@ -1111,23 +617,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     };
   }, []);
 
-  // Hero status indicator cycling
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mq.matches) return;
-    const t = window.setInterval(() => {
-      setHeroStatusIdx((prev) => (prev + 1) % 4);
-    }, 2800);
-    return () => window.clearInterval(t);
-  }, []);
-
   return (
-    <div className="orbit-landing min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-orange-500/20">
+    <div className="orbit-landing relative min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-orange-500/20">
+      {/* Reference-style Continuous Animated Grid Background */}
+      <OrbitLandingBackground />
+
       {/* Scroll progress indicator */}
       <div className="lp-scroll-progress" style={{ transform: `scaleX(${scrollPct})` }} aria-hidden="true" />
 
       {/* ============================================================
-          NAVBAR
+          NAVIGATION
           ============================================================ */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -1139,14 +638,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <a
             href="#top"
-            onClick={(e) => scrollToSection(e, 'Why ORBIT', '#top')}
+            onClick={(e) => scrollToSection(e, 'The Problem', '#top')}
             className="flex items-center gap-2.5"
             aria-label="ORBIT home"
           >
             <OrbitLogo size="md" showWordmark={true} variant="light" />
           </a>
 
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Landing page navigation">
+          <nav className="hidden items-center gap-1 xl:flex" aria-label="Landing page navigation">
             {NAV_ITEMS.map((item) => {
               const isActive = activeItem === item.label;
               return (
@@ -1154,9 +653,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   key={item.label}
                   href={item.href}
                   onClick={(e) => scrollToSection(e, item.label, item.href)}
-                  className={`lp-nav-active rounded-md px-3 py-1.5 text-[13px] font-medium transition-all duration-200 ${
+                  className={`lp-nav-active rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
                     isActive
-                      ? 'lp-nav-active is-active text-[var(--text-primary)]'
+                      ? 'is-active text-[var(--text-primary)] font-semibold'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >
@@ -1167,38 +666,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </nav>
 
           <div className="flex items-center gap-3">
-            {!isAuthenticated ? (
-              <>
-                <button
-                  type="button"
-                  onClick={primaryAction}
-                  className="hidden cursor-pointer rounded-lg border border-transparent px-3.5 py-1.5 text-[13px] font-medium text-[var(--text-secondary)] transition-all duration-200 hover:border-orange-300/80 hover:bg-orange-50 hover:text-orange-600 hover:shadow-sm active:scale-95 active:bg-orange-100 active:border-orange-400 active:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40 sm:block"
-                >
-                  Sign in
-                </button>
-                <button
-                  type="button"
-                  onClick={onNavigateToAuth}
-                  className="lp-btn-sweep hidden rounded-lg bg-[var(--text-primary)] px-4 py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 sm:inline-flex"
-                >
-                  Get started
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={primaryAction}
-                className="lp-btn-sweep hidden rounded-lg bg-[var(--accent-energy)] px-4 py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 sm:inline-flex"
-              >
-                Dashboard
-              </button>
-            )}
             <button
+              id="landing-header-signin-button"
+              type="button"
+              onClick={primaryAction}
+              className="lp-btn-sweep hidden rounded-lg bg-[var(--accent-energy)] px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 sm:inline-flex"
+            >
+              Sign In
+            </button>
+            <button
+              id="landing-header-mobile-toggle"
               type="button"
               aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
               aria-expanded={mobileNavOpen}
               onClick={() => setMobileNavOpen((open) => !open)}
-              className="rounded-md p-2 text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] lg:hidden"
+              className="rounded-md p-2 text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] xl:hidden"
             >
               {mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -1207,7 +689,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         {mobileNavOpen && (
           <nav
-            className="border-t border-[var(--border-subtle)] bg-white px-4 py-4 lg:hidden"
+            className="border-t border-[var(--border-subtle)] bg-white px-4 py-4 xl:hidden"
             aria-label="Mobile landing page navigation"
           >
             <div className="mx-auto flex max-w-7xl flex-col gap-1">
@@ -1219,21 +701,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     scrollToSection(e, item.label, item.href);
                     setMobileNavOpen(false);
                   }}
-                  className="rounded-md px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
                 >
                   {item.label}
                 </a>
               ))}
-              <div className="mt-3 flex flex-col gap-2 border-t border-[var(--border-subtle)] pt-3">
+              <div className="mt-3 border-t border-[var(--border-subtle)] pt-3">
                 <button
+                  id="landing-mobile-signin-button"
                   type="button"
                   onClick={() => {
                     setMobileNavOpen(false);
                     primaryAction();
                   }}
-                  className="rounded-lg bg-[var(--text-primary)] px-4 py-2.5 text-sm font-semibold text-white"
+                  className="w-full rounded-lg bg-[var(--accent-energy)] px-4 py-2.5 text-sm font-semibold text-white"
                 >
-                  {isAuthenticated ? 'Dashboard' : 'Get started'}
+                  Sign In
                 </button>
               </div>
             </div>
@@ -1241,72 +724,66 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         )}
       </header>
 
-      <main id="top" className="pt-16 scroll-mt-20 relative">
+      <main id="top" className="relative z-10 pt-16 scroll-mt-20">
         {/* ============================================================
-            HERO
+            1. HERO
             ============================================================ */}
-        <section className="relative overflow-hidden px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-16 lg:px-8 lg:pb-20 lg:pt-20">
+        <section className="relative overflow-hidden px-4 pb-12 pt-10 sm:px-6 sm:pb-16 sm:pt-14 lg:px-8 lg:pb-16 lg:pt-16">
           <div className="landing-hero-glow lp-parallax absolute left-1/2 top-0 h-[20rem] w-[30rem] -translate-x-1/2 rounded-full opacity-10" aria-hidden="true" />
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
             <div>
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1.5">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3.5 py-1.5 shadow-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-energy)]" aria-hidden="true" />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--accent-energy)]">
-                  Energy supply-chain intelligence
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--accent-energy)]">
+                  ENERGY SUPPLY-CHAIN INTELLIGENCE
                 </span>
               </div>
 
-              <div className="mb-6 flex flex-wrap gap-2">
-                {['ANALYZING SIGNALS', 'ROUTING EVENTS', 'MAPPING EXPOSURE', 'MODEL READY'].map((status, i) => (
-                  <div key={status} className={`lp-hero-status ${i <= heroStatusIdx ? 'is-active' : ''}`}>
-                    <span className="lp-hero-status-dot" />
-                    <span>{status}</span>
-                  </div>
+              <h1 className="max-w-2xl text-4xl font-bold leading-[1.08] tracking-[-0.03em] text-[var(--text-primary)] sm:text-5xl lg:text-[3.5rem]">
+                <span className="lp-hero-word">FROM</span>{' '}
+                <span className="lp-hero-word">GLOBAL</span>{' '}
+                <span className="lp-hero-word">EVENTS</span><br />
+                <span className="lp-hero-word">TO</span>{' '}
+                <span className="lp-hero-word">ENERGY</span>{' '}
+                <span className="lp-hero-word lp-orange-interactive" style={{ color: 'var(--accent-energy)' }}>DECISIONS.</span>
+              </h1>
+
+              <p className="mt-5 max-w-xl text-base sm:text-lg leading-[1.7] text-[var(--text-secondary)]">
+                ORBIT monitors real-world events, understands how they can affect oil supply, evaluates strategic reserves, and brings the full picture together in one system.
+              </p>
+
+              {/* Four Hero Tags */}
+              <div className="mt-6 flex flex-wrap gap-2">
+                {HERO_TAGS.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-2.5 py-1 font-mono text-[11px] font-semibold text-[var(--text-primary)]"
+                  >
+                    {tag}
+                  </span>
                 ))}
               </div>
 
-              <h1 className="max-w-2xl text-4xl font-bold leading-[1.08] tracking-[-0.03em] text-[var(--text-primary)] sm:text-5xl lg:text-[3.75rem]">
-                <span className="lp-hero-word">From</span>{' '}
-                <span className="lp-hero-word">geopolitical</span>{' '}
-                <span className="lp-hero-word">events</span>{' '}
-                <span className="lp-hero-word">to</span>{' '}
-                <span className="lp-hero-word lp-orange-interactive" style={{ color: 'var(--accent-energy)' }}>energy</span>{' '}
-                <span className="lp-hero-word">decisions</span>
-              </h1>
-
-              <p className="mt-6 max-w-xl text-lg leading-[1.75] text-[var(--text-secondary)] sm:text-xl">
-                ORBIT analyzes how global disruptions affect energy supply chains, maps infrastructure
-                exposure, and evaluates response options before a crisis becomes an operational problem.
-              </p>
-
+              {/* Buttons */}
               <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                 <a
                   id="hero-primary-cta"
-                  href="#why-orbit"
-                  onClick={(e) => scrollToSection(e, 'Why ORBIT', '#why-orbit')}
-                  className="lp-btn-sweep inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--text-primary)] px-6 py-3.5 text-base font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-energy)] focus-visible:ring-offset-2"
+                  href="#problem"
+                  onClick={(e) => scrollToSection(e, 'The Problem', '#problem')}
+                  className="lp-btn-sweep inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--text-primary)] px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-energy)] focus-visible:ring-offset-2"
                 >
-                  <span>Explore ORBIT</span>
+                  <span>EXPLORE ORBIT</span>
                   <ArrowRight className="lp-btn-arrow h-4 w-4" />
                 </a>
                 <button
                   type="button"
                   onClick={primaryAction}
-                  className="lp-btn-sweep inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--border-emphasis)] bg-transparent px-6 py-3.5 text-base font-semibold text-[var(--text-primary)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--accent-energy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-energy)] focus-visible:ring-offset-2"
+                  className="lp-btn-sweep inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--border-emphasis)] bg-transparent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--accent-energy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-energy)] focus-visible:ring-offset-2"
                 >
                   <Lock className="h-4 w-4 text-[var(--text-muted)]" />
-                  <span>Sign in to operator console</span>
+                  <span>OPEN COMMAND CENTER</span>
                 </button>
-              </div>
-
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-[var(--border-subtle)] pt-6">
-                {SIGNALS.map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex items-center gap-2 text-sm font-medium text-[var(--text-muted)]">
-                    <Icon className="h-3.5 w-3.5 text-[var(--accent-energy)]" />
-                    <span>{label}</span>
-                  </div>
-                ))}
               </div>
             </div>
 
@@ -1315,437 +792,398 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ============================================================
-            WHY ORBIT — One system from detection to response
+            2. THE PROBLEM
+            ============================================================ */}
+        <Reveal>
+          <section
+            id="problem"
+            className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-14 sm:px-6 lg:px-8 lg:py-16 relative"
+          >
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
+                GLOBAL EVENTS CAN DISRUPT ENERGY SUPPLY.
+              </h2>
+
+              <p className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)] max-w-2xl mx-auto">
+                A conflict, attack, sanction, blocked shipping route, or damaged facility can disrupt oil supply far away from where the event happens.
+              </p>
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-2 text-left">
+                <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-[var(--text-muted)]">THE HEADLINE QUESTION</span>
+                  <p className="mt-1 text-base font-bold text-[var(--text-primary)]">
+                    "What happened?"
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">News reports provide raw information, but no operational answer.</p>
+                </div>
+
+                <div className="rounded-xl border border-orange-200 bg-orange-50/70 p-5">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-[var(--accent-energy)] font-bold">THE DIFFICULT QUESTION</span>
+                  <p className="mt-1 text-base font-bold text-[var(--text-primary)]">
+                    "What does it mean for our energy supply?"
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)]">Connecting the event to supply, refineries, and reserves.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent-energy)] lp-signal-pulse" />
+                <span className="text-xs font-bold text-[var(--text-primary)]">
+                  THE SOLUTION: ORBIT
+                </span>
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ============================================================
+            3. WHAT IS ORBIT?
+            ============================================================ */}
+        <Reveal>
+          <section
+            id="what-is-orbit"
+            className="scroll-mt-24 px-4 py-14 sm:px-6 lg:px-8 lg:py-16 relative border-b border-[var(--border-subtle)]"
+          >
+            <div className="mx-auto max-w-7xl">
+              <div className="max-w-3xl">
+                <h2 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
+                  ONE SYSTEM TO UNDERSTAND AN ENERGY CRISIS.
+                </h2>
+                <p className="mt-4 text-base sm:text-lg leading-relaxed text-[var(--text-secondary)]">
+                  ORBIT is an energy intelligence platform that connects global events, energy risk, network impact, and strategic reserves into one clear picture.
+                </p>
+              </div>
+
+              {/* Simple Flow: GLOBAL EVENTS → RISK → ENERGY NETWORK → RESERVES → DECISION */}
+              <div className="mt-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 sm:p-6">
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  {[
+                    { step: 'GLOBAL EVENTS', icon: Globe2 },
+                    { step: 'RISK', icon: Activity },
+                    { step: 'ENERGY NETWORK', icon: Network },
+                    { step: 'RESERVES', icon: ShieldCheck },
+                    { step: 'DECISION', icon: Target },
+                  ].map((item, idx) => (
+                    <React.Fragment key={item.step}>
+                      <div className="flex flex-1 items-center gap-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3 sm:flex-col sm:text-center">
+                        <div className="flex h-7 w-7 items-center justify-center rounded bg-orange-50 text-[var(--accent-energy)] border border-orange-100">
+                          <item.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="font-mono text-xs font-bold tracking-wider text-[var(--text-primary)]">
+                          {item.step}
+                        </span>
+                      </div>
+                      {idx < 4 && (
+                        <div className="flex items-center justify-center py-1 sm:py-0 text-[var(--accent-energy)]" aria-hidden="true">
+                          <ArrowDown className="h-3.5 w-3.5 sm:hidden" />
+                          <ArrowRight className="hidden h-3.5 w-3.5 sm:block" />
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ============================================================
+            4. GEOPOLITICAL RISK INTELLIGENCE
+            ============================================================ */}
+        <Reveal>
+          <section
+            id="risk-intelligence"
+            className="scroll-mt-24 bg-[var(--bg-secondary)] px-4 py-14 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]"
+          >
+            <div className="mx-auto max-w-7xl">
+              <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+                <div>
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[var(--accent-energy)]">
+                    RISK INTELLIGENCE
+                  </span>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
+                    ORBIT FINDS THE ENERGY RISK.
+                  </h2>
+                  <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
+                    ORBIT's Geopolitical Risk Agent analyzes real-world news and identifies events that could affect oil and energy supply.
+                  </p>
+
+                  <div className="mt-6 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-[var(--accent-energy)]">
+                      REAL NEWS → ENERGY RISK
+                    </span>
+                    <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                      Filters through global reporting to extract concrete energy impacts without manual parsing.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Conversational Assistant Mention */}
+                <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6">
+                  <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] pb-3">
+                    <Bot className="h-4 w-4 text-[var(--accent-energy)]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                      Conversational Assistant: Ask ORBIT
+                    </span>
+                  </div>
+
+                  <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+                    Users can ask ORBIT questions about current risks, affected supply, network impact, and reserves.
+                  </p>
+
+                  <div className="mt-4 space-y-2">
+                    <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2.5 text-xs text-[var(--text-primary)]">
+                      <MessageSquare className="inline h-3.5 w-3.5 text-[var(--accent-energy)] mr-2" />
+                      "Which supply routes are currently exposed?"
+                    </div>
+                    <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-2.5 text-xs text-[var(--text-primary)]">
+                      <MessageSquare className="inline h-3.5 w-3.5 text-[var(--accent-energy)] mr-2" />
+                      "What is our reserve position if the disruption continues?"
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ============================================================
+            5. DIGITAL TWIN
+            ============================================================ */}
+        <Reveal>
+          <section
+            id="digital-twin"
+            className="scroll-mt-24 px-4 py-14 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]"
+          >
+            <div className="mx-auto max-w-7xl">
+              <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
+                <div>
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[var(--accent-energy)]">
+                    NETWORK MAPPING
+                  </span>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
+                    ORBIT SHOWS WHERE THE IMPACT GOES.
+                  </h2>
+
+                  <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
+                    The Digital Twin is a digital copy of the energy network.
+                  </p>
+
+                  <div className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-1.5 font-mono text-xs font-bold text-[var(--text-primary)]">
+                    <span>SUPPLIERS</span>
+                    <span className="text-[var(--accent-energy)]">→</span>
+                    <span>ROUTES</span>
+                    <span className="text-[var(--accent-energy)]">→</span>
+                    <span>PORTS</span>
+                    <span className="text-[var(--accent-energy)]">→</span>
+                    <span>REFINERIES</span>
+                  </div>
+
+                  <p className="mt-4 text-sm text-[var(--text-secondary)] leading-relaxed">
+                    When an event occurs, ORBIT traces which parts of the network may be affected.
+                  </p>
+
+                  <div className="mt-5 border-l-2 border-[var(--accent-energy)] pl-3">
+                    <p className="font-mono text-sm font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                      DON'T JUST READ THE HEADLINE.<br />
+                      SEE ITS IMPACT.
+                    </p>
+                  </div>
+                </div>
+
+                <NetworkVisualization />
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ============================================================
+            6. STRATEGIC RESERVES
+            ============================================================ */}
+        <Reveal>
+          <section
+            id="reserves"
+            className="scroll-mt-24 bg-[var(--bg-secondary)] px-4 py-14 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]"
+          >
+            <div className="mx-auto max-w-7xl">
+              <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+                <ConceptualReserveVisual />
+
+                <div>
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[var(--accent-energy)]">
+                    STRATEGIC RESERVES
+                  </span>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
+                    ORBIT SHOWS WHAT CAN BE DONE ABOUT IT.
+                  </h2>
+
+                  <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
+                    ORBIT combines the current reserve position with the disruption to help determine how reserves can be used while protecting the required safety level.
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-3 font-mono text-xs font-bold text-[var(--text-primary)]">
+                    <span>CURRENT RESERVE</span>
+                    <span className="text-[var(--accent-energy)]">→</span>
+                    <span>DISRUPTION</span>
+                    <span className="text-[var(--accent-energy)]">→</span>
+                    <span className="text-emerald-700">RESERVE STRATEGY</span>
+                  </div>
+
+                  <p className="mt-4 text-xs text-[var(--text-muted)]">
+                    Enforces dynamic safety floors to prevent over-release while ensuring strategic resilience.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ============================================================
+            7. ORCHESTRATOR
+            ============================================================ */}
+        <Reveal>
+          <section
+            id="orchestrator"
+            className="scroll-mt-24 px-4 py-14 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]"
+          >
+            <div className="mx-auto max-w-7xl">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--accent-energy)]">
+                  <Workflow className="h-3.5 w-3.5" />
+                  <span>ORBIT ORCHESTRATOR</span>
+                </div>
+
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
+                  ORBIT CONNECTS EVERYTHING AUTOMATICALLY.
+                </h2>
+
+                <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
+                  When a new event is detected, ORBIT automatically connects the different intelligence and analysis stages instead of requiring someone to move information between systems manually.
+                </p>
+              </div>
+
+              {/* NEWS → RISK → DIGITAL TWIN → RESERVES → ASSESSMENT → COMMAND OVERVIEW */}
+              <div className="mt-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 sm:p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 items-center">
+                  {[
+                    { label: 'NEWS', sub: 'Event intake' },
+                    { label: 'RISK', sub: 'Impact scoring' },
+                    { label: 'DIGITAL TWIN', sub: 'Asset tracing' },
+                    { label: 'RESERVES', sub: 'Buffer evaluation' },
+                    { label: 'ASSESSMENT', sub: 'Synthesis' },
+                    { label: 'COMMAND OVERVIEW', sub: 'Decision ready' },
+                  ].map((step, idx) => (
+                    <div
+                      key={step.label}
+                      className="lp-card-hover rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-3.5 text-center flex flex-col justify-center"
+                    >
+                      <span className="font-mono text-[10px] font-bold text-[var(--accent-energy)]">0{idx + 1}</span>
+                      <span className="mt-1 text-xs font-bold text-[var(--text-primary)]">{step.label}</span>
+                      <span className="mt-0.5 text-[10px] text-[var(--text-muted)]">{step.sub}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-4 text-center font-mono text-xs font-bold text-[var(--accent-energy)]">
+                  AUTOMATED HAND-OFF ACROSS ALL PIPELINE STAGES
+                </p>
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ============================================================
+            8. WHY ORBIT
             ============================================================ */}
         <Reveal>
           <section
             id="why-orbit"
-            className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative"
+            className="scroll-mt-24 bg-[var(--bg-secondary)] px-4 py-14 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]"
           >
             <div className="mx-auto max-w-7xl">
               <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  Why ORBIT
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  One system from event detection to{' '}
-                  <span style={{ color: 'var(--accent-energy)' }}>response</span>
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[var(--accent-energy)]">
+                  WHY ORBIT
+                </span>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
+                  INTELLIGENCE THAT LEADS TO ACTION.
                 </h2>
-                <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                  ORBIT connects geopolitical intelligence with the physical energy network, allowing
-                  operators to understand what changed, where the exposure sits, and what response options
-                  are available.
-                </p>
               </div>
 
-              <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lp-stagger">
-                {CORE_PILLARS.map(({ number, step, title, description, icon: Icon }) => (
-                  <article
-                    key={number}
-                    className="lp-card-hover lp-card-border-glow group rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-6"
+              {/* Four Short Points */}
+              <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="lp-card-hover rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
+                  <span className="font-mono text-xs font-bold tracking-wider text-[var(--accent-energy)]">
+                    SOURCE-BACKED
+                  </span>
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                    Understand where information comes from.
+                  </p>
+                </div>
+
+                <div className="lp-card-hover rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
+                  <span className="font-mono text-xs font-bold tracking-wider text-[var(--accent-energy)]">
+                    NETWORK-AWARE
+                  </span>
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                    See how disruptions can spread.
+                  </p>
+                </div>
+
+                <div className="lp-card-hover rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
+                  <span className="font-mono text-xs font-bold tracking-wider text-[var(--accent-energy)]">
+                    RESERVE-AWARE
+                  </span>
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                    Understand the available response.
+                  </p>
+                </div>
+
+                <div className="lp-card-hover rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
+                  <span className="font-mono text-xs font-bold tracking-wider text-[var(--accent-energy)]">
+                    AUTOMATED
+                  </span>
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                    Connect the analysis without manual intervention.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <SourceTraceVisual />
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ============================================================
+            9. FINAL CTA
+            ============================================================ */}
+        <Reveal>
+          <section className="scroll-mt-24 px-4 py-16 sm:px-6 lg:px-8 lg:py-20 relative">
+            <div className="mx-auto max-w-4xl text-center">
+              <div className="rounded-3xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-8 sm:p-12 lg:p-14 shadow-lg relative overflow-hidden">
+                <div className="landing-hero-glow absolute inset-0 opacity-20 pointer-events-none" aria-hidden="true" />
+
+                <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl lg:text-5xl leading-tight">
+                  FROM GLOBAL EVENTS<br />
+                  <span style={{ color: 'var(--accent-energy)' }}>TO ENERGY DECISIONS.</span>
+                </h2>
+
+                <p className="mt-4 max-w-xl mx-auto text-base text-[var(--text-secondary)]">
+                  ORBIT turns global events into a clear picture of risk, impact, reserves, and response.
+                </p>
+
+                <div className="mt-8 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={primaryAction}
+                    className="lp-btn-sweep inline-flex items-center gap-2 rounded-xl bg-[var(--accent-energy)] px-8 py-3.5 text-base font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-energy)] focus-visible:ring-offset-2"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold tracking-[0.2em] text-[var(--accent-energy)]">
-                        {number} — {step}
-                      </span>
-                      <div className="lp-card-icon lp-cap-icon-pulse flex h-9 w-9 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                    </div>
-                    <h3 className="mt-5 text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
-                    <div className="lp-card-signal-line" aria-hidden="true" />
-                  </article>
-                ))}
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            CORE CAPABILITIES — 4 Key Operational Deep-Dives
-            ============================================================ */}
-        <div id="capabilities" className="scroll-mt-24">
-          {/* 1. Digital Twin Network */}
-          <Reveal>
-            <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative border-b border-[var(--border-subtle)]">
-              <div className="mx-auto max-w-7xl">
-                <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                      Digital Twin Network
-                    </p>
-                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                      See the energy network behind the event
-                    </h2>
-                    <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                      When a geopolitical disruption occurs, ORBIT does not stop at the headline. Its Digital
-                      Twin connects the event to suppliers, trade routes, infrastructure, refineries,
-                      chokepoints, and other network dependencies so operators can trace physical propagation.
-                    </p>
-
-                    <div className="mt-8 grid grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent-energy)]">
-                          <Fuel className="h-4 w-4" />
-                          <span>Supply & Routes</span>
-                        </div>
-                        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                          Tracks crude contracts, tanker origins, and chokepoint transit volumes.
-                        </p>
-                      </div>
-                      <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-card)] p-4">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--accent-energy)]">
-                          <Network className="h-4 w-4" />
-                          <span>Physical Assets</span>
-                        </div>
-                        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                          Connects deep-water ports, crude pipelines, and inland refinery clusters.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <NetworkVisualization />
+                    <span>ENTER ORBIT</span>
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
                 </div>
-
-                <div className="mt-8">
-                  <DataRoutingWindow />
-                </div>
-              </div>
-            </section>
-          </Reveal>
-
-          {/* 2. Scenario Modelling */}
-          <Reveal>
-            <section className="bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]">
-              <div className="mx-auto max-w-7xl">
-                <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-start">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                      Scenario Modelling
-                    </p>
-                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                      Model the disruption before it becomes a{' '}
-                      <span style={{ color: 'var(--accent-energy)' }}>crisis</span>
-                    </h2>
-                    <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                      ORBIT does not simply say "this event is risky." It helps evaluate
-                      "what happens if?" Different assumptions can be tested across deterministic scenarios.
-                    </p>
-
-                    <div className="mt-6 space-y-3">
-                      {SCENARIOS.map((s) => (
-                        <div key={s.id} className="flex items-start gap-3">
-                          <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--accent-energy)]" />
-                          <div>
-                            <span className="text-sm font-semibold text-[var(--text-primary)]">{s.label}</span>
-                            <span className="ml-2 text-sm text-[var(--text-secondary)]">— {s.description}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <ScenarioVisualization />
-                </div>
-              </div>
-            </section>
-          </Reveal>
-
-          {/* 3. Strategic Reserve Optimization */}
-          <Reveal>
-            <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]">
-              <div className="mx-auto max-w-7xl">
-                <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
-                  <ReserveGauge />
-
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                      Strategic Reserve Optimization
-                    </p>
-                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                      Test how much reserve can{' '}
-                      <span style={{ color: 'var(--accent-energy)' }}>safely</span> be released
-                    </h2>
-                    <p className="mt-5 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                      ORBIT models strategic petroleum reserve as an operational system. Operators can
-                      evaluate disruption scenarios, calculate reserve drawdown requirements, account for
-                      alternative procurement, and enforce a minimum reserve floor.
-                    </p>
-                    <p className="mt-4 text-base leading-[1.75] text-[var(--text-secondary)]">
-                      Rather than making speculative draw decisions, teams can test various outage durations,
-                      monitor SPR buffer days, and verify replenishment feasibility under real supply constraints.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </Reveal>
-
-          {/* 4. Executive Decision & Response */}
-          <Reveal>
-            <section className="bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]">
-              <div className="mx-auto max-w-7xl">
-                <div className="max-w-3xl">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                    Executive Decision & Response
-                  </p>
-                  <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                    Turn intelligence into a{' '}
-                    <span style={{ color: 'var(--accent-energy)' }}>decision-ready</span>{' '}
-                    operational picture
-                  </h2>
-                  <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                    ORBIT combines source-backed intelligence, network exposure, scenario results,
-                    procurement options, and reserve implications into decision-ready operational
-                    information for leaders.
-                  </p>
-                </div>
-
-                <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
-                  <DecisionPreview />
-                  <ResponseComparison />
-                </div>
-              </div>
-            </section>
-          </Reveal>
-
-          {/* Differentiation & Source Traceability Deep-Dive */}
-          <Reveal>
-            <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16 border-b border-[var(--border-subtle)]">
-              <div className="mx-auto max-w-7xl">
-                <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                      Evidence & Verification
-                    </p>
-                    <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                      Source traceability at every stage
-                    </h2>
-                    <p className="mt-4 text-base text-[var(--text-secondary)]">
-                      Every insight is anchored to verified intelligence feeds, maritime logs, and commodity market data.
-                    </p>
-                    <div className="mt-6">
-                      <SourceTraceVisual />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {DIFFERENTIATORS.map(({ icon: Icon, title, subtitle, description }) => (
-                      <div
-                        key={title}
-                        className="lp-card-hover lp-card-border-glow rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="lp-card-icon lp-cap-icon-pulse flex h-9 w-9 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <span className="block font-mono text-xs font-bold tracking-[0.16em] text-[var(--accent-energy)]">
-                              {title}
-                            </span>
-                            <span className="text-xs text-[var(--text-muted)]">{subtitle}</span>
-                          </div>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
-          </Reveal>
-        </div>
-
-        {/* ============================================================
-            USE CASES — Real-World Disruption Scenarios
-            ============================================================ */}
-        <Reveal>
-          <section
-            id="use-cases"
-            className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative border-b border-[var(--border-subtle)]"
-          >
-            <div className="mx-auto max-w-7xl">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  Operational Use Cases
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  See the decision before making it
-                </h2>
-                <p className="mt-4 text-lg leading-[1.75] text-[var(--text-secondary)]">
-                  Suppose a major geopolitical disruption threatens crude flows through a critical
-                  maritime chokepoint. ORBIT lets an operator move from the event itself to a structured
-                  response analysis without switching between disconnected tools.
-                </p>
-              </div>
-
-              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lp-stagger">
-                {USE_CASES.map(({ icon: Icon, title, tag, description }) => (
-                  <article
-                    key={title}
-                    className="lp-card-hover lp-card-border-glow rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="lp-card-icon lp-cap-icon-pulse flex h-10 w-10 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)]">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <span className="font-mono text-[10px] text-[var(--text-muted)]">{tag}</span>
-                    </div>
-                    <h3 className="mt-5 text-base font-semibold text-[var(--text-primary)]">{title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
-                    <div className="lp-card-signal-line" aria-hidden="true" />
-                  </article>
-                ))}
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            WORKFLOW — End-to-End Platform Flow
-            ============================================================ */}
-        <Reveal>
-          <section id="workflow" className="scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
-            <div className="mx-auto max-w-7xl">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                  End-to-End Workflow
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)] sm:text-4xl">
-                  From signal to{' '}
-                  <span style={{ color: 'var(--accent-energy)' }}>decision</span>
-                </h2>
-                <p className="mt-3 text-base text-[var(--text-secondary)]">
-                  A traceable path from initial geopolitical event detection to operational execution.
-                </p>
-              </div>
-
-              {/* Connected Non-wrapping Flow */}
-              <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-stretch lg:gap-3">
-                {WORKFLOW_STEPS.map(({ number, phase, icon: Icon, title, description }, index) => (
-                  <React.Fragment key={title}>
-                    <article className="lp-card-hover lp-card-border-glow lp-connected-card flex min-w-0 flex-1 flex-col rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-semibold tracking-[0.2em] text-[var(--accent-energy)]">
-                          {number}
-                        </span>
-                        <span className="text-[10px] font-mono font-medium text-[var(--text-muted)]">
-                          {phase}
-                        </span>
-                      </div>
-                      <div className="lp-card-icon lp-cap-icon-pulse mt-4 flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--accent-energy)]">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <h3 className="mt-5 text-base font-semibold text-[var(--text-primary)]">{title}</h3>
-                      <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">{description}</p>
-                      <div className="lp-card-signal-line" aria-hidden="true" />
-                    </article>
-
-                    {index < WORKFLOW_STEPS.length - 1 && (
-                      <div
-                        className="relative flex shrink-0 items-center justify-center text-[var(--accent-energy)] lg:w-4"
-                        aria-hidden="true"
-                      >
-                        <ArrowDown className="h-4 w-4 lg:hidden" />
-                        <ArrowRight className="hidden h-4 w-4 lg:block" />
-                      </div>
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            SECURITY — Secure Operator Access
-            ============================================================ */}
-        <Reveal>
-          <section id="security" className="scroll-mt-24 border-y border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-12 sm:px-6 lg:px-8 lg:py-16 relative">
-            <div className="mx-auto grid max-w-7xl items-center gap-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-7 sm:p-10 lg:grid-cols-[1fr_auto]">
-              <div className="flex gap-4">
-                <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-orange-100 bg-orange-50 text-[var(--accent-energy)] sm:flex">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-energy)]">
-                    Secure operator access
-                  </p>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
-                    Built for accountable operations
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
-                    Sign in to work with ORBIT's source-backed intelligence, Digital Twin context,
-                    deterministic scenarios, and operational response tools.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={primaryAction}
-                className="lp-btn-sweep inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--text-primary)] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 sm:w-auto"
-              >
-                <span>{primaryLabel}</span>
-                <ArrowRight className="lp-btn-arrow h-4 w-4" />
-              </button>
-            </div>
-          </section>
-        </Reveal>
-
-        {/* ============================================================
-            RESOURCES
-            ============================================================ */}
-        <Reveal>
-          <section
-            id="resources"
-            className="scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8"
-          >
-            <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-              <div>
-                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-                  <div className="flex h-5 w-5 items-center justify-center rounded bg-[var(--text-primary)]">
-                    <div className="h-2 w-2 rounded-full border border-white">
-                      <div className="h-0.5 w-0.5 m-auto mt-[2.5px] rounded-full bg-[var(--accent-energy)]" />
-                    </div>
-                  </div>
-                  <span>ORBIT operating surface</span>
-                </div>
-                <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                  Energy supply-chain intelligence for geopolitical risk, network impact, scenarios,
-                  procurement, and strategic reserves.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-[var(--text-muted)]">
-                <a
-                  href="#capabilities"
-                  onClick={(e) => scrollToSection(e, 'Capabilities', '#capabilities')}
-                  className="transition-colors hover:text-[var(--accent-energy)]"
-                >
-                  Capabilities
-                </a>
-                <a
-                  href="#use-cases"
-                  onClick={(e) => scrollToSection(e, 'Use Cases', '#use-cases')}
-                  className="transition-colors hover:text-[var(--accent-energy)]"
-                >
-                  Use Cases
-                </a>
-                <a
-                  href="#workflow"
-                  onClick={(e) => scrollToSection(e, 'Workflow', '#workflow')}
-                  className="transition-colors hover:text-[var(--accent-energy)]"
-                >
-                  Workflow
-                </a>
-                <a
-                  href="#security"
-                  onClick={(e) => scrollToSection(e, 'Security', '#security')}
-                  className="transition-colors hover:text-[var(--accent-energy)]"
-                >
-                  Security
-                </a>
               </div>
             </div>
           </section>
@@ -1755,17 +1193,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ============================================================
           FOOTER
           ============================================================ */}
-      <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-7 text-sm text-[var(--text-muted)] sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-2">
+      <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-secondary)] px-4 py-6 text-sm text-[var(--text-muted)] sm:px-6 lg:px-8 relative z-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2.5">
             <div className="h-2 w-2 rounded-full bg-[var(--accent-energy)]" />
-            <span className="font-semibold text-[var(--text-primary)]">ORBIT</span>
-            <span>
-              Energy supply-chain intelligence for geopolitical risk, network impact, scenarios,
-              procurement, and strategic reserves.
+            <span className="font-bold text-[var(--text-primary)]">ORBIT</span>
+            <span className="text-xs sm:text-sm">
+              Energy supply-chain intelligence from global events to energy decisions.
             </span>
           </div>
-          <span>Source-backed insight · Secure operator access</span>
+          <span className="font-mono text-xs">SOURCE-BACKED · SAFETY-AWARE · AUTOMATED</span>
         </div>
       </footer>
     </div>

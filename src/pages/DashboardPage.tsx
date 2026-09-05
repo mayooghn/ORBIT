@@ -34,6 +34,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
+import { OrbitTechnicalBackground } from '../components/dashboard/OrbitTechnicalBackground';
 
 interface DashboardPageProps {
   onNavigate: (path: string) => void;
@@ -448,9 +449,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const hasValidOptimizerStrategy = drawdownRate > 0 || (latest?.reserve?.result?.duration != null && latest.reserve.result.duration > 0);
 
   return (
-    <div className="min-h-screen bg-[#000000] text-[#EDEDED] font-sans antialiased p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* =============================================================
-          1. HEADER
+    <div className="relative -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-full bg-[#000000] text-[#EDEDED] font-sans antialiased overflow-hidden">
+      {/* Premium Continuous Animated Technical Background System */}
+      <OrbitTechnicalBackground />
+
+      <div className="relative z-10 space-y-6 max-w-7xl mx-auto">
+        {/* =============================================================
+            1. HEADER
           - ORBIT / ENERGY SUPPLY-CHAIN COMMAND CENTER
           - Right: Live/system state, Last real data update, Refresh action
           ============================================================= */}
@@ -1445,6 +1450,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       <footer className="text-center py-4 text-[11px] font-mono text-[#555555] border-t border-[#141414]">
         ORBIT Global Energy Supply Chain Intelligence Platform · Command Overview
       </footer>
+      </div>
     </div>
   );
 };

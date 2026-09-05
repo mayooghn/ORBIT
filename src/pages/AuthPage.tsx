@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, AlertCircle, Loader2, Mail, KeyRound, ShieldCheck, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { ThreeEnergyGlobe } from '../components/common/ThreeEnergyGlobe';
 import { OrbitLogo } from '../components/common/OrbitLogo';
+
+export const EXACT_LOGIN_ERROR_MESSAGE = 'Unable to sign in. Check your credentials or create an ORBIT account.';
 
 interface AuthPageProps {
   onBackToLanding: () => void;
@@ -17,8 +19,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [loginErrorMessage, setLoginErrorMessage] = useState<string | null>(null);
+  const [signupErrorMessage, setSignupErrorMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Track the credentials that failed authentication to prevent synthetic browser events
+  // or unchanged input re-renders from prematurely clearing the error message.
+  const failedCredentialsRef = useRef<{ email: string; password: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -26,31 +33,93 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
 
   const changeMode = (nextMode: 'signin' | 'signup') => {
     setMode(nextMode);
-    setLocalError(null);
+    setLoginErrorMessage(null);
+    setSignupErrorMessage(null);
     clearError();
+    failedCredentialsRef.current = null;
     setPassword('');
     setConfirmPassword('');
   };
 
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    if (signupErrorMessage) setSignupErrorMessage(null);
+    // Only clear login error when user actively modifies the email address
+    if (failedCredentialsRef.current) {
+      if (val.trim() !== failedCredentialsRef.current.email) {
+        setLoginErrorMessage(null);
+        clearError();
+        failedCredentialsRef.current = null;
+      }
+    } else if (loginErrorMessage) {
+      setLoginErrorMessage(null);
+      clearError();
+    }
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if (signupErrorMessage) setSignupErrorMessage(null);
+    // Only clear login error when user actively edits the password
+    if (failedCredentialsRef.current) {
+      if (val !== failedCredentialsRef.current.password && (val.length > 0 || failedCredentialsRef.current.password === '')) {
+        setLoginErrorMessage(null);
+        clearError();
+        failedCredentialsRef.current = null;
+      }
+    } else if (loginErrorMessage) {
+      setLoginErrorMessage(null);
+      clearError();
+    }
+  };
+
+  const handleConfirmPasswordChange = (val: string) => {
+    setConfirmPassword(val);
+    if (signupErrorMessage) setSignupErrorMessage(null);
+    clearError();
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLocalError(null);
-    clearError();
+    if (mode === 'signup') {
+      setSignupErrorMessage(null);
+      clearError();
+    }
+
+    if (!isConfigured) {
+      if (mode === 'signin') {
+        failedCredentialsRef.current = { email: email.trim(), password };
+        setLoginErrorMessage(EXACT_LOGIN_ERROR_MESSAGE);
+      } else {
+        setSignupErrorMessage('Firebase Authentication is awaiting configuration variables in your environment.');
+      }
+      return;
+    }
 
     if (mode === 'signup' && password !== confirmPassword) {
-      setLocalError('Passwords do not match.');
+      setSignupErrorMessage('Passwords do not match.');
       return;
     }
 
     try {
       if (mode === 'signin') {
         await signIn(email.trim(), password);
+        setLoginErrorMessage(null);
+        clearError();
+        failedCredentialsRef.current = null;
       } else {
         await signUp(email.trim(), password);
       }
       onSuccessRedirect();
-    } catch (authError) {
-      setLocalError(authError instanceof Error ? authError.message : 'Authentication failed.');
+    } catch (authError: unknown) {
+      if (mode === 'signin') {
+        // Record failed credentials so synthetic events won't clear it
+        failedCredentialsRef.current = { email: email.trim(), password };
+        // For security and consistency, ALL failed login attempts show the SAME persistent message.
+        setLoginErrorMessage(EXACT_LOGIN_ERROR_MESSAGE);
+      } else {
+        setSignupErrorMessage(authError instanceof Error && authError.message ? authError.message : 'Account registration failed.');
+      }
     }
   };
 
@@ -59,7 +128,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
       {/* ------------------------------------------------------------- */}
       {/* LEFT SIDE: Interactive Globe & Energy Network Visual           */}
       {/* ------------------------------------------------------------- */}
-      <div className="orbit-auth-globe relative w-full lg:w-[50%] xl:w-[55%] min-h-[400px] lg:min-h-screen flex flex-col">
+      <div className="orbit-auth-globe relative w-full lg:w-[52%] xl:w-[58%] min-h-[380px] lg:min-h-screen flex flex-col">
         {/* Ambient glow */}
         <div className="orbit-auth-globe-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
@@ -99,9 +168,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
       {/* ------------------------------------------------------------- */}
       {/* RIGHT SIDE: White ORBIT Authentication Panel                  */}
       {/* ------------------------------------------------------------- */}
-      <div className="orbit-auth-panel relative w-full lg:w-[50%] xl:w-[45%] min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16">
+      <div className="orbit-auth-panel relative w-full lg:w-[48%] xl:w-[42%] min-h-screen flex flex-col justify-between p-5 sm:p-7 lg:px-9 lg:py-6 xl:px-10 xl:py-7">
         {/* Top: Brand + Badge */}
-        <div className={`flex items-center justify-between mb-8 ${mounted ? 'orbit-auth-entrance' : 'opacity-0'}`}>
+        <div className={`flex items-center justify-between mb-4 sm:mb-5 ${mounted ? 'orbit-auth-entrance' : 'opacity-0'}`}>
           <div className="flex items-center gap-2.5">
             <OrbitLogo size="md" showWordmark={true} variant="light" />
           </div>
@@ -113,13 +182,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
         </div>
 
         {/* Center: Auth Content */}
-        <div className="my-auto max-w-sm w-full mx-auto">
+        <div className="my-auto max-w-[350px] sm:max-w-[360px] w-full mx-auto">
           {/* Welcome */}
-          <div className={`mb-8 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-1' : 'opacity-0'}`}>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--auth-text)]">
+          <div className={`mb-4 sm:mb-5 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-1' : 'opacity-0'}`}>
+            <h1 className="text-2xl sm:text-[26px] font-bold tracking-tight text-[var(--auth-text)]">
               {mode === 'signin' ? 'Welcome back.' : 'Create account.'}
             </h1>
-            <p className="mt-2 text-[15px] leading-relaxed text-[var(--auth-text-secondary)]">
+            <p className="mt-1 text-[13.5px] leading-normal text-[var(--auth-text-secondary)]">
               {mode === 'signin'
                 ? 'Access the ORBIT energy intelligence command console.'
                 : 'Register operator credentials for scenario simulation.'}
@@ -127,7 +196,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
           </div>
 
           {/* Tabs */}
-          <div className={`orbit-auth-tabs mb-6 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-2' : 'opacity-0'}`}>
+          <div className={`orbit-auth-tabs mb-3.5 sm:mb-4 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-2' : 'opacity-0'}`}>
             <button
               id="auth-tab-signin"
               type="button"
@@ -148,22 +217,55 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
 
           {/* Firebase config warning */}
           {!isConfigured && (
-            <div className={`orbit-auth-warning mb-5 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-3' : 'opacity-0'}`}>
+            <div className={`orbit-auth-warning mb-3.5 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-3' : 'opacity-0'}`}>
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span>Firebase Authentication is awaiting config variables. Provide VITE_FIREBASE_API_KEY to authenticate live.</span>
             </div>
           )}
 
-          {/* Error message */}
-          {(error || localError) && (
-            <div className="orbit-auth-error mb-5" role="alert" aria-live="assertive">
+          {/* Persistent Login Error Message */}
+          {mode === 'signin' && loginErrorMessage && (
+            <div
+              id="auth-login-error-banner"
+              className={`orbit-auth-failed-banner mb-3.5 ${mounted ? 'orbit-auth-entrance' : ''}`}
+              role="alert"
+              aria-live="assertive"
+            >
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-[#ea580c] flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12.5px] leading-snug font-medium text-[#7c2d12]">
+                    {loginErrorMessage}
+                  </p>
+                  <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-orange-200/60">
+                    <span className="text-[11.5px] text-[var(--auth-text-muted)]">
+                      New to ORBIT?
+                    </span>
+                    <button
+                      type="button"
+                      id="auth-failed-signup-btn"
+                      onClick={() => changeMode('signup')}
+                      className="orbit-auth-new-user-btn"
+                    >
+                      <span>Sign Up</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sign Up Error Banner */}
+          {mode === 'signup' && (signupErrorMessage || error) && (
+            <div className="orbit-auth-error mb-3.5" role="alert" aria-live="assertive">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>{error || localError}</span>
+              <span>{signupErrorMessage || error}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className={`space-y-4 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-3' : 'opacity-0'}`}>
+          <form onSubmit={handleSubmit} className={`space-y-3 ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-3' : 'opacity-0'}`}>
             {/* Email */}
             <div>
               <label htmlFor="auth-email-input" className="orbit-auth-label">
@@ -178,7 +280,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
                   autoComplete="email"
                   placeholder="operator@orbit-energy.gov"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) => handleEmailChange(event.target.value)}
                   className="orbit-auth-input"
                 />
               </div>
@@ -186,12 +288,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
 
             {/* Password */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-1">
                 <label htmlFor="auth-password-input" className="orbit-auth-label" style={{ marginBottom: 0 }}>
                   Password
                 </label>
                 {mode === 'signin' && (
-                  <button type="button" className="orbit-auth-link text-[13px]">
+                  <button type="button" className="orbit-auth-link text-[12px]">
                     Forgot password?
                   </button>
                 )}
@@ -206,9 +308,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) => handlePasswordChange(event.target.value)}
                   className="orbit-auth-input"
-                  style={{ paddingRight: 42 }}
+                  style={{ paddingRight: 38 }}
                 />
                 <button
                   type="button"
@@ -216,7 +318,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
                   className="orbit-auth-eye"
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
@@ -237,7 +339,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
                     autoComplete="new-password"
                     placeholder="Confirm your password"
                     value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    onChange={(event) => handleConfirmPasswordChange(event.target.value)}
                     className="orbit-auth-input"
                   />
                 </div>
@@ -246,7 +348,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
 
             {/* Remember me */}
             {mode === 'signin' && (
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-0.5">
                 <input
                   type="checkbox"
                   id="remember-me"
@@ -254,7 +356,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="orbit-auth-checkbox"
                 />
-                <label htmlFor="remember-me" className="text-[13px] text-[var(--auth-text-secondary)] cursor-pointer select-none">
+                <label htmlFor="remember-me" className="text-[12.5px] text-[var(--auth-text-secondary)] cursor-pointer select-none">
                   Remember me
                 </label>
               </div>
@@ -264,8 +366,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
             <button
               id="auth-submit-button"
               type="submit"
-              disabled={loading || !isConfigured}
-              className="orbit-auth-cta mt-4"
+              disabled={loading}
+              className="orbit-auth-cta mt-3"
             >
               {loading ? (
                 <>
@@ -282,9 +384,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
           </form>
 
           {/* Account switch */}
-          <div className={`text-center mt-6 pt-6 border-t border-[var(--auth-border)] ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-5' : 'opacity-0'}`}>
+          <div className={`text-center mt-3.5 pt-3 border-t border-[var(--auth-border)] ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-5' : 'opacity-0'}`}>
             {mode === 'signin' ? (
-              <p className="text-[13px] text-[var(--auth-text-muted)]">
+              <p className="text-[12.5px] text-[var(--auth-text-muted)]">
                 Don't have an account?{' '}
                 <button
                   type="button"
@@ -295,7 +397,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
                 </button>
               </p>
             ) : (
-              <p className="text-[13px] text-[var(--auth-text-muted)]">
+              <p className="text-[12.5px] text-[var(--auth-text-muted)]">
                 Already have an account?{' '}
                 <button
                   type="button"
@@ -310,13 +412,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
         </div>
 
         {/* Footer: Trust indicators */}
-        <div className={`mt-8 pt-4 border-t border-[var(--auth-border)] flex items-center justify-between ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-6' : 'opacity-0'}`}>
+        <div className={`mt-4 pt-3 border-t border-[var(--auth-border)] flex items-center justify-between ${mounted ? 'orbit-auth-entrance orbit-auth-entrance-delay-6' : 'opacity-0'}`}>
           <div className="orbit-auth-trust">
-            <Lock className="w-3.5 h-3.5" />
+            <Lock className="w-3 h-3" />
             <span>Encrypted Access</span>
           </div>
           <div className="orbit-auth-trust">
-            <ShieldCheck className="w-3.5 h-3.5 text-[var(--auth-accent)]" />
+            <ShieldCheck className="w-3 h-3 text-[var(--auth-accent)]" />
             <span>Firebase Auth</span>
           </div>
         </div>

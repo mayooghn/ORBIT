@@ -14,6 +14,7 @@ export interface AuthState {
   user: UserProfile | null;
   loading: boolean;
   error: string | null;
+  isNewUserError?: boolean;
   isConfigured: boolean;
 }
 

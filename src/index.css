@@ -296,7 +296,7 @@
    ========================================================================== */
 .orbit-landing {
   --bg-primary: #ffffff;
-  --bg-secondary: #fafafa;
+  --bg-secondary: rgba(248, 249, 250, 0.42);
   --bg-surface: #f7f7f8;
   --bg-card: #ffffff;
   --bg-card-hover: #fdfdfd;
@@ -2519,17 +2519,17 @@ summary:focus-visible {
 .orbit-auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  padding: 3px;
+  padding: 2.5px;
   background: var(--auth-surface);
   border: 1px solid var(--auth-border);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .orbit-auth-tab {
-  padding: 10px 0;
-  font-size: 13px;
+  padding: 7px 0;
+  font-size: 12.5px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 6px;
   border: none;
   background: transparent;
   color: var(--auth-text-muted);
@@ -2554,12 +2554,12 @@ summary:focus-visible {
 
 .orbit-auth-input {
   width: 100%;
-  padding: 12px 14px 12px 42px;
-  font-size: 14px;
-  line-height: 1.5;
+  padding: 9px 12px 9px 38px;
+  font-size: 13.5px;
+  line-height: 1.4;
   background: var(--auth-bg);
   border: 1px solid var(--auth-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--auth-text);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   outline: none;
@@ -2581,7 +2581,7 @@ summary:focus-visible {
 
 .orbit-auth-input-icon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--auth-text-muted);
@@ -2596,16 +2596,16 @@ summary:focus-visible {
 
 .orbit-auth-label {
   display: block;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--auth-text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 /* Password visibility toggle */
 .orbit-auth-eye {
   position: absolute;
-  right: 14px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--auth-text-muted);
@@ -2623,8 +2623,8 @@ summary:focus-visible {
 /* Custom checkbox */
 .orbit-auth-checkbox {
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border: 1.5px solid var(--auth-border);
   border-radius: 4px;
   background: var(--auth-bg);
@@ -2645,10 +2645,10 @@ summary:focus-visible {
 .orbit-auth-checkbox:checked::after {
   content: '';
   position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 5px;
-  height: 9px;
+  left: 3.5px;
+  top: 0.5px;
+  width: 4.5px;
+  height: 8.5px;
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
@@ -2661,13 +2661,13 @@ summary:focus-visible {
 /* CTA Button */
 .orbit-auth-cta {
   width: 100%;
-  padding: 13px 20px;
-  font-size: 14px;
+  padding: 9.5px 18px;
+  font-size: 13.5px;
   font-weight: 600;
   color: white;
   background: var(--auth-accent);
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -2681,12 +2681,12 @@ summary:focus-visible {
 .orbit-auth-cta:hover:not(:disabled) {
   background: var(--auth-accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 3px 10px rgba(249, 115, 22, 0.25);
 }
 
 .orbit-auth-cta:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.2);
+  box-shadow: 0 1px 4px rgba(249, 115, 22, 0.2);
 }
 
 .orbit-auth-cta:disabled {
@@ -2722,14 +2722,61 @@ summary:focus-visible {
   text-underline-offset: 3px;
 }
 
+/* Persistent Failed Login Banner */
+.orbit-auth-failed-banner {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  background: rgba(249, 115, 22, 0.07);
+  color: #7c2d12;
+  font-size: 12.5px;
+  animation: orbit-auth-fade-up 0.2s ease-out;
+}
+
+.orbit-auth-new-user-banner {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  background: rgba(249, 115, 22, 0.06);
+  color: #7c2d12;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  animation: orbit-auth-fade-up 0.25s ease-out;
+}
+
+.orbit-auth-new-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 12px;
+  color: white;
+  background: var(--auth-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.orbit-auth-new-user-btn:hover {
+  background: var(--auth-accent-hover);
+  transform: translateY(-0.5px);
+}
+
 /* Error message */
 .orbit-auth-error {
-  padding: 12px 14px;
+  padding: 9px 12px;
   border-radius: 8px;
   border: 1px solid rgba(185, 28, 28, 0.2);
   background: rgba(185, 28, 28, 0.04);
   color: var(--auth-error);
-  font-size: 13px;
+  font-size: 12.5px;
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -2738,12 +2785,12 @@ summary:focus-visible {
 
 /* Warning message */
 .orbit-auth-warning {
-  padding: 12px 14px;
+  padding: 9px 12px;
   border-radius: 8px;
   border: 1px solid rgba(180, 83, 9, 0.2);
   background: rgba(180, 83, 9, 0.04);
   color: #92400e;
-  font-size: 13px;
+  font-size: 12.5px;
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -2752,11 +2799,11 @@ summary:focus-visible {
 
 /* Trust footer */
 .orbit-auth-trust {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--auth-text-muted);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 /* Globe container */
@@ -2929,3 +2976,192 @@ summary:focus-visible {
     animation: none;
   }
 }
+
+/* ==========================================================================
+   ORBIT TECHNICAL BACKGROUND SYSTEM (Command Overview)
+   Continuous architectural grid, signal nodes, ambient breathing, subtle traces
+   ========================================================================== */
+
+.orbit-tech-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  contain: strict;
+}
+
+/* Subtle architectural cell breathing */
+.orbit-tech-cell-pulse-1 {
+  animation: orbit-tech-cell-breathe 14s ease-in-out infinite;
+}
+
+.orbit-tech-cell-pulse-2 {
+  animation: orbit-tech-cell-breathe 18s ease-in-out infinite 4s;
+}
+
+.orbit-tech-cell-pulse-3 {
+  animation: orbit-tech-cell-breathe 16s ease-in-out infinite 8s;
+}
+
+@keyframes orbit-tech-cell-breathe {
+  0%, 100% {
+    opacity: 0.35;
+    border-color: rgba(255, 255, 255, 0.035);
+  }
+  50% {
+    opacity: 0.75;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Subtle technical signal nodes */
+.orbit-tech-node-glint-1 {
+  animation: orbit-tech-glint 12s ease-in-out infinite;
+}
+
+.orbit-tech-node-glint-2 {
+  animation: orbit-tech-glint 16s ease-in-out infinite 6s;
+}
+
+.orbit-tech-node-glint-3 {
+  animation: orbit-tech-glint 20s ease-in-out infinite 11s;
+}
+
+@keyframes orbit-tech-glint {
+  0%, 80%, 100% {
+    opacity: 0.15;
+    transform: scale(0.9);
+  }
+  90% {
+    opacity: 0.85;
+    transform: scale(1.15);
+  }
+}
+
+/* Occasional ORBIT-Orange Signal Pulse Beacon */
+.orbit-tech-beacon-1 {
+  animation: orbit-tech-beacon-cycle 22s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.orbit-tech-beacon-2 {
+  animation: orbit-tech-beacon-cycle 26s cubic-bezier(0.4, 0, 0.2, 1) infinite 9s;
+}
+
+.orbit-tech-beacon-3 {
+  animation: orbit-tech-beacon-cycle 24s cubic-bezier(0.4, 0, 0.2, 1) infinite 16s;
+}
+
+@keyframes orbit-tech-beacon-cycle {
+  0%, 75%, 100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  82% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  88% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+  94% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+
+.orbit-tech-beacon-ring-1 {
+  animation: orbit-tech-ring-cycle 22s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.orbit-tech-beacon-ring-2 {
+  animation: orbit-tech-ring-cycle 26s cubic-bezier(0.4, 0, 0.2, 1) infinite 9s;
+}
+
+.orbit-tech-beacon-ring-3 {
+  animation: orbit-tech-ring-cycle 24s cubic-bezier(0.4, 0, 0.2, 1) infinite 16s;
+}
+
+@keyframes orbit-tech-ring-cycle {
+  0%, 75%, 100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  82% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  92% {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+
+/* Data Trace - horizontal */
+.orbit-tech-trace-h-1 {
+  animation: orbit-tech-trace-h-anim 18s linear infinite;
+}
+
+.orbit-tech-trace-h-2 {
+  animation: orbit-tech-trace-h-anim 24s linear infinite 8s;
+}
+
+@keyframes orbit-tech-trace-h-anim {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(250%);
+    opacity: 0;
+  }
+}
+
+/* Data Trace - vertical */
+.orbit-tech-trace-v-1 {
+  animation: orbit-tech-trace-v-anim 22s linear infinite 4s;
+}
+
+@keyframes orbit-tech-trace-v-anim {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.5;
+  }
+  85% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(250%);
+    opacity: 0;
+  }
+}
+
+/* Accessibility: respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-tech-bg * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .orbit-tech-beacon-1,
+  .orbit-tech-beacon-2,
+  .orbit-tech-beacon-3,
+  .orbit-tech-beacon-ring-1,
+  .orbit-tech-beacon-ring-2,
+  .orbit-tech-beacon-ring-3,
+  .orbit-tech-trace-h-1,
+  .orbit-tech-trace-h-2,
+  .orbit-tech-trace-v-1 {
+    display: none !important;
+  }
+}
+

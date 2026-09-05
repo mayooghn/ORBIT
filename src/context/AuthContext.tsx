@@ -10,6 +10,8 @@ import {
   fbOnAuthStateChanged
 } from '../config/firebase';
 
+export const AUTH_SIGN_IN_FAILED_MESSAGE = 'Unable to sign in. Check your credentials or create an ORBIT account.';
+
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
@@ -25,16 +27,12 @@ function getFirebaseErrorMessage(error: unknown, fallback: string): string {
     : '';
 
   switch (code) {
-    case 'auth/invalid-credential':
-    case 'auth/user-not-found':
-    case 'auth/wrong-password':
-      return 'Invalid email or password. Please check your credentials.';
-    case 'auth/invalid-email':
-      return 'The email address is improperly formatted.';
     case 'auth/email-already-in-use':
       return 'An account with this email already exists.';
     case 'auth/weak-password':
       return 'Password is too weak. Please use at least 6 characters.';
+    case 'auth/invalid-email':
+      return 'The email address is improperly formatted.';
     case 'auth/too-many-requests':
       return 'Too many failed attempts. Please wait a moment and try again.';
     case 'auth/operation-not-allowed':
@@ -99,7 +97,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const clearError = () => setError(null);
+  const clearError = () => {
+    setError(null);
+  };
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
@@ -110,9 +110,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       await signInWithEmailAndPassword(auth, email, password);
     } catch (authError) {
-      const message = getFirebaseErrorMessage(authError, 'Authentication failed. Please verify your credentials.');
-      setError(message);
-      throw new Error(message);
+      setError(AUTH_SIGN_IN_FAILED_MESSAGE);
+      throw new Error(AUTH_SIGN_IN_FAILED_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -154,7 +153,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, error, isConfigured: isFirebaseConfigured, signIn, signUp, signOut, clearError }}
+      value={{
+        user,
+        loading,
+        error,
+        isConfigured: isFirebaseConfigured,
+        signIn,
+        signUp,
+        signOut,
+        clearError
+      }}
     >
       {children}
     </AuthContext.Provider>
