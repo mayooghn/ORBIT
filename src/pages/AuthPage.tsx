@@ -81,10 +81,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoginErrorMessage(null);
     if (mode === 'signup') {
       setSignupErrorMessage(null);
-      clearError();
     }
+    clearError();
 
     if (!isConfigured) {
       if (mode === 'signin') {
@@ -227,7 +228,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onBackToLanding, onSuccessRe
           {mode === 'signin' && loginErrorMessage && (
             <div
               id="auth-login-error-banner"
-              className={`orbit-auth-failed-banner mb-3.5 ${mounted ? 'orbit-auth-entrance' : ''}`}
+              className="orbit-auth-failed-banner mb-3.5"
               role="alert"
               aria-live="assertive"
             >
