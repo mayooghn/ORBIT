@@ -2,6 +2,15 @@ import { NavigationRoute } from '../types';
 
 export const NAVIGATION_ROUTES: NavigationRoute[] = [
   {
+    id: 'assistant',
+    path: '/app/assistant',
+    title: 'ORBIT AI Assistant',
+    shortDescription: 'Ask ORBIT about energy risks, disruptions, and reserves',
+    iconName: 'Bot',
+    phaseNumber: 9,
+    phaseLabel: 'AI Module'
+  },
+  {
     id: 'dashboard',
     path: '/app/dashboard',
     title: 'Command Overview',
@@ -29,12 +38,12 @@ export const NAVIGATION_ROUTES: NavigationRoute[] = [
     phaseLabel: 'Future Module'
   },
   {
-    id: 'assistant',
-    path: '/app/assistant',
+    id: 'geopolitical',
+    path: '/app/geopolitical',
     title: 'Geopolitical Risk Agent',
     shortDescription: 'Analyze geopolitical events and energy supply-chain risk',
-    iconName: 'Bot',
-    phaseNumber: 9,
-    phaseLabel: 'Future Module'
+    iconName: 'ShieldAlert',
+    phaseNumber: 8,
+    phaseLabel: 'Intelligence Module'
   }
 ];

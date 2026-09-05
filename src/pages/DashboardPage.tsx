@@ -1305,7 +1305,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
           <button
             type="button"
-            onClick={() => onNavigate('/app/assistant')}
+            onClick={() => onNavigate('/app/geopolitical')}
             className="text-xs font-mono text-[#f97316] hover:underline flex items-center gap-1 cursor-pointer"
           >
             <span>View All Intelligence →</span>

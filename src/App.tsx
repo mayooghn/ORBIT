@@ -5,7 +5,8 @@ import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { NetworkPage } from './pages/NetworkPage';
 import { ReservesPage } from './pages/ReservesPage';
-import { AssistantPage } from './pages/AssistantPage';
+import { GeopoliticalPage } from './pages/GeopoliticalPage';
+import { AiAssistantPage } from './pages/AiAssistantPage';
 import { AppShell } from './components/layout/AppShell';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { LoadingState } from './components/common/LoadingState';
@@ -37,7 +38,7 @@ function MainRouter() {
       <LandingPage
         isAuthenticated={Boolean(user)}
         onNavigateToAuth={() => navigate('/login')}
-        onNavigateToApp={() => navigate('/app/dashboard')}
+        onNavigateToApp={() => navigate('/app/assistant')}
       />
     );
   }
@@ -45,12 +46,12 @@ function MainRouter() {
   // Route: Auth / Login (/login or /auth)
   if (currentPath === '/login' || currentPath === '/auth') {
     if (user) {
-      return <RedirectToCommandCenter onRedirect={() => navigate('/app/dashboard')} />;
+      return <RedirectToAssistant onRedirect={() => navigate('/app/assistant')} />;
     }
     return (
       <AuthPage
         onBackToLanding={() => navigate('/')}
-        onSuccessRedirect={() => navigate('/app/dashboard')}
+        onSuccessRedirect={() => navigate('/app/assistant')}
       />
     );
   }
@@ -61,16 +62,19 @@ function MainRouter() {
       <AppShell currentPath={currentPath} onNavigate={navigate}>
         {(() => {
           switch (currentPath) {
+            case '/app/assistant':
+            case '/app/ai-assistant':
+              return <AiAssistantPage onNavigate={navigate} />;
             case '/app/dashboard':
               return <DashboardPage onNavigate={navigate} />;
             case '/app/network':
               return <NetworkPage />;
             case '/app/reserves':
               return <ReservesPage />;
-            case '/app/assistant':
-              return <AssistantPage onNavigate={navigate} />;
+            case '/app/geopolitical':
+              return <GeopoliticalPage onNavigate={navigate} />;
             default:
-              return <DashboardPage onNavigate={navigate} />;
+              return <AiAssistantPage onNavigate={navigate} />;
           }
         })()}
       </AppShell>
@@ -78,14 +82,14 @@ function MainRouter() {
   );
 }
 
-const RedirectToCommandCenter: React.FC<{ onRedirect: () => void }> = ({ onRedirect }) => {
+const RedirectToAssistant: React.FC<{ onRedirect: () => void }> = ({ onRedirect }) => {
   useEffect(() => {
     onRedirect();
   }, [onRedirect]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
-      <LoadingState message="Opening Command Center..." subtext="Your secure session is active" />
+      <LoadingState message="Opening ORBIT AI Assistant..." subtext="Your secure session is active" />
     </div>
   );
 };

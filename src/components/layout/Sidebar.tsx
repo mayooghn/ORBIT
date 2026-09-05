@@ -3,12 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 import { NAVIGATION_ROUTES } from '../../config/navigation';
 import {
   LayoutDashboard,
-  AlertTriangle,
   Network,
-  GitBranch,
-  TrendingUp,
   Database,
-  CheckCircle2,
+  ShieldAlert,
   Bot,
   ChevronLeft,
   ChevronRight
@@ -41,6 +38,12 @@ const navigationItem = (id: string, icon: React.ElementType) => {
 
 const NAV_SECTIONS: NavSection[] = [
   {
+    title: 'AI',
+    items: [
+      navigationItem('assistant', Bot)
+    ]
+  },
+  {
     title: 'Core Engine',
     items: [
       navigationItem('dashboard', LayoutDashboard),
@@ -56,7 +59,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Intelligence',
     items: [
-      navigationItem('assistant', Bot)
+      navigationItem('geopolitical', ShieldAlert)
     ]
   }
 ];
@@ -102,10 +105,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, colla
                         isActive ? 'text-orange-400' : 'text-[#666666]'
                       }`}
                     />
-                      {!collapsed && (
-                        <div className="flex-1 truncate">
-                          <span className="truncate">{item.title}</span>
-                        </div>
+                    {!collapsed && (
+                      <div className="flex-1 truncate">
+                        <span className="truncate">{item.title}</span>
+                      </div>
                     )}
                   </button>
                 );
